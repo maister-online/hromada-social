@@ -1,0 +1,47 @@
+name: Prepare server for Render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-port:
+    if: ${{ !contains(github.event.head_commit.message, '[render-port]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Render PORT
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('server.ts')
+          s = p.read_text()
+          old = 'const PORT = 3000;'
+          new = 'const PORT = Number(process.env.PORT || 3000);'
+          if old not in s:
+              print('Port is already configured or pattern not found; no change needed.')
+          else:
+              p.write_text(s.replace(old, new, 1))
+              print('Updated server.ts to use process.env.PORT')
+          PY
+
+      - name: Commit change
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server.ts
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git commit -m "Use Render PORT [render-port]"
+          git push
