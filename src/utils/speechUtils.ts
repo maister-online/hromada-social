@@ -1,7 +1,6 @@
 /**
  * Voice utilities for Mashunya.
- * Primary voice comes from the Hromada Social server (ElevenLabs), so every
- * user hears the same Mashunya voice. Browser speech is only a fallback.
+ * Primary voice: server-side ElevenLabs. Browser speech is a fallback.
  */
 
 export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
@@ -14,52 +13,46 @@ export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
-
     if (type === 'start') {
       osc.frequency.setValueAtTime(587.33, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
       gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
     } else if (type === 'end') {
       osc.frequency.setValueAtTime(880, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(587.33, ctx.currentTime + 0.15);
       gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.18);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.18);
     } else {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(220, ctx.currentTime);
       gain.gain.setValueAtTime(0.1, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.2);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
     }
-  } catch (_) {
-    // Ignore autoplay/audio-context restrictions.
-  }
+  } catch (_) {}
 }
 
-/** Convert UI/Markdown text into natural spoken Ukrainian. */
-function cleanSpeechText(text: string): string {
+/** Convert Markdown, URLs and technical punctuation into natural spoken Ukrainian. */
+export function cleanSpeechText(text: string): string {
   return text
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/https?:\/\/\S+/gi, ' ')
     .replace(/www\.\S+/gi, ' ')
-    .replace(/[\*_`#>\[\]{}()<>|~^=+_]/g, ' ')
+    .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/[*_`#>\[\]{}()<>|~^=+\\/]/g, ' ')
+    .replace(/[•·]/g, ' ')
     .replace(/\s[-–—]\s/g, '. ')
-    .replace(/[!?;:]+/g, '. ')
+    .replace(/[:;]+/g, '. ')
+    .replace(/!+/g, '! ')
+    .replace(/\?+/g, '? ')
     .replace(/\.{2,}/g, '. ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/**
- * Server-side ElevenLabs is the primary path. If the server TTS is unavailable,
- * use the best Ukrainian voice available in the browser as a safety fallback.
- */
 export function speakGentleUkVoice(
   text: string,
   onStart?: () => void,
@@ -67,16 +60,10 @@ export function speakGentleUkVoice(
   onError?: () => void,
   speechRate: number = 0.95
 ): () => void {
-  if (typeof window === 'undefined') {
-    onEnd?.();
-    return () => {};
-  }
+  if (typeof window === 'undefined') { onEnd?.(); return () => {}; }
 
   const cleanText = cleanSpeechText(text);
-  if (!cleanText) {
-    onEnd?.();
-    return () => {};
-  }
+  if (!cleanText) { onEnd?.(); return () => {}; }
 
   window.speechSynthesis?.cancel();
   let cancelled = false;
@@ -89,6 +76,9 @@ export function speakGentleUkVoice(
     objectUrl = null;
     if (audio) {
       audio.pause();
+      audio.onplay = null;
+      audio.onended = null;
+      audio.onerror = null;
       audio.removeAttribute('src');
       audio.load();
     }
@@ -102,12 +92,7 @@ export function speakGentleUkVoice(
 
   const useBrowserFallback = () => {
     if (cancelled) return;
-    if (!('speechSynthesis' in window)) {
-      onError?.();
-      onEnd?.();
-      return;
-    }
-
+    if (!('speechSynthesis' in window)) { onError?.(); onEnd?.(); return; }
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(cleanText);
     const voices = synth.getVoices();
@@ -116,7 +101,6 @@ export function speakGentleUkVoice(
       const name = (v.name || '').toLowerCase();
       return lang === 'uk-ua' || lang.startsWith('uk-') || lang === 'uk' || name.includes('ukrainian') || name.includes('україн');
     });
-
     utterance.lang = 'uk-UA';
     if (ukVoice) utterance.voice = ukVoice;
     utterance.pitch = 1;
@@ -139,16 +123,25 @@ export function speakGentleUkVoice(
       if (!response.ok) throw new Error(`TTS ${response.status}`);
       const blob = await response.blob();
       if (cancelled) return;
+
       objectUrl = URL.createObjectURL(blob);
-      audio = new Audio(objectUrl);
+      audio = document.createElement('audio');
+      audio.src = objectUrl;
       audio.preload = 'auto';
+      audio.setAttribute('playsinline', 'true');
+      audio.volume = 1;
       audio.onplay = () => onStart?.();
       audio.onended = finish;
-      audio.onerror = () => {
+      audio.onerror = () => { cleanup(); useBrowserFallback(); };
+      document.body.appendChild(audio);
+
+      try {
+        await audio.play();
+      } catch (playError) {
+        console.warn('Audio autoplay blocked; using browser speech fallback:', playError);
         cleanup();
         useBrowserFallback();
-      };
-      await audio.play();
+      }
     } catch (error) {
       console.warn('Server TTS unavailable, using browser fallback:', error);
       useBrowserFallback();
@@ -163,8 +156,15 @@ export function speakGentleUkVoice(
 }
 
 export function stopSpeaking() {
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+  if (typeof window !== 'undefined') {
+    window.speechSynthesis?.cancel();
+    document.querySelectorAll('audio[data-mashunya-tts]').forEach((el) => {
+      const audio = el as HTMLAudioElement;
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+      audio.remove();
+    });
   }
 }
 
@@ -175,18 +175,14 @@ export function createSpeechRecognizer(
   onError?: (err: any) => void
 ) {
   if (typeof window === 'undefined') return null;
-
   const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   if (!SpeechRecognition) return null;
-
   const recognition = new SpeechRecognition();
   recognition.lang = 'uk-UA';
   recognition.interimResults = true;
   recognition.continuous = false;
   recognition.maxAlternatives = 1;
-
   recognition.onstart = () => playVoiceBeep('start');
-
   recognition.onresult = (event: any) => {
     let interimTranscript = '';
     let finalTranscript = '';
@@ -197,17 +193,11 @@ export function createSpeechRecognizer(
     if (finalTranscript) onResult(finalTranscript.trim(), true);
     else if (interimTranscript) onResult(interimTranscript.trim(), false);
   };
-
-  recognition.onend = () => {
-    playVoiceBeep('end');
-    onEnd?.();
-  };
-
+  recognition.onend = () => { playVoiceBeep('end'); onEnd?.(); };
   recognition.onerror = (event: any) => {
     console.warn('SpeechRecognition error:', event.error);
     if (event.error !== 'no-speech') playVoiceBeep('error');
     onError?.(event.error);
   };
-
   return recognition;
 }
