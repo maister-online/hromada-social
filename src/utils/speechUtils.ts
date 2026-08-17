@@ -1,8 +1,9 @@
 /**
- * Advanced Speech Synthesis & Speech Recognition Utility for Rokytne AI Voice Assistant (Mashunya)
+ * Voice utilities for Mashunya.
+ * Uses the device/browser's built-in Web Speech API — no API key, Azure,
+ * Gemini quota or paid TTS service required.
  */
 
-// Simple Audio Synthesizer Beep for tactile voice feedback
 export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
   if (typeof window === 'undefined') return;
   try {
@@ -11,20 +12,19 @@ export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     if (type === 'start') {
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
       gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.15);
     } else if (type === 'end') {
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
-      osc.frequency.exponentialRampToValueAtTime(587.33, ctx.currentTime + 0.15); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(587.33, ctx.currentTime + 0.15);
       gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
       osc.start(ctx.currentTime);
@@ -37,13 +37,56 @@ export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.2);
     }
-  } catch (e) {
-    // Ignore audio context auto-play restrictions
+  } catch (_) {
+    // Ignore autoplay/audio-context restrictions.
   }
 }
 
+function getUkrainianVoice(): SpeechSynthesisVoice | undefined {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined;
+
+  const voices = window.speechSynthesis.getVoices();
+  const uk = voices.filter(v => {
+    const lang = (v.lang || '').toLowerCase();
+    const name = (v.name || '').toLowerCase();
+    return lang === 'uk-ua' || lang.startsWith('uk-') || lang === 'uk' ||
+      name.includes('ukrainian') || name.includes('україн');
+  });
+
+  // Prefer a local Ukrainian voice when one exists; otherwise use any Ukrainian voice.
+  return uk.find(v => v.localService) || uk[0];
+}
+
+function waitForVoices(timeoutMs = 1200): Promise<SpeechSynthesisVoice[]> {
+  return new Promise(resolve => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      resolve([]);
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+    const immediate = synth.getVoices();
+    if (immediate.length) {
+      resolve(immediate);
+      return;
+    }
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      synth.removeEventListener('voiceschanged', finish);
+      resolve(synth.getVoices());
+    };
+
+    synth.addEventListener('voiceschanged', finish, { once: true });
+    window.setTimeout(finish, timeoutMs);
+  });
+}
+
 /**
- * Speaks text using Ukrainian Web Speech Synthesis with gentle pitch and human speed
+ * Speaks Ukrainian text using the best Ukrainian voice available on the user's device.
+ * Web Speech voices are supplied by the browser/OS and can differ between devices.
  */
 export function speakGentleUkVoice(
   text: string,
@@ -53,63 +96,52 @@ export function speakGentleUkVoice(
   speechRate: number = 0.95
 ): () => void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-    if (onEnd) onEnd();
+    onEnd?.();
     return () => {};
   }
 
-  // Cancel any ongoing speech
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
 
-  // Strip Markdown markers, code blocks, URLs for natural Ukrainian speech
   const cleanText = text
-    .replace(/```[\s\S]*?```/g, '') // remove code blocks
-    .replace(/[\*\_`\#\-\>]/g, ' ')
+    .replace(/```[\s\S]*?```/g, '')
     .replace(/https?:\/\/\S+/g, 'посилання в інтернеті')
+    .replace(/[\*_`#>]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
   if (!cleanText) {
-    if (onEnd) onEnd();
+    onEnd?.();
     return () => {};
   }
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
+  let cancelled = false;
+  void waitForVoices().then(() => {
+    if (cancelled) return;
 
-  // Search for Ukrainian voices or fall back to uk-UA
-  const voices = window.speechSynthesis.getVoices();
-  const ukVoice = voices.find(v => 
-    v.lang.startsWith('uk') || 
-    v.lang.includes('UA') || 
-    v.name.toLowerCase().includes('ukrainian') ||
-    v.name.toLowerCase().includes('lesya')
-  );
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const ukVoice = getUkrainianVoice();
 
-  if (ukVoice) {
-    utterance.voice = ukVoice;
-  }
+    utterance.lang = 'uk-UA';
+    if (ukVoice) utterance.voice = ukVoice;
+    utterance.pitch = 1.0;
+    utterance.rate = Math.max(0.8, Math.min(1.05, speechRate));
+    utterance.volume = 1;
 
-  utterance.lang = 'uk-UA';
-  utterance.pitch = 0.98; // Warm, natural voice tone
-  utterance.rate = speechRate;
+    utterance.onstart = () => onStart?.();
+    utterance.onend = () => onEnd?.();
+    utterance.onerror = (event) => {
+      console.warn('SpeechSynthesis error:', event);
+      onError?.();
+      onEnd?.();
+    };
 
-  utterance.onstart = () => {
-    if (onStart) onStart();
-  };
-
-  utterance.onend = () => {
-    if (onEnd) onEnd();
-  };
-
-  utterance.onerror = (e) => {
-    console.warn('SpeechSynthesis error:', e);
-    if (onError) onError();
-    if (onEnd) onEnd();
-  };
-
-  window.speechSynthesis.speak(utterance);
+    synth.speak(utterance);
+  });
 
   return () => {
-    window.speechSynthesis.cancel();
+    cancelled = true;
+    synth.cancel();
   };
 }
 
@@ -119,9 +151,7 @@ export function stopSpeaking() {
   }
 }
 
-/**
- * Creates browser Web Speech Recognition instance tuned for Ukrainian language
- */
+/** Creates browser Web Speech Recognition tuned for Ukrainian. */
 export function createSpeechRecognizer(
   onResult: (text: string, isFinal: boolean) => void,
   onEnd?: () => void,
@@ -138,40 +168,28 @@ export function createSpeechRecognizer(
   recognition.continuous = false;
   recognition.maxAlternatives = 1;
 
-  recognition.onstart = () => {
-    playVoiceBeep('start');
-  };
+  recognition.onstart = () => playVoiceBeep('start');
 
   recognition.onresult = (event: any) => {
     let interimTranscript = '';
     let finalTranscript = '';
-
     for (let i = event.resultIndex; i < event.results.length; ++i) {
-      if (event.results[i].isFinal) {
-        finalTranscript += event.results[i][0].transcript;
-      } else {
-        interimTranscript += event.results[i][0].transcript;
-      }
+      if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+      else interimTranscript += event.results[i][0].transcript;
     }
-
-    if (finalTranscript) {
-      onResult(finalTranscript.trim(), true);
-    } else if (interimTranscript) {
-      onResult(interimTranscript.trim(), false);
-    }
+    if (finalTranscript) onResult(finalTranscript.trim(), true);
+    else if (interimTranscript) onResult(interimTranscript.trim(), false);
   };
 
   recognition.onend = () => {
     playVoiceBeep('end');
-    if (onEnd) onEnd();
+    onEnd?.();
   };
 
   recognition.onerror = (event: any) => {
     console.warn('SpeechRecognition error:', event.error);
-    if (event.error !== 'no-speech') {
-      playVoiceBeep('error');
-    }
-    if (onError) onError(event.error);
+    if (event.error !== 'no-speech') playVoiceBeep('error');
+    onError?.(event.error);
   };
 
   return recognition;
