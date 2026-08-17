@@ -3,7 +3,9 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 
 const PORT = Number(process.env.PORT || 3000);
-const GEMINI_MODEL = "gemini-2.5-flash-lite";
+// Gemini 2.5 models used by the old server are no longer available to new users.
+// Gemini 3.6 Flash is a current stable production model.
+const GEMINI_MODEL = "gemini-3.6-flash";
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 45000);
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
@@ -13,11 +15,10 @@ const SYSTEM_PROMPT = `
 
 Правила:
 - Не вигадуй факти, дати, новини, людей або посилання.
-- Якщо запит стосується конкретної людини, прізвища, біографії, новин, сьогоднішніх подій, актуальної інформації, документів, рішень, тендерів або користувач просить знайти/перевірити інформацію — ОБОВ'ЯЗКОВО використовуй Google Search.
+- Якщо запит стосується конкретної людини, прізвища, біографії, новин, сьогоднішніх подій, актуальної інформації, документів, рішень, тендерів або користувач просить знайти/перевірити інформацію — використовуй вебпошук.
 - Для людини не припускай зв'язок із Рокитнівською громадою. Спочатку перевір веб.
-- Після вебпошуку узагальнюй знайдені джерела, а не просто вигадуй відповідь.
+- Після вебпошуку узагальнюй знайдені джерела, а не вигадуй відповідь.
 - Якщо надійних даних немає — прямо скажи про це.
-- Якщо Google Search не повернув підтверджених джерел, чесно скажи про це.
 `;
 
 function isSearchRequest(message: string): boolean {
@@ -65,11 +66,17 @@ async function geminiChat(message: string, history: any[] = [], forceSearch = fa
   if (!key) throw Object.assign(new Error("GEMINI_API_KEY is not set"), { status: 503 });
   const searchRequired = forceSearch || isSearchRequest(message);
   const ai = new GoogleGenAI({ apiKey: key });
-  const searchInstruction = searchRequired ? "\n\nОБОВ'ЯЗКОВИЙ ВЕБ-ПОШУК: цей запит потребує актуальної інформації. Використай вбудований Google Search. Якщо йдеться про людину або прізвище, шукай точне ім'я/прізвище та перевір кілька вебджерел. Не вигадуй зв'язок із Рокитнівською громадою." : "";
+  const searchInstruction = searchRequired
+    ? "\n\nЦей запит потребує актуальної інформації. Використай Google Search. Якщо йдеться про людину або прізвище, шукай точне ім'я/прізвище та перевір вебджерела. Не вигадуй зв'язок із Рокитнівською громадою."
+    : "";
   const response = await withTimeout(ai.models.generateContent({
     model: GEMINI_MODEL,
     contents: buildContents(message, history),
-    config: { systemInstruction: SYSTEM_PROMPT + searchInstruction, ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}), maxOutputTokens: 900, temperature: 0.2 }
+    config: {
+      systemInstruction: SYSTEM_PROMPT + searchInstruction,
+      ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
+      maxOutputTokens: 900
+    }
   }));
   const result = extractGrounding(response);
   if (!result.text) throw Object.assign(new Error("Gemini returned an empty response"), { status: 502 });
@@ -90,7 +97,9 @@ async function ordinarySearch(query: string) {
       if (title && match[1]) results.push({ title, url: match[1] });
     }
     return results;
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function answer(message: string, history: any[] = [], forceSearch = false) {
@@ -103,10 +112,20 @@ async function answer(message: string, history: any[] = [], forceSearch = false)
     const sources = await ordinarySearch(message);
     if (sources.length) {
       const sourceText = sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join("\n");
-      return { text: `Google Search через Gemini зараз недоступний. Технічна причина: ${details.status || "невідома"}. Нижче — звичайні результати вебпошуку, без вигаданого аналізу:\n\n${sourceText}`, provider: "search-fallback", model: "duckduckgo-html", fallbackUsed: true, usedSearch: true, searchQueries: [message], sources, attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
+      // Never expose internal Gemini errors as the user's answer.
+      return {
+        text: `Ось знайдені результати вебпошуку за вашим запитом:\n\n${sourceText}`,
+        provider: "web-search-fallback",
+        model: "duckduckgo-html",
+        fallbackUsed: true,
+        usedSearch: true,
+        searchQueries: [message],
+        sources,
+        attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }]
+      };
     }
     if (isSimpleGreeting(message)) return { text: "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
-    return { text: "Машуня тимчасово не отримала відповідь від AI. Спробуй повторити запит трохи пізніше.", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
+    return { text: "Не вдалося отримати актуальну відповідь. Спробуйте пошукати запит у Google.", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
   }
 }
 
@@ -116,14 +135,30 @@ async function testModelSearch(model: string, key: string, query: string) {
   try {
     const response = await withTimeout(ai.models.generateContent({
       model,
-      contents: [{ role: "user", parts: [{ text: `Знайди в Google актуальну інформацію за запитом: ${query}. Дай коротку відповідь і використай Google Search.` }] }],
-      config: { tools: [{ googleSearch: {} }], maxOutputTokens: 300, temperature: 0.1 }
+      contents: [{ role: "user", parts: [{ text: `Знайди актуальну інформацію за запитом: ${query}. Дай коротку відповідь і використай вебпошук.` }] }],
+      config: { tools: [{ googleSearch: {} }], maxOutputTokens: 300 }
     }));
     const result = extractGrounding(response);
     return { model, ok: true, status: 200, elapsedMs: Date.now() - started, answer: result.text.slice(0, 1500), usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources };
   } catch (error: any) {
     return { model, ok: false, status: error?.status || error?.code || null, elapsedMs: Date.now() - started, error: errorDetails(error) };
   }
+}
+
+// Keep speech text human-friendly: remove Markdown, URLs and punctuation/symbols
+// that should never be spoken aloud by either ElevenLabs or browser fallback.
+function cleanSpeechText(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/www\.\S+/gi, " ")
+    .replace(/[\*_`#>\[\]{}()<>|~^=+_]/g, " ")
+    .replace(/\s[-–—]\s/g, ". ")
+    .replace(/[!?;:]+/g, ". ")
+    .replace(/\.{2,}/g, ". ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 5000);
 }
 
 async function startServer() {
@@ -146,7 +181,6 @@ async function startServer() {
       res.json({ ok: true, currentModel: GEMINI_MODEL, count: models.length, models, timestamp: new Date().toISOString() });
     } catch (error: any) {
       const details = errorDetails(error);
-      console.error("GEMINI_MODELS_ERROR", JSON.stringify(details));
       res.status(500).json({ ok: false, error: details, currentModel: GEMINI_MODEL });
     }
   });
@@ -155,7 +189,7 @@ async function startServer() {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(503).json({ ok: false, error: "GEMINI_API_KEY is not set" });
     const query = typeof req.query.q === "string" && req.query.q.trim() ? req.query.q.trim() : "Хто є головою Рокитнівської селищної територіальної громади?";
-    const candidates = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3.1-flash-lite"];
+    const candidates = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
     const results = [];
     for (const model of candidates) results.push(await testModelSearch(model, key, query));
     res.json({ ok: results.some(r => r.ok && r.usedSearch), query, results, timestamp: new Date().toISOString() });
@@ -177,7 +211,7 @@ async function startServer() {
 
   app.get("/api/test-google-search", async (req, res) => {
     const q = typeof req.query.q === "string" && req.query.q.trim() ? req.query.q.trim() : "Хто є головою Рокитнівської селищної територіальної громади?";
-    const result = await answer(`Знайди в Google актуальну інформацію та джерела за запитом: ${q}`, [], true);
+    const result = await answer(`Знайди актуальну інформацію та джерела за запитом: ${q}`, [], true);
     res.status(result.provider === "fallback" ? 502 : 200).json({ ok: result.provider !== "fallback", query: q, answer: result.text, provider: result.provider, model: result.model, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, fallbackUsed: result.fallbackUsed, attempts: result.attempts });
   });
 
@@ -186,7 +220,7 @@ async function startServer() {
     const key = process.env.ELEVENLABS_API_KEY;
     if (!key) return res.status(503).json({ ok: false, error: "ELEVENLABS_API_KEY is not set" });
     if (!text) return res.status(400).json({ ok: false, error: "Текст для озвучення порожній" });
-    const cleanText = text.replace(/```[\s\S]*?```/g, "").replace(/https?:\/\/\S+/g, "").replace(/[\*\_`#>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 5000);
+    const cleanText = cleanSpeechText(text);
     if (!cleanText) return res.status(400).json({ ok: false, error: "Немає тексту для озвучення" });
     try {
       const elevenResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(ELEVENLABS_VOICE_ID)}?output_format=mp3_44100_128`, {
@@ -194,11 +228,7 @@ async function startServer() {
         headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
         body: JSON.stringify({ text: cleanText, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } })
       });
-      if (!elevenResponse.ok) {
-        const errorBody = await elevenResponse.text();
-        console.error("ELEVENLABS_TTS_ERROR", elevenResponse.status, errorBody.slice(0, 1000));
-        return res.status(elevenResponse.status).json({ ok: false, error: "ElevenLabs TTS error", status: elevenResponse.status });
-      }
+      if (!elevenResponse.ok) return res.status(elevenResponse.status).json({ ok: false, error: "ElevenLabs TTS error", status: elevenResponse.status });
       const audio = Buffer.from(await elevenResponse.arrayBuffer());
       res.set({ "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=3600", "Content-Length": String(audio.length) });
       return res.send(audio);
@@ -227,7 +257,7 @@ async function startServer() {
   const distPath = path.resolve(process.cwd(), "dist");
   app.use(express.static(distPath));
   app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
-  app.listen(PORT, "0.0.0.0", () => console.log(`Hromada Social server listening on 0.0.0.0:${PORT}; Gemini=${GEMINI_MODEL}; SDK Google Search enabled; ElevenLabs TTS=${Boolean(process.env.ELEVENLABS_API_KEY)}`));
+  app.listen(PORT, "0.0.0.0", () => console.log(`Hromada Social server listening on 0.0.0.0:${PORT}; Gemini=${GEMINI_MODEL}; Google Search enabled; ElevenLabs TTS=${Boolean(process.env.ELEVENLABS_API_KEY)}`));
 }
 
 startServer().catch((error) => {
