@@ -88,23 +88,55 @@ async function geminiChat(message: string, history: any[] = [], forceSearch = fa
   }
 }
 
+function decodeHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeSearchUrl(raw: string): string {
+  try {
+    const decoded = decodeURIComponent(raw);
+    const match = decoded.match(/[?&]uddg=([^&]+)/i);
+    if (match?.[1]) return decodeURIComponent(match[1]);
+    return raw.startsWith("http") ? raw : `https:${raw}`;
+  } catch {
+    return raw.startsWith("http") ? raw : `https:${raw}`;
+  }
+}
+
 async function ordinarySearch(query: string) {
   try {
-    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query.slice(0, 300))}`;
+    const cleanQuery = query.replace(/^Знайди актуальну інформацію та джерела за запитом:\s*/iu, "").trim();
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQuery.slice(0, 300))}`;
     const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 HromadaSocial/1.0" } });
     if (!response.ok) return [];
     const html = await response.text();
     const results: { title: string; url: string }[] = [];
     const re = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
     let match: RegExpExecArray | null;
-    while ((match = re.exec(html)) && results.length < 5) {
-      const title = match[2].replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").trim();
-      if (title && match[1]) results.push({ title, url: match[1] });
+    while ((match = re.exec(html)) && results.length < 6) {
+      const title = decodeHtml(match[2]);
+      const resultUrl = normalizeSearchUrl(match[1]);
+      if (title && /^https?:\/\//i.test(resultUrl)) results.push({ title, url: resultUrl });
     }
-    return results;
+    return Array.from(new Map(results.map(s => [s.url, s])).values());
   } catch {
     return [];
   }
+}
+
+async function synthesizeSearchResults(query: string, sources: { title: string; url: string }[], history: any[] = []) {
+  const sourceText = sources.map((s, i) => `${i + 1}. ${s.title}\nURL: ${s.url}`).join("\n\n");
+  const prompt = `Користувач запитав: ${query}\n\nЗнайдені вебджерела:\n${sourceText}\n\nСформуй точну коротку відповідь українською. Використовуй ТІЛЬКИ інформацію, яку можна обґрунтувати цими джерелами. Якщо джерела не дають однозначної відповіді — так і скажи. Не вигадуй. Наприкінці додай розділ «Джерела» з нумерованим списком назв джерел та URL.`;
+  const result = await geminiChat(prompt, history, false);
+  return result.text;
 }
 
 async function answer(message: string, history: any[] = [], forceSearch = false) {
@@ -113,20 +145,38 @@ async function answer(message: string, history: any[] = [], forceSearch = false)
     return { text: result.text, provider: "gemini", model: result.model, fallbackUsed: false, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, attempts: result.attempts };
   } catch (error: any) {
     const details = errorDetails(error);
-    const sources = await ordinarySearch(message);
+    const searchNeeded = forceSearch || isSearchRequest(message);
+    const sources = searchNeeded ? await ordinarySearch(message) : [];
+
     if (sources.length) {
-      const sourceText = sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join("\n");
-      return {
-        text: `Ось знайдені результати вебпошуку за вашим запитом:\n\n${sourceText}`,
-        provider: "web-search-fallback",
-        model: "duckduckgo-html",
-        fallbackUsed: true,
-        usedSearch: true,
-        searchQueries: [message],
-        sources,
-        attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }]
-      };
+      try {
+        const groundedText = await synthesizeSearchResults(message, sources, history);
+        return {
+          text: groundedText,
+          provider: "gemini-web-fallback",
+          model: GEMINI_MODEL,
+          fallbackUsed: true,
+          usedSearch: true,
+          searchQueries: [message],
+          sources,
+          attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }]
+        };
+      } catch (synthesisError: any) {
+        console.error("MASHUNYA_SEARCH_SYNTHESIS_ERROR", JSON.stringify(errorDetails(synthesisError)));
+        const sourceText = sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join("\n");
+        return {
+          text: `Не вдалося сформувати повну відповідь, але ось знайдені джерела:\n\n${sourceText}`,
+          provider: "web-search-fallback",
+          model: "duckduckgo-html",
+          fallbackUsed: true,
+          usedSearch: true,
+          searchQueries: [message],
+          sources,
+          attempts: [...(error?.attempts || []), { provider: "gemini", model: GEMINI_MODEL, error: errorDetails(synthesisError) }]
+        };
+      }
     }
+
     if (isSimpleGreeting(message)) return { text: "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
     return { text: "Не вдалося отримати актуальну відповідь. Спробуйте ще раз через кілька секунд.", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
   }
@@ -175,7 +225,7 @@ async function startServer() {
     if (!key) return res.status(503).json({ ok: false, error: "GEMINI_API_KEY is not set" });
     const query = typeof req.query.q === "string" && req.query.q.trim() ? req.query.q.trim() : "Хто є головою Рокитнівської селищної територіальної громади?";
     try {
-      const result = await geminiChat(`Знайди актуальну інформацію та джерела за запитом: ${query}`, [], true);
+      const result = await answer(query, [], true);
       res.json({ ok: true, query, result, timestamp: new Date().toISOString() });
     } catch (error: any) {
       res.status(200).json({ ok: false, query, error: errorDetails(error), attempts: error.attempts || [], timestamp: new Date().toISOString() });
@@ -198,7 +248,7 @@ async function startServer() {
 
   app.get("/api/test-google-search", async (req, res) => {
     const q = typeof req.query.q === "string" && req.query.q.trim() ? req.query.q.trim() : "Хто є головою Рокитнівської селищної територіальної громади?";
-    const result = await answer(`Знайди актуальну інформацію та джерела за запитом: ${q}`, [], true);
+    const result = await answer(q, [], true);
     res.status(result.provider === "fallback" ? 502 : 200).json({ ok: result.provider !== "fallback", query: q, answer: result.text, provider: result.provider, model: result.model, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, fallbackUsed: result.fallbackUsed, attempts: result.attempts });
   });
 
