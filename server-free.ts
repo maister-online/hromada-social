@@ -11,7 +11,7 @@ const SYSTEM_PROMPT = `
 Відповідай живою сучасною українською мовою, коротко й по суті.
 Допомагай із питаннями про громаду, документи, послуги, Marketplace, звернення та загальні питання.
 Не вигадуй факти, дати, новини або посилання.
-Якщо запит стосується сьогоднішніх/актуальних даних, використовуй Google Search, якщо він увімкнений для цього запиту.
+Якщо запит стосується сьогоднішніх/актуальних даних, використовуй Google Search.
 Якщо актуальні дані не вдалося підтвердити — прямо скажи про це.
 `;
 
@@ -28,22 +28,6 @@ function isLiveSearchRequest(message: string): boolean {
 
 function isSimpleGreeting(message: string): boolean {
   return /^(привіт|вітаю|добрий ранок|добрий день|добрий вечір|хай|hello|hi)[!.? ]*$/iu.test(message.trim());
-}
-
-const requestWindows = new Map<string, { started: number; ai: number; search: number }>();
-function allowRequest(ip: string, liveSearch: boolean): boolean {
-  const now = Date.now();
-  const hour = 60 * 60 * 1000;
-  let state = requestWindows.get(ip);
-  if (!state || now - state.started >= hour) {
-    state = { started: now, ai: 0, search: 0 };
-    requestWindows.set(ip, state);
-  }
-  if (state.ai >= 30) return false;
-  if (liveSearch && state.search >= 10) return false;
-  state.ai += 1;
-  if (liveSearch) state.search += 1;
-  return true;
 }
 
 let client: GoogleGenAI | null = null;
@@ -71,10 +55,6 @@ async function generate(ai: GoogleGenAI, contents: any[], config: any) {
 
 async function answer(message: string, history: any[] = []) {
   const liveSearch = isLiveSearchRequest(message);
-  const ip = "server";
-  if (!allowRequest(ip, liveSearch)) {
-    return { text: "Безкоштовний ліміт Машуні на цей момент вичерпано. Спробуй трохи пізніше.", sources: [], usedSearch: false, searchQueries: [] };
-  }
 
   try {
     const ai = getClient();
@@ -101,8 +81,8 @@ async function answer(message: string, history: any[] = []) {
       const detail = String(firstError?.message || firstError);
       console.warn(`Mashunya Gemini error model=${MODEL} search=${liveSearch} code=${code ?? "unknown"}:`, detail);
 
-      // Search is optional. If Search itself is rejected/quota-limited, make one
-      // normal Gemini attempt rather than failing the whole chat request.
+      // Search is optional. If Search/grounding is rejected or quota-limited,
+      // retry once without Search so ordinary chat still works.
       if (liveSearch && /429|quota|resource_exhausted|search|grounding/i.test(detail)) {
         const noSearchConfig = { ...config };
         delete noSearchConfig.tools;
