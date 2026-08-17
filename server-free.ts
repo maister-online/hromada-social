@@ -3,8 +3,10 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 
 const PORT = Number(process.env.PORT || 3000);
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "openrouter/free";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 15000);
@@ -23,7 +25,7 @@ function isSimpleGreeting(message: string): boolean {
 
 function fallback(message: string): string {
   if (isSimpleGreeting(message)) return "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?";
-  return "AI-помічник тимчасово недоступний. Спробуй ще раз трохи пізніше або скористайся пошуком сайту.";
+  return "AI-помічник тимчасово недоступний. Спробуй ще раз трохи пізніше або скористайся звичайним пошуком.";
 }
 
 function errorDetails(error: any) {
@@ -50,6 +52,18 @@ function buildMessages(message: string, history: any[] = []) {
   ];
 }
 
+function openAIStyleToGemini(messages: any[]) {
+  const system = messages.find((m: any) => m.role === "system")?.content || SYSTEM_PROMPT;
+  const rest = messages.filter((m: any) => m.role !== "system");
+  return {
+    systemInstruction: { parts: [{ text: system }] },
+    contents: rest.map((m: any) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: String(m.content || "") }]
+    }))
+  };
+}
+
 async function fetchWithTimeout(url: string, options: RequestInit) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -58,6 +72,37 @@ async function fetchWithTimeout(url: string, options: RequestInit) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function geminiChat(message: string, history: any[] = [], maxTokens = 600) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw Object.assign(new Error("GEMINI_API_KEY is not set"), { status: 503, provider: "gemini" });
+
+  const body = openAIStyleToGemini(buildMessages(message, history));
+  const response = await fetchWithTimeout(`${GEMINI_URL}/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...body,
+      generationConfig: { temperature: 0.4, maxOutputTokens: maxTokens }
+    })
+  });
+
+  const raw = await response.text();
+  let data: any;
+  try { data = JSON.parse(raw); } catch { data = { error: { message: raw } }; }
+
+  if (!response.ok) {
+    const error: any = new Error(data?.error?.message || `gemini HTTP ${response.status}`);
+    error.status = response.status;
+    error.provider = "gemini";
+    error.providerError = data?.error || null;
+    throw error;
+  }
+
+  const text = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("") || "").trim();
+  if (!text) throw Object.assign(new Error("gemini returned an empty response"), { status: 502, provider: "gemini" });
+  return text;
 }
 
 async function chatRequest(provider: string, url: string, apiKey: string, model: string, messages: any[], maxTokens = 600) {
@@ -71,18 +116,12 @@ async function chatRequest(provider: string, url: string, apiKey: string, model:
         "X-Title": process.env.SITE_NAME || "Hromada Social"
       } : {})
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: maxTokens,
-      temperature: 0.4
-    })
+    body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.4 })
   });
 
   const raw = await response.text();
   let data: any;
   try { data = JSON.parse(raw); } catch { data = { error: { message: raw } }; }
-
   if (!response.ok) {
     const error: any = new Error(data?.error?.message || `${provider} HTTP ${response.status}`);
     error.status = response.status;
@@ -92,13 +131,7 @@ async function chatRequest(provider: string, url: string, apiKey: string, model:
   }
 
   const text = String(data?.choices?.[0]?.message?.content || "").trim();
-  if (!text) {
-    const error: any = new Error(`${provider} returned an empty response`);
-    error.status = 502;
-    error.provider = provider;
-    throw error;
-  }
-
+  if (!text) throw Object.assign(new Error(`${provider} returned an empty response`), { status: 502, provider });
   return text;
 }
 
@@ -114,22 +147,34 @@ async function openRouterChat(message: string, history: any[] = [], maxTokens = 
   return chatRequest("openrouter", OPENROUTER_URL, key, OPENROUTER_MODEL, buildMessages(message, history), maxTokens);
 }
 
+async function ordinarySearch(query: string) {
+  try {
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query.slice(0, 300))}`;
+    const response = await fetchWithTimeout(url, { headers: { "User-Agent": "Mozilla/5.0 HromadaSocial/1.0" } });
+    if (!response.ok) throw new Error(`search HTTP ${response.status}`);
+    const html = await response.text();
+    const results: { title: string; url: string; snippet?: string }[] = [];
+    const re = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(html)) && results.length < 5) {
+      const cleanTitle = match[2].replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").trim();
+      let resultUrl = match[1];
+      try { resultUrl = decodeURIComponent(resultUrl); } catch {}
+      if (cleanTitle && resultUrl) results.push({ title: cleanTitle, url: resultUrl });
+    }
+    return results;
+  } catch (error) {
+    console.warn("Ordinary search failed:", errorDetails(error));
+    return [];
+  }
+}
+
 async function answer(message: string, history: any[] = []) {
   const attempts: any[] = [];
-
   const providers = [
-    {
-      name: "groq",
-      model: GROQ_MODEL,
-      enabled: Boolean(process.env.GROQ_API_KEY),
-      call: () => groqChat(message, history)
-    },
-    {
-      name: "openrouter",
-      model: OPENROUTER_MODEL,
-      enabled: Boolean(process.env.OPENROUTER_API_KEY),
-      call: () => openRouterChat(message, history)
-    }
+    { name: "gemini", model: GEMINI_MODEL, enabled: Boolean(process.env.GEMINI_API_KEY), call: () => geminiChat(message, history) },
+    { name: "groq", model: GROQ_MODEL, enabled: Boolean(process.env.GROQ_API_KEY), call: () => groqChat(message, history) },
+    { name: "openrouter", model: OPENROUTER_MODEL, enabled: Boolean(process.env.OPENROUTER_API_KEY), call: () => openRouterChat(message, history) }
   ];
 
   for (const provider of providers) {
@@ -137,21 +182,10 @@ async function answer(message: string, history: any[] = []) {
       attempts.push({ provider: provider.name, model: provider.model, skipped: true, reason: "API key not configured" });
       continue;
     }
-
     try {
       const text = await provider.call();
-      const fallbackUsed = attempts.length > 0;
-      console.log(`Mashunya AI success provider=${provider.name} model=${provider.model} fallback=${fallbackUsed}`);
-      return {
-        text,
-        provider: provider.name,
-        model: provider.model,
-        fallbackUsed,
-        usedSearch: false,
-        searchQueries: [],
-        sources: [],
-        attempts
-      };
+      console.log(`Mashunya AI success provider=${provider.name} model=${provider.model}`);
+      return { text, provider: provider.name, model: provider.model, fallbackUsed: attempts.length > 0, usedSearch: false, searchQueries: [], sources: [], attempts };
     } catch (error: any) {
       const details = errorDetails(error);
       attempts.push({ provider: provider.name, model: provider.model, error: details });
@@ -159,17 +193,22 @@ async function answer(message: string, history: any[] = []) {
     }
   }
 
-  console.warn("Mashunya: all configured AI providers failed; using local fallback.");
-  return {
-    text: fallback(message),
-    provider: "fallback",
-    model: "none",
-    fallbackUsed: true,
-    usedSearch: false,
-    searchQueries: [],
-    sources: [],
-    attempts
-  };
+  const sources = await ordinarySearch(message);
+  if (sources.length) {
+    const sourceText = sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join("\n");
+    return {
+      text: `AI зараз недоступний. Ось результати звичайного пошуку за запитом «${message}»:\n\n${sourceText}`,
+      provider: "search",
+      model: "duckduckgo-html",
+      fallbackUsed: true,
+      usedSearch: true,
+      searchQueries: [message],
+      sources,
+      attempts
+    };
+  }
+
+  return { text: fallback(message), provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts };
 }
 
 async function startServer() {
@@ -180,6 +219,7 @@ async function startServer() {
     ok: true,
     mode: "hybrid-free",
     providers: {
+      gemini: { enabled: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL },
       groq: { enabled: Boolean(process.env.GROQ_API_KEY), model: GROQ_MODEL },
       openrouter: { enabled: Boolean(process.env.OPENROUTER_API_KEY), model: OPENROUTER_MODEL }
     },
@@ -198,57 +238,24 @@ async function startServer() {
 
   app.get("/api/test-ai", async (_req, res) => {
     const result = await answer("Відповідай одним коротким реченням: Привіт від Машуні!", []);
-    const ok = result.provider !== "fallback";
-    res.status(ok ? 200 : 502).json({
-      ok,
-      answer: result.text,
-      provider: result.provider,
-      model: result.model,
-      fallbackUsed: result.fallbackUsed,
-      attempts: result.attempts
-    });
+    res.status(result.provider === "fallback" ? 502 : 200).json({ ok: result.provider !== "fallback", answer: result.text, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, attempts: result.attempts });
   });
 
-  // Backward-compatible endpoint used by older frontend diagnostics.
   app.get("/api/test-groq", async (_req, res) => {
     try {
       const text = await groqChat("Відповідай одним коротким реченням: Привіт від Машуні!", [], 100);
       res.json({ ok: true, answer: text, provider: "groq", model: GROQ_MODEL });
     } catch (error: any) {
-      res.status(502).json({
-        ok: false,
-        provider: "groq",
-        model: GROQ_MODEL,
-        groqKeyPresent: Boolean(process.env.GROQ_API_KEY),
-        error: errorDetails(error)
-      });
+      res.status(502).json({ ok: false, provider: "groq", model: GROQ_MODEL, groqKeyPresent: Boolean(process.env.GROQ_API_KEY), error: errorDetails(error) });
     }
   });
 
   const chatHandler = async (req: express.Request, res: express.Response) => {
     const message = req.body?.message;
     if (!message || typeof message !== "string") return res.status(400).json({ ok: false, error: "Не передано повідомлення." });
-    const history = Array.isArray(req.body?.conversationHistory)
-      ? req.body.conversationHistory
-      : (Array.isArray(req.body?.history) ? req.body.history : []);
-
+    const history = Array.isArray(req.body?.conversationHistory) ? req.body.conversationHistory : (Array.isArray(req.body?.history) ? req.body.history : []);
     const result = await answer(message, history);
-    res.json({
-      ok: true,
-      answer: result.text,
-      reply: result.text,
-      sources: result.sources,
-      webSources: result.sources,
-      usedSearch: result.usedSearch,
-      searchQueries: result.searchQueries,
-      quickActions: [],
-      emotion: "smile",
-      searchCategory: "general",
-      provider: result.provider,
-      model: result.model,
-      fallbackUsed: result.fallbackUsed,
-      timestamp: new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })
-    });
+    res.json({ ok: true, answer: result.text, reply: result.text, sources: result.sources, webSources: result.sources, usedSearch: result.usedSearch, searchQueries: result.searchQueries, quickActions: [], emotion: "smile", searchCategory: "general", provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, timestamp: new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }) });
   };
 
   app.post("/api/chat", chatHandler);
@@ -270,7 +277,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Mashunya hybrid server running on ${PORT}; Groq=${Boolean(process.env.GROQ_API_KEY)} OpenRouter=${Boolean(process.env.OPENROUTER_API_KEY)}`);
+    console.log(`Mashunya hybrid server running on ${PORT}; Gemini=${Boolean(process.env.GEMINI_API_KEY)} Groq=${Boolean(process.env.GROQ_API_KEY)} OpenRouter=${Boolean(process.env.OPENROUTER_API_KEY)}`);
   });
 }
 
