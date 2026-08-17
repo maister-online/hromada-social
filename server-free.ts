@@ -3,7 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 
 const PORT = Number(process.env.PORT || 3000);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+const GEMINI_MODEL = "gemini-2.5-flash-lite";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 45000);
 
