@@ -5,6 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 const PORT = Number(process.env.PORT || 3000);
 const GEMINI_MODEL = "gemini-2.5-flash-lite";
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 45000);
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
 const SYSTEM_PROMPT = `
 Ти Машуня — дружня AI-помічниця Рокитнівської громади.
@@ -129,7 +130,7 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
 
-  app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "google-genai-sdk", gemini: { enabled: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL }, googleSearchGrounding: true, ordinarySearchFallback: true, time: new Date().toISOString() }));
+  app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "google-genai-sdk", gemini: { enabled: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL }, googleSearchGrounding: true, ordinarySearchFallback: true, elevenLabsTTS: Boolean(process.env.ELEVENLABS_API_KEY), time: new Date().toISOString() }));
 
   app.get("/api/gemini-models", async (_req, res) => {
     try {
@@ -180,6 +181,33 @@ async function startServer() {
     res.status(result.provider === "fallback" ? 502 : 200).json({ ok: result.provider !== "fallback", query: q, answer: result.text, provider: result.provider, model: result.model, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, fallbackUsed: result.fallbackUsed, attempts: result.attempts });
   });
 
+  app.post("/api/tts", async (req, res) => {
+    const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+    const key = process.env.ELEVENLABS_API_KEY;
+    if (!key) return res.status(503).json({ ok: false, error: "ELEVENLABS_API_KEY is not set" });
+    if (!text) return res.status(400).json({ ok: false, error: "Текст для озвучення порожній" });
+    const cleanText = text.replace(/```[\s\S]*?```/g, "").replace(/https?:\/\/\S+/g, "").replace(/[\*\_`#>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 5000);
+    if (!cleanText) return res.status(400).json({ ok: false, error: "Немає тексту для озвучення" });
+    try {
+      const elevenResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(ELEVENLABS_VOICE_ID)}?output_format=mp3_44100_128`, {
+        method: "POST",
+        headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" },
+        body: JSON.stringify({ text: cleanText, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } })
+      });
+      if (!elevenResponse.ok) {
+        const errorBody = await elevenResponse.text();
+        console.error("ELEVENLABS_TTS_ERROR", elevenResponse.status, errorBody.slice(0, 1000));
+        return res.status(elevenResponse.status).json({ ok: false, error: "ElevenLabs TTS error", status: elevenResponse.status });
+      }
+      const audio = Buffer.from(await elevenResponse.arrayBuffer());
+      res.set({ "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=3600", "Content-Length": String(audio.length) });
+      return res.send(audio);
+    } catch (error: any) {
+      console.error("ELEVENLABS_TTS_EXCEPTION", error?.message || error);
+      return res.status(502).json({ ok: false, error: "Не вдалося отримати аудіо від ElevenLabs" });
+    }
+  });
+
   const chatHandler = async (req: express.Request, res: express.Response) => {
     const message = req.body?.message;
     if (!message || typeof message !== "string") return res.status(400).json({ ok: false, error: "Не передано повідомлення." });
@@ -199,7 +227,7 @@ async function startServer() {
   const distPath = path.resolve(process.cwd(), "dist");
   app.use(express.static(distPath));
   app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
-  app.listen(PORT, "0.0.0.0", () => console.log(`Hromada Social server listening on 0.0.0.0:${PORT}; Gemini=${GEMINI_MODEL}; SDK Google Search enabled`));
+  app.listen(PORT, "0.0.0.0", () => console.log(`Hromada Social server listening on 0.0.0.0:${PORT}; Gemini=${GEMINI_MODEL}; SDK Google Search enabled; ElevenLabs TTS=${Boolean(process.env.ELEVENLABS_API_KEY)}`));
 }
 
 startServer().catch((error) => {
