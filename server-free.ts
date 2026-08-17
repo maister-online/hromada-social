@@ -1,106 +1,111 @@
 import express from "express";
 import path from "path";
-import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 const PORT = Number(process.env.PORT || 3000);
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const SYSTEM_PROMPT = `
 Ти Машуня — дружня AI-помічниця Рокитнівської громади.
 Відповідай живою сучасною українською мовою, коротко й по суті.
 Допомагай із питаннями про громаду, документи, послуги, Marketplace, звернення та загальні питання.
 Не вигадуй факти, дати, новини або посилання.
-Якщо запит стосується сьогоднішніх/актуальних даних, використовуй Google Search.
-Якщо актуальні дані не вдалося підтвердити — прямо скажи про це.
+Якщо не знаєш актуальної інформації — чесно скажи про це.
 `;
-
-function isLiveSearchRequest(message: string): boolean {
-  const text = message.toLowerCase();
-  const terms = ["сьогодні", "зараз", "останн", "новин", "поді", "погода", "температур", "дощ", "вітер", "курс", "актуальн", "свіж", "рішення ради", "виконком", "оголошенн", "ваканс", "тендер", "закупів", "відключ", "тривог", "аварі", "розклад", "графік", "пряме посилання", "що нового"];
-  return terms.some(term => text.includes(term));
-}
 
 function isSimpleGreeting(message: string): boolean {
   return /^(привіт|вітаю|добрий ранок|добрий день|добрий вечір|хай|hello|hi)[!.? ]*$/iu.test(message.trim());
 }
 
-let client: GoogleGenAI | null = null;
-function getClient(): GoogleGenAI {
-  if (!client) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) throw new Error("GEMINI_API_KEY environment variable is not set");
-    client = new GoogleGenAI({ apiKey: key });
-  }
-  return client;
+function getKey(): string {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY environment variable is not set");
+  return key;
 }
 
 function fallback(message: string): string {
   if (isSimpleGreeting(message)) return "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?";
-  return "Я зараз працюю в максимально економному режимі. Для цього запиту не вдалося отримати відповідь від Gemini. Спробуй ще раз трохи пізніше.";
-}
-
-function errorCode(error: any): number | undefined {
-  return Number(error?.status || error?.code || error?.error?.code) || undefined;
+  return "Машуня тимчасово не отримала відповідь від AI. Спробуй ще раз трохи пізніше.";
 }
 
 function errorDetails(error: any) {
-  const code = errorCode(error);
-  const status = error?.status || error?.error?.status;
-  const message = String(error?.message || error?.error?.message || error);
-  return { code: code ?? null, status: status ?? null, message: message.slice(0, 2000) };
+  return {
+    code: Number(error?.status || error?.code) || null,
+    status: error?.status || null,
+    message: String(error?.message || error).slice(0, 2000)
+  };
 }
 
-async function generate(ai: GoogleGenAI, contents: any[], config: any) {
-  return ai.models.generateContent({ model: MODEL, contents, config });
+async function groqChat(message: string, history: any[] = [], maxTokens = 600) {
+  const safeHistory = Array.isArray(history)
+    ? history.filter((m: any) => m && typeof m.text === "string").slice(-8).map((m: any) => ({
+        role: m.sender === "user" || m.role === "user" ? "user" : "assistant",
+        content: m.text.slice(0, 2000)
+      }))
+    : [];
+
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...safeHistory,
+    { role: "user", content: message.slice(0, 4000) }
+  ];
+
+  const response = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${getKey()}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      max_tokens: maxTokens,
+      temperature: 0.4
+    })
+  });
+
+  const raw = await response.text();
+  let data: any;
+  try { data = JSON.parse(raw); } catch { data = { error: { message: raw } }; }
+
+  if (!response.ok) {
+    const error: any = new Error(data?.error?.message || `Groq HTTP ${response.status}`);
+    error.status = response.status;
+    error.provider = data?.error;
+    throw error;
+  }
+
+  return String(data?.choices?.[0]?.message?.content || "").trim();
 }
 
 async function answer(message: string, history: any[] = []) {
-  const liveSearch = isLiveSearchRequest(message);
   try {
-    const ai = getClient();
-    const safeHistory = Array.isArray(history) ? history.filter((m: any) => m && typeof m.text === "string").slice(-8).map((m: any) => ({ role: m.sender === "user" || m.role === "user" ? "user" : "model", parts: [{ text: m.text.slice(0, 2000) }] })) : [];
-    const contents: any[] = [...safeHistory, { role: "user", parts: [{ text: message.slice(0, 4000) }] }];
-    const config: any = { systemInstruction: SYSTEM_PROMPT, maxOutputTokens: 600 };
-    if (liveSearch) config.tools = [{ googleSearch: {} }];
-
-    let response;
-    try {
-      response = await generate(ai, contents, config);
-    } catch (firstError: any) {
-      const details = errorDetails(firstError);
-      console.warn(`Mashunya Gemini error model=${MODEL} search=${liveSearch}:`, JSON.stringify(details));
-      if (liveSearch && /429|quota|resource_exhausted|search|grounding/i.test(details.message)) {
-        const noSearchConfig = { ...config };
-        delete noSearchConfig.tools;
-        response = await generate(ai, contents, noSearchConfig);
-      } else if (/429|500|502|503|504|temporar|unavailable/i.test(details.message)) {
-        await new Promise(resolve => setTimeout(resolve, 700));
-        response = await generate(ai, contents, config);
-      } else {
-        throw firstError;
-      }
-    }
-
-    const text = response.text || "";
-    const metadata = response.candidates?.[0]?.groundingMetadata;
-    const chunks = metadata?.groundingChunks || [];
-    const sources = chunks.map((chunk: any) => ({ title: chunk.web?.title || "Джерело з мережі", url: chunk.web?.uri || "" })).filter((s: any) => s.url);
-    const searchQueries = metadata?.webSearchQueries || [];
-    if (liveSearch && sources.length === 0 && searchQueries.length === 0) return { text: "Я не знайшла підтвердженої актуальної інформації через Google Search. Не хочу вигадувати новини або факти.", sources: [], usedSearch: false, searchQueries: [] };
-    return { text: text || fallback(message), sources, usedSearch: sources.length > 0 || searchQueries.length > 0, searchQueries };
+    const text = await groqChat(message, history);
+    return { text: text || fallback(message), sources: [], usedSearch: false, searchQueries: [] };
   } catch (error: any) {
     const details = errorDetails(error);
-    console.warn(`Mashunya Gemini final error model=${MODEL} search=${liveSearch}:`, JSON.stringify(details));
-    return { text: liveSearch && /429|quota|resource_exhausted/i.test(details.message) ? "Безкоштовна квота Gemini зараз вичерпана. Я не буду вигадувати актуальні новини. Спробуй пізніше." : fallback(message), sources: [], usedSearch: false, searchQueries: [] };
+    console.warn(`Mashunya Groq error model=${MODEL}:`, JSON.stringify({ ...details, provider: error?.provider || null }));
+    return { text: fallback(message), sources: [], usedSearch: false, searchQueries: [], error: details };
   }
 }
 
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
-  app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "free", model: MODEL, gemini: Boolean(process.env.GEMINI_API_KEY), googleSearch: true, time: new Date().toISOString() }));
+
+  app.get("/api/health", (_req, res) => res.json({
+    ok: true,
+    mode: "free",
+    provider: "groq",
+    model: MODEL,
+    groqKeyPresent: Boolean(process.env.GROQ_API_KEY),
+    googleSearch: false,
+    time: new Date().toISOString()
+  }));
+
   app.post("/api/network/ping", (_req, res) => res.json({ ok: true, status: "ONLINE", timestamp: new Date().toISOString() }));
+
   app.post("/api/network/analyze-error", async (req, res) => {
     const errorText = typeof req.body?.errorText === "string" ? req.body.errorText : "";
     if (!errorText) return res.status(400).json({ ok: false, error: "Текст помилки обов'язковий" });
@@ -108,14 +113,19 @@ async function startServer() {
     res.json({ ok: true, analysis: result.text, timestamp: new Date().toISOString() });
   });
 
-  // Diagnostic endpoint: never returns the API key, only the sanitized Google error.
-  app.get("/api/test-gemini", async (_req, res) => {
+  app.get("/api/test-groq", async (_req, res) => {
     try {
-      const ai = getClient();
-      const response = await generate(ai, [{ role: "user", parts: [{ text: "Відповідай одним коротким реченням: Привіт від Машуні!" }] }], { maxOutputTokens: 100 });
-      res.json({ ok: true, answer: response.text || "", model: MODEL });
+      const text = await groqChat("Відповідай одним коротким реченням: Привіт від Машуні!", [], 100);
+      res.json({ ok: true, answer: text, provider: "groq", model: MODEL });
     } catch (error: any) {
-      res.status(502).json({ ok: false, model: MODEL, geminiKeyPresent: Boolean(process.env.GEMINI_API_KEY), error: errorDetails(error) });
+      res.status(502).json({
+        ok: false,
+        provider: "groq",
+        model: MODEL,
+        groqKeyPresent: Boolean(process.env.GROQ_API_KEY),
+        error: errorDetails(error),
+        providerError: error?.provider || null
+      });
     }
   });
 
@@ -124,15 +134,32 @@ async function startServer() {
     if (!message || typeof message !== "string") return res.status(400).json({ ok: false, error: "Не передано повідомлення." });
     const history = Array.isArray(req.body?.conversationHistory) ? req.body.conversationHistory : (Array.isArray(req.body?.history) ? req.body.history : []);
     const result = await answer(message, history);
-    res.json({ ok: true, answer: result.text, reply: result.text, sources: result.sources, webSources: result.sources, usedSearch: result.usedSearch, searchQueries: result.searchQueries, quickActions: [], emotion: "smile", searchCategory: isLiveSearchRequest(message) ? "live" : "general", timestamp: new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }) });
+    res.json({
+      ok: true,
+      answer: result.text,
+      reply: result.text,
+      sources: result.sources,
+      webSources: result.sources,
+      usedSearch: result.usedSearch,
+      searchQueries: result.searchQueries,
+      quickActions: [],
+      emotion: "smile",
+      searchCategory: "general",
+      provider: "groq",
+      model: MODEL,
+      timestamp: new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })
+    });
   };
+
   app.post("/api/chat", chatHandler);
   app.post("/api/mashunya", chatHandler);
+
   app.post("/api/social-request", async (req, res) => {
     const details = typeof req.body?.details === "string" ? req.body.details : "";
     const result = await answer(`Допоможи сформувати соціальне звернення українською. Категорія: ${req.body?.category || "Загальна"}. Опис: ${details}`);
     res.json({ analysis: result.text });
   });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
@@ -141,6 +168,8 @@ async function startServer() {
     app.use(express.static(distPath));
     app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
   }
-  app.listen(PORT, "0.0.0.0", () => console.log(`Mashunya free server running on ${PORT} using ${MODEL}`));
+
+  app.listen(PORT, "0.0.0.0", () => console.log(`Mashunya server running on ${PORT} using Groq ${MODEL}`));
 }
+
 startServer();
