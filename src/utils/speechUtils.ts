@@ -1,7 +1,7 @@
 /**
  * Voice utilities for Mashunya.
- * Uses the device/browser's built-in Web Speech API — no API key, Azure,
- * Gemini quota or paid TTS service required.
+ * Primary voice comes from the Hromada Social server (ElevenLabs), so every
+ * user hears the same Mashunya voice. Browser speech is only a fallback.
  */
 
 export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
@@ -42,51 +42,18 @@ export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
   }
 }
 
-function getUkrainianVoice(): SpeechSynthesisVoice | undefined {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined;
-
-  const voices = window.speechSynthesis.getVoices();
-  const uk = voices.filter(v => {
-    const lang = (v.lang || '').toLowerCase();
-    const name = (v.name || '').toLowerCase();
-    return lang === 'uk-ua' || lang.startsWith('uk-') || lang === 'uk' ||
-      name.includes('ukrainian') || name.includes('україн');
-  });
-
-  // Prefer a local Ukrainian voice when one exists; otherwise use any Ukrainian voice.
-  return uk.find(v => v.localService) || uk[0];
-}
-
-function waitForVoices(timeoutMs = 1200): Promise<SpeechSynthesisVoice[]> {
-  return new Promise(resolve => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      resolve([]);
-      return;
-    }
-
-    const synth = window.speechSynthesis;
-    const immediate = synth.getVoices();
-    if (immediate.length) {
-      resolve(immediate);
-      return;
-    }
-
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      synth.removeEventListener('voiceschanged', finish);
-      resolve(synth.getVoices());
-    };
-
-    synth.addEventListener('voiceschanged', finish, { once: true });
-    window.setTimeout(finish, timeoutMs);
-  });
+function cleanSpeechText(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/[\*_`#>\-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
- * Speaks Ukrainian text using the best Ukrainian voice available on the user's device.
- * Web Speech voices are supplied by the browser/OS and can differ between devices.
+ * Server-side ElevenLabs is the primary path. If the server TTS is unavailable,
+ * use the best Ukrainian voice available in the browser as a safety fallback.
  */
 export function speakGentleUkVoice(
   text: string,
@@ -95,53 +62,98 @@ export function speakGentleUkVoice(
   onError?: () => void,
   speechRate: number = 0.95
 ): () => void {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+  if (typeof window === 'undefined') {
     onEnd?.();
     return () => {};
   }
 
-  const synth = window.speechSynthesis;
-  synth.cancel();
-
-  const cleanText = text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/https?:\/\/\S+/g, 'посилання в інтернеті')
-    .replace(/[\*_`#>]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
+  const cleanText = cleanSpeechText(text);
   if (!cleanText) {
     onEnd?.();
     return () => {};
   }
 
+  window.speechSynthesis?.cancel();
   let cancelled = false;
-  void waitForVoices().then(() => {
-    if (cancelled) return;
+  let audio: HTMLAudioElement | null = null;
+  let objectUrl: string | null = null;
+  let fallbackCancel: (() => void) | null = null;
 
+  const cleanup = () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = null;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    }
+    audio = null;
+  };
+
+  const finish = () => {
+    cleanup();
+    if (!cancelled) onEnd?.();
+  };
+
+  const useBrowserFallback = () => {
+    if (cancelled) return;
+    if (!('speechSynthesis' in window)) {
+      onError?.();
+      onEnd?.();
+      return;
+    }
+
+    const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    const ukVoice = getUkrainianVoice();
+    const voices = synth.getVoices();
+    const ukVoice = voices.find(v => {
+      const lang = (v.lang || '').toLowerCase();
+      const name = (v.name || '').toLowerCase();
+      return lang === 'uk-ua' || lang.startsWith('uk-') || lang === 'uk' || name.includes('ukrainian') || name.includes('україн');
+    });
 
     utterance.lang = 'uk-UA';
     if (ukVoice) utterance.voice = ukVoice;
-    utterance.pitch = 1.0;
+    utterance.pitch = 1;
     utterance.rate = Math.max(0.8, Math.min(1.05, speechRate));
     utterance.volume = 1;
-
     utterance.onstart = () => onStart?.();
-    utterance.onend = () => onEnd?.();
-    utterance.onerror = (event) => {
-      console.warn('SpeechSynthesis error:', event);
-      onError?.();
-      onEnd?.();
-    };
-
+    utterance.onend = () => { if (!cancelled) onEnd?.(); };
+    utterance.onerror = () => { if (!cancelled) { onError?.(); onEnd?.(); } };
+    fallbackCancel = () => synth.cancel();
     synth.speak(utterance);
-  });
+  };
+
+  (async () => {
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText })
+      });
+      if (!response.ok) throw new Error(`TTS ${response.status}`);
+      const blob = await response.blob();
+      if (cancelled) return;
+      objectUrl = URL.createObjectURL(blob);
+      audio = new Audio(objectUrl);
+      audio.preload = 'auto';
+      audio.onplay = () => onStart?.();
+      audio.onended = finish;
+      audio.onerror = () => {
+        cleanup();
+        useBrowserFallback();
+      };
+      await audio.play();
+    } catch (error) {
+      console.warn('Server TTS unavailable, using browser fallback:', error);
+      useBrowserFallback();
+    }
+  })();
 
   return () => {
     cancelled = true;
-    synth.cancel();
+    fallbackCancel?.();
+    cleanup();
   };
 }
 
