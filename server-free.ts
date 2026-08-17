@@ -83,14 +83,17 @@ async function geminiChat(message: string, history: any[] = [], maxTokens = 800)
     : "";
 
   const response = await fetchWithTimeout(
-    `${GEMINI_URL}/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(key)}`,
+    `${GEMINI_URL}/${encodeURIComponent(GEMINI_MODEL)}:generateContent`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": key
+      },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT + searchInstruction }] },
         contents: buildContents(message, history),
-        tools: searchRequired ? [{ googleSearch: {} }] : undefined,
+        tools: searchRequired ? [{ google_search: {} }] : undefined,
         generationConfig: { temperature: 0.25, maxOutputTokens: maxTokens }
       })
     }
