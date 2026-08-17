@@ -17,12 +17,7 @@ const SYSTEM_PROMPT = `
 
 function isLiveSearchRequest(message: string): boolean {
   const text = message.toLowerCase();
-  const terms = [
-    "сьогодні", "зараз", "останн", "новин", "поді", "погода", "температур",
-    "дощ", "вітер", "курс", "актуальн", "свіж", "рішення ради", "виконком",
-    "оголошенн", "ваканс", "тендер", "закупів", "відключ", "тривог",
-    "аварі", "розклад", "графік", "пряме посилання", "що нового"
-  ];
+  const terms = ["сьогодні", "зараз", "останн", "новин", "поді", "погода", "температур", "дощ", "вітер", "курс", "актуальн", "свіж", "рішення ради", "виконком", "оголошенн", "ваканс", "тендер", "закупів", "відключ", "тривог", "аварі", "розклад", "графік", "пряме посилання", "що нового"];
   return terms.some(term => text.includes(term));
 }
 
@@ -49,45 +44,37 @@ function errorCode(error: any): number | undefined {
   return Number(error?.status || error?.code || error?.error?.code) || undefined;
 }
 
+function errorDetails(error: any) {
+  const code = errorCode(error);
+  const status = error?.status || error?.error?.status;
+  const message = String(error?.message || error?.error?.message || error);
+  return { code: code ?? null, status: status ?? null, message: message.slice(0, 2000) };
+}
+
 async function generate(ai: GoogleGenAI, contents: any[], config: any) {
   return ai.models.generateContent({ model: MODEL, contents, config });
 }
 
 async function answer(message: string, history: any[] = []) {
   const liveSearch = isLiveSearchRequest(message);
-
   try {
     const ai = getClient();
-    const safeHistory = Array.isArray(history)
-      ? history.filter((m: any) => m && typeof m.text === "string").slice(-8).map((m: any) => ({
-          role: m.sender === "user" || m.role === "user" ? "user" : "model",
-          parts: [{ text: m.text.slice(0, 2000) }]
-        }))
-      : [];
-
+    const safeHistory = Array.isArray(history) ? history.filter((m: any) => m && typeof m.text === "string").slice(-8).map((m: any) => ({ role: m.sender === "user" || m.role === "user" ? "user" : "model", parts: [{ text: m.text.slice(0, 2000) }] })) : [];
     const contents: any[] = [...safeHistory, { role: "user", parts: [{ text: message.slice(0, 4000) }] }];
-    const config: any = {
-      systemInstruction: SYSTEM_PROMPT,
-      maxOutputTokens: 600
-    };
-
+    const config: any = { systemInstruction: SYSTEM_PROMPT, maxOutputTokens: 600 };
     if (liveSearch) config.tools = [{ googleSearch: {} }];
 
     let response;
     try {
       response = await generate(ai, contents, config);
     } catch (firstError: any) {
-      const code = errorCode(firstError);
-      const detail = String(firstError?.message || firstError);
-      console.warn(`Mashunya Gemini error model=${MODEL} search=${liveSearch} code=${code ?? "unknown"}:`, detail);
-
-      // Search is optional. If Search/grounding is rejected or quota-limited,
-      // retry once without Search so ordinary chat still works.
-      if (liveSearch && /429|quota|resource_exhausted|search|grounding/i.test(detail)) {
+      const details = errorDetails(firstError);
+      console.warn(`Mashunya Gemini error model=${MODEL} search=${liveSearch}:`, JSON.stringify(details));
+      if (liveSearch && /429|quota|resource_exhausted|search|grounding/i.test(details.message)) {
         const noSearchConfig = { ...config };
         delete noSearchConfig.tools;
         response = await generate(ai, contents, noSearchConfig);
-      } else if (/429|500|502|503|504|temporar|unavailable/i.test(detail)) {
+      } else if (/429|500|502|503|504|temporar|unavailable/i.test(details.message)) {
         await new Promise(resolve => setTimeout(resolve, 700));
         response = await generate(ai, contents, config);
       } else {
@@ -98,44 +85,22 @@ async function answer(message: string, history: any[] = []) {
     const text = response.text || "";
     const metadata = response.candidates?.[0]?.groundingMetadata;
     const chunks = metadata?.groundingChunks || [];
-    const sources = chunks.map((chunk: any) => ({
-      title: chunk.web?.title || "Джерело з мережі",
-      url: chunk.web?.uri || ""
-    })).filter((s: any) => s.url);
+    const sources = chunks.map((chunk: any) => ({ title: chunk.web?.title || "Джерело з мережі", url: chunk.web?.uri || "" })).filter((s: any) => s.url);
     const searchQueries = metadata?.webSearchQueries || [];
-
-    if (liveSearch && sources.length === 0 && searchQueries.length === 0) {
-      return { text: "Я не знайшла підтвердженої актуальної інформації через Google Search. Не хочу вигадувати новини або факти.", sources: [], usedSearch: false, searchQueries: [] };
-    }
-
+    if (liveSearch && sources.length === 0 && searchQueries.length === 0) return { text: "Я не знайшла підтвердженої актуальної інформації через Google Search. Не хочу вигадувати новини або факти.", sources: [], usedSearch: false, searchQueries: [] };
     return { text: text || fallback(message), sources, usedSearch: sources.length > 0 || searchQueries.length > 0, searchQueries };
   } catch (error: any) {
-    const code = errorCode(error);
-    const messageText = String(error?.message || error);
-    console.warn(`Mashunya Gemini final error model=${MODEL} search=${liveSearch} code=${code ?? "unknown"}:`, messageText);
-    return {
-      text: liveSearch && /429|quota|resource_exhausted/i.test(messageText)
-        ? "Безкоштовна квота Gemini зараз вичерпана. Я не буду вигадувати актуальні новини. Спробуй пізніше."
-        : fallback(message),
-      sources: [],
-      usedSearch: false,
-      searchQueries: []
-    };
+    const details = errorDetails(error);
+    console.warn(`Mashunya Gemini final error model=${MODEL} search=${liveSearch}:`, JSON.stringify(details));
+    return { text: liveSearch && /429|quota|resource_exhausted/i.test(details.message) ? "Безкоштовна квота Gemini зараз вичерпана. Я не буду вигадувати актуальні новини. Спробуй пізніше." : fallback(message), sources: [], usedSearch: false, searchQueries: [] };
   }
 }
 
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
-
-  app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, mode: "free", model: MODEL, gemini: Boolean(process.env.GEMINI_API_KEY), googleSearch: true, time: new Date().toISOString() });
-  });
-
-  app.post("/api/network/ping", (_req, res) => {
-    res.json({ ok: true, status: "ONLINE", timestamp: new Date().toISOString() });
-  });
-
+  app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "free", model: MODEL, gemini: Boolean(process.env.GEMINI_API_KEY), googleSearch: true, time: new Date().toISOString() }));
+  app.post("/api/network/ping", (_req, res) => res.json({ ok: true, status: "ONLINE", timestamp: new Date().toISOString() }));
   app.post("/api/network/analyze-error", async (req, res) => {
     const errorText = typeof req.body?.errorText === "string" ? req.body.errorText : "";
     if (!errorText) return res.status(400).json({ ok: false, error: "Текст помилки обов'язковий" });
@@ -143,9 +108,15 @@ async function startServer() {
     res.json({ ok: true, analysis: result.text, timestamp: new Date().toISOString() });
   });
 
+  // Diagnostic endpoint: never returns the API key, only the sanitized Google error.
   app.get("/api/test-gemini", async (_req, res) => {
-    const result = await answer("Відповідай одним коротким реченням: Привіт від Машуні!");
-    res.json({ ok: true, answer: result.text, model: MODEL });
+    try {
+      const ai = getClient();
+      const response = await generate(ai, [{ role: "user", parts: [{ text: "Відповідай одним коротким реченням: Привіт від Машуні!" }] }], { maxOutputTokens: 100 });
+      res.json({ ok: true, answer: response.text || "", model: MODEL });
+    } catch (error: any) {
+      res.status(502).json({ ok: false, model: MODEL, geminiKeyPresent: Boolean(process.env.GEMINI_API_KEY), error: errorDetails(error) });
+    }
   });
 
   const chatHandler = async (req: express.Request, res: express.Response) => {
@@ -153,30 +124,15 @@ async function startServer() {
     if (!message || typeof message !== "string") return res.status(400).json({ ok: false, error: "Не передано повідомлення." });
     const history = Array.isArray(req.body?.conversationHistory) ? req.body.conversationHistory : (Array.isArray(req.body?.history) ? req.body.history : []);
     const result = await answer(message, history);
-    res.json({
-      ok: true,
-      answer: result.text,
-      reply: result.text,
-      sources: result.sources,
-      webSources: result.sources,
-      usedSearch: result.usedSearch,
-      searchQueries: result.searchQueries,
-      quickActions: [],
-      emotion: "smile",
-      searchCategory: isLiveSearchRequest(message) ? "live" : "general",
-      timestamp: new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })
-    });
+    res.json({ ok: true, answer: result.text, reply: result.text, sources: result.sources, webSources: result.sources, usedSearch: result.usedSearch, searchQueries: result.searchQueries, quickActions: [], emotion: "smile", searchCategory: isLiveSearchRequest(message) ? "live" : "general", timestamp: new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }) });
   };
-
   app.post("/api/chat", chatHandler);
   app.post("/api/mashunya", chatHandler);
-
   app.post("/api/social-request", async (req, res) => {
     const details = typeof req.body?.details === "string" ? req.body.details : "";
     const result = await answer(`Допоможи сформувати соціальне звернення українською. Категорія: ${req.body?.category || "Загальна"}. Опис: ${details}`);
     res.json({ analysis: result.text });
   });
-
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
@@ -185,8 +141,6 @@ async function startServer() {
     app.use(express.static(distPath));
     app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
   }
-
   app.listen(PORT, "0.0.0.0", () => console.log(`Mashunya free server running on ${PORT} using ${MODEL}`));
 }
-
 startServer();
