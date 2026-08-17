@@ -3,9 +3,10 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 
 const PORT = Number(process.env.PORT || 3000);
-// Gemini 2.5 models used by the old server are no longer available to new users.
-// Gemini 3.6 Flash is a current stable production model.
-const GEMINI_MODEL = "gemini-3.6-flash";
+// Prefer current models and automatically try another available model if one is
+// unavailable for this project or temporarily rate-limited.
+const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite"];
+const GEMINI_MODEL = GEMINI_MODELS[0];
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 45000);
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
@@ -69,18 +70,33 @@ async function geminiChat(message: string, history: any[] = [], forceSearch = fa
   const searchInstruction = searchRequired
     ? "\n\nЦей запит потребує актуальної інформації. Використай Google Search. Якщо йдеться про людину або прізвище, шукай точне ім'я/прізвище та перевір вебджерела. Не вигадуй зв'язок із Рокитнівською громадою."
     : "";
-  const response = await withTimeout(ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: buildContents(message, history),
-    config: {
-      systemInstruction: SYSTEM_PROMPT + searchInstruction,
-      ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
-      maxOutputTokens: 900
+  const errors: any[] = [];
+
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await withTimeout(ai.models.generateContent({
+        model,
+        contents: buildContents(message, history),
+        config: {
+          systemInstruction: SYSTEM_PROMPT + searchInstruction,
+          ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
+          maxOutputTokens: 900
+        }
+      }));
+      const result = extractGrounding(response);
+      if (!result.text) throw Object.assign(new Error("Gemini returned an empty response"), { status: 502 });
+      return { ...result, searchRequired, model, attempts: errors };
+    } catch (error: any) {
+      const details = errorDetails(error);
+      errors.push({ provider: "gemini", model, error: details });
+      console.error("MASHUNYA_GEMINI_ATTEMPT", JSON.stringify({ model, ...details }));
+      // A model-specific 404/429 should not kill the whole assistant. Try the
+      // next current model available to the same API project.
+      continue;
     }
-  }));
-  const result = extractGrounding(response);
-  if (!result.text) throw Object.assign(new Error("Gemini returned an empty response"), { status: 502 });
-  return { ...result, searchRequired };
+  }
+  const last = errors[errors.length - 1]?.error || { status: 502, message: "All Gemini models failed" };
+  throw Object.assign(new Error(last.message || "All Gemini models failed"), { status: last.status || 502, attempts: errors });
 }
 
 async function ordinarySearch(query: string) {
@@ -105,14 +121,13 @@ async function ordinarySearch(query: string) {
 async function answer(message: string, history: any[] = [], forceSearch = false) {
   try {
     const result = await geminiChat(message, history, forceSearch);
-    return { text: result.text, provider: "gemini", model: GEMINI_MODEL, fallbackUsed: false, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, attempts: [] };
+    return { text: result.text, provider: "gemini", model: result.model, fallbackUsed: false, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, attempts: result.attempts };
   } catch (error: any) {
     const details = errorDetails(error);
     console.error("MASHUNYA_GEMINI_ERROR", JSON.stringify(details));
     const sources = await ordinarySearch(message);
     if (sources.length) {
       const sourceText = sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join("\n");
-      // Never expose internal Gemini errors as the user's answer.
       return {
         text: `Ось знайдені результати вебпошуку за вашим запитом:\n\n${sourceText}`,
         provider: "web-search-fallback",
@@ -121,11 +136,11 @@ async function answer(message: string, history: any[] = [], forceSearch = false)
         usedSearch: true,
         searchQueries: [message],
         sources,
-        attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }]
+        attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }]
       };
     }
-    if (isSimpleGreeting(message)) return { text: "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
-    return { text: "Не вдалося отримати актуальну відповідь. Спробуйте пошукати запит у Google.", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
+    if (isSimpleGreeting(message)) return { text: "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
+    return { text: "Не вдалося отримати актуальну відповідь. Спробуйте ще раз через кілька секунд.", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
   }
 }
 
@@ -145,8 +160,6 @@ async function testModelSearch(model: string, key: string, query: string) {
   }
 }
 
-// Keep speech text human-friendly: remove Markdown, URLs and punctuation/symbols
-// that should never be spoken aloud by either ElevenLabs or browser fallback.
 function cleanSpeechText(text: string): string {
   return text
     .replace(/```[\s\S]*?```/g, " ")
@@ -165,7 +178,7 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
 
-  app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "google-genai-sdk", gemini: { enabled: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL }, googleSearchGrounding: true, ordinarySearchFallback: true, elevenLabsTTS: Boolean(process.env.ELEVENLABS_API_KEY), time: new Date().toISOString() }));
+  app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "google-genai-sdk", gemini: { enabled: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL, models: GEMINI_MODELS }, googleSearchGrounding: true, ordinarySearchFallback: true, elevenLabsTTS: Boolean(process.env.ELEVENLABS_API_KEY), time: new Date().toISOString() }));
 
   app.get("/api/gemini-models", async (_req, res) => {
     try {
@@ -178,10 +191,10 @@ async function startServer() {
         if (supported.includes("generateContent") || supported.length === 0) models.push({ name: (model as any).name || null, baseModelId: (model as any).baseModelId || null, displayName: (model as any).displayName || null, version: (model as any).version || null, supportedActions: supported });
       }
       models.sort((a, b) => String(a.name).localeCompare(String(b.name)));
-      res.json({ ok: true, currentModel: GEMINI_MODEL, count: models.length, models, timestamp: new Date().toISOString() });
+      res.json({ ok: true, currentModel: GEMINI_MODEL, fallbackModels: GEMINI_MODELS, count: models.length, models, timestamp: new Date().toISOString() });
     } catch (error: any) {
       const details = errorDetails(error);
-      res.status(500).json({ ok: false, error: details, currentModel: GEMINI_MODEL });
+      res.status(500).json({ ok: false, error: details, currentModel: GEMINI_MODEL, fallbackModels: GEMINI_MODELS });
     }
   });
 
@@ -189,7 +202,7 @@ async function startServer() {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(503).json({ ok: false, error: "GEMINI_API_KEY is not set" });
     const query = typeof req.query.q === "string" && req.query.q.trim() ? req.query.q.trim() : "Хто є головою Рокитнівської селищної територіальної громади?";
-    const candidates = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
+    const candidates = GEMINI_MODELS;
     const results = [];
     for (const model of candidates) results.push(await testModelSearch(model, key, query));
     res.json({ ok: results.some(r => r.ok && r.usedSearch), query, results, timestamp: new Date().toISOString() });
