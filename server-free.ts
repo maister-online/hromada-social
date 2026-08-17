@@ -3,7 +3,7 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const PORT = Number(process.env.PORT || 3000);
 
 const SYSTEM_PROMPT = `
@@ -61,6 +61,14 @@ function fallback(message: string): string {
   return "Я зараз працюю в максимально економному режимі. Для цього запиту не вдалося отримати відповідь від Gemini. Спробуй ще раз трохи пізніше.";
 }
 
+function errorCode(error: any): number | undefined {
+  return Number(error?.status || error?.code || error?.error?.code) || undefined;
+}
+
+async function generate(ai: GoogleGenAI, contents: any[], config: any) {
+  return ai.models.generateContent({ model: MODEL, contents, config });
+}
+
 async function answer(message: string, history: any[] = []) {
   const liveSearch = isLiveSearchRequest(message);
   const ip = "server";
@@ -83,11 +91,30 @@ async function answer(message: string, history: any[] = []) {
       maxOutputTokens: 600
     };
 
-    if (liveSearch) {
-      config.tools = [{ googleSearch: {} }];
+    if (liveSearch) config.tools = [{ googleSearch: {} }];
+
+    let response;
+    try {
+      response = await generate(ai, contents, config);
+    } catch (firstError: any) {
+      const code = errorCode(firstError);
+      const detail = String(firstError?.message || firstError);
+      console.warn(`Mashunya Gemini error model=${MODEL} search=${liveSearch} code=${code ?? "unknown"}:`, detail);
+
+      // Search is optional. If Search itself is rejected/quota-limited, make one
+      // normal Gemini attempt rather than failing the whole chat request.
+      if (liveSearch && /429|quota|resource_exhausted|search|grounding/i.test(detail)) {
+        const noSearchConfig = { ...config };
+        delete noSearchConfig.tools;
+        response = await generate(ai, contents, noSearchConfig);
+      } else if (/429|500|502|503|504|temporar|unavailable/i.test(detail)) {
+        await new Promise(resolve => setTimeout(resolve, 700));
+        response = await generate(ai, contents, config);
+      } else {
+        throw firstError;
+      }
     }
 
-    const response = await ai.models.generateContent({ model: MODEL, contents, config });
     const text = response.text || "";
     const metadata = response.candidates?.[0]?.groundingMetadata;
     const chunks = metadata?.groundingChunks || [];
@@ -103,8 +130,9 @@ async function answer(message: string, history: any[] = []) {
 
     return { text: text || fallback(message), sources, usedSearch: sources.length > 0 || searchQueries.length > 0, searchQueries };
   } catch (error: any) {
+    const code = errorCode(error);
     const messageText = String(error?.message || error);
-    console.warn("Mashunya Gemini error:", messageText);
+    console.warn(`Mashunya Gemini final error model=${MODEL} search=${liveSearch} code=${code ?? "unknown"}:`, messageText);
     return {
       text: liveSearch && /429|quota|resource_exhausted/i.test(messageText)
         ? "Безкоштовна квота Gemini зараз вичерпана. Я не буду вигадувати актуальні новини. Спробуй пізніше."
