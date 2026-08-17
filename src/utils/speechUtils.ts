@@ -42,11 +42,16 @@ export function playVoiceBeep(type: 'start' | 'end' | 'error' = 'start') {
   }
 }
 
+/** Convert UI/Markdown text into natural spoken Ukrainian. */
 function cleanSpeechText(text: string): string {
   return text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/https?:\/\/\S+/g, '')
-    .replace(/[\*_`#>\-]/g, ' ')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/https?:\/\/\S+/gi, ' ')
+    .replace(/www\.\S+/gi, ' ')
+    .replace(/[\*_`#>\[\]{}()<>|~^=+_]/g, ' ')
+    .replace(/\s[-–—]\s/g, '. ')
+    .replace(/[!?;:]+/g, '. ')
+    .replace(/\.{2,}/g, '. ')
     .replace(/\s+/g, ' ')
     .trim();
 }
