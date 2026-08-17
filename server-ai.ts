@@ -178,6 +178,37 @@ async function startServer() {
 
   app.get("/api/health", (_req, res) => res.json({ ok: true, mode: "google-genai-sdk", gemini: { enabled: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL }, googleSearchGrounding: true, ordinarySearchFallback: true, time: new Date().toISOString() }));
 
+  app.get("/api/gemini-models", async (_req, res) => {
+    try {
+      const key = process.env.GEMINI_API_KEY;
+      if (!key) return res.status(503).json({ ok: false, error: "GEMINI_API_KEY is not set" });
+      const ai = new GoogleGenAI({ apiKey: key });
+      const models: any[] = [];
+      for await (const model of await ai.models.list({ config: { pageSize: 100 } })) {
+        const supported = Array.isArray((model as any).supportedActions)
+          ? (model as any).supportedActions
+          : Array.isArray((model as any).supportedGenerationMethods)
+            ? (model as any).supportedGenerationMethods
+            : [];
+        if (supported.includes("generateContent") || supported.length === 0) {
+          models.push({
+            name: (model as any).name || null,
+            baseModelId: (model as any).baseModelId || null,
+            displayName: (model as any).displayName || null,
+            version: (model as any).version || null,
+            supportedActions: supported
+          });
+        }
+      }
+      models.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      res.json({ ok: true, currentModel: GEMINI_MODEL, count: models.length, models, timestamp: new Date().toISOString() });
+    } catch (error: any) {
+      const details = errorDetails(error);
+      console.error("GEMINI_MODELS_ERROR", JSON.stringify(details));
+      res.status(500).json({ ok: false, error: details, currentModel: GEMINI_MODEL });
+    }
+  });
+
   app.post("/api/network/ping", (_req, res) => res.json({ ok: true, status: "ONLINE", timestamp: new Date().toISOString() }));
 
   app.post("/api/network/analyze-error", async (req, res) => {
