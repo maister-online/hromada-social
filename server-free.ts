@@ -3,7 +3,9 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 
 const PORT = Number(process.env.PORT || 3000);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+// Gemini 2.5 Flash-Lite is no longer available to new users.
+// Use the current stable, cost-efficient Gemini 3.1 Flash-Lite model.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 15000);
 
@@ -245,8 +247,8 @@ async function startServer() {
       ok: true,
       status: "ONLINE",
       timestamp: new Date().toISOString()
-    })
-  );
+    });
+  });
 
   app.post("/api/network/analyze-error", async (req, res) => {
     const errorText = typeof req.body?.errorText === "string" ? req.body.errorText : "";
