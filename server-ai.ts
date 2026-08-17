@@ -3,10 +3,8 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 
 const PORT = Number(process.env.PORT || 3000);
-// Prefer current models and automatically try another available model if one is
-// unavailable for this project or temporarily rate-limited.
-const GEMINI_MODELS = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite"];
-const GEMINI_MODEL = GEMINI_MODELS[0];
+const GEMINI_MODEL = "gemini-3.6-flash";
+const GEMINI_MODELS = [GEMINI_MODEL];
 const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 45000);
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
@@ -70,33 +68,24 @@ async function geminiChat(message: string, history: any[] = [], forceSearch = fa
   const searchInstruction = searchRequired
     ? "\n\nЦей запит потребує актуальної інформації. Використай Google Search. Якщо йдеться про людину або прізвище, шукай точне ім'я/прізвище та перевір вебджерела. Не вигадуй зв'язок із Рокитнівською громадою."
     : "";
-  const errors: any[] = [];
-
-  for (const model of GEMINI_MODELS) {
-    try {
-      const response = await withTimeout(ai.models.generateContent({
-        model,
-        contents: buildContents(message, history),
-        config: {
-          systemInstruction: SYSTEM_PROMPT + searchInstruction,
-          ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
-          maxOutputTokens: 900
-        }
-      }));
-      const result = extractGrounding(response);
-      if (!result.text) throw Object.assign(new Error("Gemini returned an empty response"), { status: 502 });
-      return { ...result, searchRequired, model, attempts: errors };
-    } catch (error: any) {
-      const details = errorDetails(error);
-      errors.push({ provider: "gemini", model, error: details });
-      console.error("MASHUNYA_GEMINI_ATTEMPT", JSON.stringify({ model, ...details }));
-      // A model-specific 404/429 should not kill the whole assistant. Try the
-      // next current model available to the same API project.
-      continue;
-    }
+  try {
+    const response = await withTimeout(ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: buildContents(message, history),
+      config: {
+        systemInstruction: SYSTEM_PROMPT + searchInstruction,
+        ...(searchRequired ? { tools: [{ googleSearch: {} }] } : {}),
+        maxOutputTokens: 900
+      }
+    }));
+    const result = extractGrounding(response);
+    if (!result.text) throw Object.assign(new Error("Gemini returned an empty response"), { status: 502 });
+    return { ...result, searchRequired, model: GEMINI_MODEL, attempts: [] };
+  } catch (error: any) {
+    const details = errorDetails(error);
+    console.error("MASHUNYA_GEMINI_ERROR", JSON.stringify({ model: GEMINI_MODEL, ...details }));
+    throw Object.assign(new Error(details.message), { status: details.status || 502, attempts: [{ provider: "gemini", model: GEMINI_MODEL, error: details }] });
   }
-  const last = errors[errors.length - 1]?.error || { status: 502, message: "All Gemini models failed" };
-  throw Object.assign(new Error(last.message || "All Gemini models failed"), { status: last.status || 502, attempts: errors });
 }
 
 async function ordinarySearch(query: string) {
@@ -124,7 +113,6 @@ async function answer(message: string, history: any[] = [], forceSearch = false)
     return { text: result.text, provider: "gemini", model: result.model, fallbackUsed: false, usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources, attempts: result.attempts };
   } catch (error: any) {
     const details = errorDetails(error);
-    console.error("MASHUNYA_GEMINI_ERROR", JSON.stringify(details));
     const sources = await ordinarySearch(message);
     if (sources.length) {
       const sourceText = sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join("\n");
@@ -141,22 +129,6 @@ async function answer(message: string, history: any[] = [], forceSearch = false)
     }
     if (isSimpleGreeting(message)) return { text: "Привіт! Я Машуня 😉 Що будемо сьогодні шукати?", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
     return { text: "Не вдалося отримати актуальну відповідь. Спробуйте ще раз через кілька секунд.", provider: "fallback", model: "none", fallbackUsed: true, usedSearch: false, searchQueries: [], sources: [], attempts: error?.attempts || [{ provider: "gemini", model: GEMINI_MODEL, error: details }] };
-  }
-}
-
-async function testModelSearch(model: string, key: string, query: string) {
-  const ai = new GoogleGenAI({ apiKey: key });
-  const started = Date.now();
-  try {
-    const response = await withTimeout(ai.models.generateContent({
-      model,
-      contents: [{ role: "user", parts: [{ text: `Знайди актуальну інформацію за запитом: ${query}. Дай коротку відповідь і використай вебпошук.` }] }],
-      config: { tools: [{ googleSearch: {} }], maxOutputTokens: 300 }
-    }));
-    const result = extractGrounding(response);
-    return { model, ok: true, status: 200, elapsedMs: Date.now() - started, answer: result.text.slice(0, 1500), usedSearch: result.usedSearch, searchQueries: result.searchQueries, sources: result.sources };
-  } catch (error: any) {
-    return { model, ok: false, status: error?.status || error?.code || null, elapsedMs: Date.now() - started, error: errorDetails(error) };
   }
 }
 
@@ -202,10 +174,12 @@ async function startServer() {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(503).json({ ok: false, error: "GEMINI_API_KEY is not set" });
     const query = typeof req.query.q === "string" && req.query.q.trim() ? req.query.q.trim() : "Хто є головою Рокитнівської селищної територіальної громади?";
-    const candidates = GEMINI_MODELS;
-    const results = [];
-    for (const model of candidates) results.push(await testModelSearch(model, key, query));
-    res.json({ ok: results.some(r => r.ok && r.usedSearch), query, results, timestamp: new Date().toISOString() });
+    try {
+      const result = await geminiChat(`Знайди актуальну інформацію та джерела за запитом: ${query}`, [], true);
+      res.json({ ok: true, query, result, timestamp: new Date().toISOString() });
+    } catch (error: any) {
+      res.status(200).json({ ok: false, query, error: errorDetails(error), attempts: error.attempts || [], timestamp: new Date().toISOString() });
+    }
   });
 
   app.post("/api/network/ping", (_req, res) => res.json({ ok: true, status: "ONLINE", timestamp: new Date().toISOString() }));
