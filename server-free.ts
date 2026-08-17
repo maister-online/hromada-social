@@ -3,13 +3,13 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
-const MODEL = "gemini-2.5-flash-lite";
+const MODEL = "gemini-2.5-flash";
 const PORT = Number(process.env.PORT || 3000);
 
 const SYSTEM_PROMPT = `
 Ти Машуня — дружня AI-помічниця Рокитнівської громади.
 Відповідай живою сучасною українською мовою, коротко й по суті.
-Допомагай із питаннями про громаду, документи, послуги, Marketplace, звернення та загальними питаннями.
+Допомагай із питаннями про громаду, документи, послуги, Marketplace, звернення та загальні питання.
 Не вигадуй факти, дати, новини або посилання.
 Якщо запит стосується сьогоднішніх/актуальних даних, використовуй Google Search, якщо він увімкнений для цього запиту.
 Якщо актуальні дані не вдалося підтвердити — прямо скажи про це.
