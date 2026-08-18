@@ -7,12 +7,14 @@ interface BottomNavigationProps {
   onCreateNew?: () => void;
 }
 
+const MARKETPLACE_URL = 'https://maister-online.github.io/';
+
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onSelectTab, onCreateNew }) => {
   const items = [
     { id: 'feed', label: 'Головна', icon: Home },
     { id: 'groups', label: 'Групи', icon: Users },
     { id: 'create', label: 'Створити', icon: PlusCircle, isCreateAction: true },
-    { id: 'business', label: 'Маркет', icon: ShoppingBag },
+    { id: 'business', label: 'Маркет', icon: ShoppingBag, isMarketplace: true },
     { id: 'profile', label: 'Профіль', icon: User }
   ];
 
@@ -23,7 +25,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, o
         const isActive = activeTab === item.id;
         return (
           <button key={item.id} onClick={() => {
-            if (item.isCreateAction) onCreateNew ? onCreateNew() : onSelectTab('business');
+            if (item.isMarketplace) window.open(MARKETPLACE_URL, '_blank', 'noopener,noreferrer');
+            else if (item.isCreateAction) onCreateNew ? onCreateNew() : onSelectTab('business');
             else onSelectTab(item.id);
           }} className={`min-w-[58px] flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all relative cursor-pointer ${
             isActive ? 'text-cyan-300 font-bold bg-cyan-400/10 border border-cyan-400/20' : item.isCreateAction ? 'text-emerald-300 font-bold hover:text-emerald-200' : 'text-slate-400 hover:text-white'
@@ -36,4 +39,3 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, o
     </nav>
   );
 };
-
