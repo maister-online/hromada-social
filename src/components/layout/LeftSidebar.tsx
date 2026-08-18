@@ -3,6 +3,8 @@ import { Home, Users, Video, Zap, Calendar, UserCheck, Bot, Map, AlertTriangle, 
 
 interface LeftSidebarProps { activeTab: string; onSelectTab: (tab: string) => void; }
 
+const MARKETPLACE_URL = 'https://maister-online.github.io/';
+
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeTab, onSelectTab }) => {
   const groups = [
     { title: 'ТВОЯ ГРОМАДА', items: [
@@ -15,7 +17,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeTab, onSelectTab
       { id:'petitions', label:'Петиції', icon:FileSpreadsheet }, { id:'cnap', label:'ЦНАП та послуги', icon:Building2 }
     ]},
     { title: 'ВІДКРИВАЙ РОКИТНЕ', items: [
-      { id:'business', label:'Маркетплейс', icon:Briefcase }, { id:'tourism', label:'Туризм', icon:Compass },
+      { id:'business', label:'Маркетплейс', icon:Briefcase, external:true }, { id:'tourism', label:'Туризм', icon:Compass },
       { id:'starostins', label:'Старостинські округи', icon:Landmark }, { id:'map', label:'Карта', icon:Map }, { id:'opendata', label:'Відкриті дані', icon:FileCheck2 },
       { id:'admin', label:'Кабінет', icon:ShieldCheck }
     ]}
@@ -27,7 +29,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeTab, onSelectTab
       <div className="space-y-5">
         {groups.map((group, gi) => <section key={gi}>
           <div className="px-3 mb-1.5 text-[9px] font-black tracking-[.18em] text-slate-500">{group.title}</div>
-          <div className="space-y-1">{group.items.map(item => { const Icon=item.icon; const active=activeTab===item.id; return <button key={item.id} onClick={()=>onSelectTab(item.id)} className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all border ${active ? 'bg-cyan-500/15 border-cyan-400/30 text-white shadow-lg shadow-cyan-950/20' : item.highlight ? 'bg-amber-500/5 border-amber-500/15 text-amber-300 hover:bg-amber-500/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <div className="space-y-1">{group.items.map(item => { const Icon=item.icon; const active=activeTab===item.id; return <button key={item.id} onClick={()=> item.external ? window.open(MARKETPLACE_URL, '_blank', 'noopener,noreferrer') : onSelectTab(item.id)} className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all border ${active ? 'bg-cyan-500/15 border-cyan-400/30 text-white shadow-lg shadow-cyan-950/20' : item.highlight ? 'bg-amber-500/5 border-amber-500/15 text-amber-300 hover:bg-amber-500/10' : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <span className="flex items-center gap-3 min-w-0"><span className={`w-8 h-8 rounded-xl flex items-center justify-center ${active?'bg-cyan-400/15 text-cyan-300':'bg-white/[.04] text-slate-400'}`}><Icon className="w-4 h-4"/></span><span className="truncate">{item.label}</span></span>
             {item.badge && <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/20">{item.badge}</span>}
           </button> })}</div>
