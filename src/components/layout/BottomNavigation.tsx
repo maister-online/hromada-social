@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, PlusCircle, Bot, User } from 'lucide-react';
+import { Home, Users, PlusCircle, ShoppingBag, User } from 'lucide-react';
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -7,11 +7,7 @@ interface BottomNavigationProps {
   onCreateNew?: () => void;
 }
 
-export const BottomNavigation: React.FC<BottomNavigationProps> = ({
-  activeTab,
-  onSelectTab,
-  onCreateNew
-}) => {
+export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onSelectTab, onCreateNew }) => {
   const items = [
     { id: 'feed', label: 'Головна', icon: Home },
     { id: 'groups', label: 'Групи', icon: Users },
@@ -25,27 +21,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {items.map(item => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
-
         return (
-          <button
-            key={item.id}
-            onClick={() => {
-              if (item.isCreateAction) {
-                if (onCreateNew) onCreateNew();
-                else onSelectTab('business');
-              } else {
-                onSelectTab(item.id);
-              }
-            }}
-            className={`min-w-[58px] flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all relative cursor-pointer ${
-              isActive
-                ? 'text-cyan-300 font-bold bg-cyan-400/10 border border-cyan-400/20'
-                : item.isCreateAction
-                ? 'text-emerald-300 font-bold hover:text-emerald-200'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Icon className={`w-5 h-5 ${item.isCreateAction ? 'drop-shadow-[0_0_8px_rgba(52,211,153,.35)]' : ''}`} />
+          <button key={item.id} onClick={() => {
+            if (item.isCreateAction) onCreateNew ? onCreateNew() : onSelectTab('business');
+            else onSelectTab(item.id);
+          }} className={`min-w-[58px] flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all relative cursor-pointer ${
+            isActive ? 'text-cyan-300 font-bold bg-cyan-400/10 border border-cyan-400/20' : item.isCreateAction ? 'text-emerald-300 font-bold hover:text-emerald-200' : 'text-slate-400 hover:text-white'
+          }`}>
+            <Icon className="w-5 h-5" />
             <span className="text-[10px] font-medium mt-0.5">{item.label}</span>
           </button>
         );
