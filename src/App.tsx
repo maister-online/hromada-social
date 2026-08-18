@@ -27,7 +27,6 @@ import { StarostinDistrictsTab } from './components/social/StarostinDistrictsTab
 import { OpenDataTab } from './components/social/OpenDataTab';
 import { TourismCommunityTab } from './components/TourismCommunityTab';
 import { NetworkStatusModal } from './components/network/NetworkStatusModal';
-import { CoatOfArmsIcon } from './components/CoatOfArmsIcon';
 
 function MainAppShell() {
   const [activeTab, setActiveTab] = useState<string>('feed');
@@ -41,24 +40,19 @@ function MainAppShell() {
   const handleOpenAiWindow = () => {
     openWindow({
       id: 'ai-chat-window',
-      title: '🤖 Рокитне-Бот AI Консультант',
+      title: 'Машуня — AI-помічник громади',
       component: <AIAssistantPanel />,
       initialSize: { width: 540, height: 620 }
     });
   };
 
   return (
-    <div className="min-h-screen rokytne-site-bg text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-950 relative overflow-x-hidden">
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-cyan-400/10 rounded-full blur-[140px]" />
-        <div className="absolute top-1/3 -right-40 w-[550px] h-[550px] bg-sky-400/10 rounded-full blur-[140px]" />
-      </div>
-
+    <div className="min-h-screen facebook-app text-slate-900 flex flex-col relative overflow-x-hidden">
       <div className="relative z-10 flex-1 flex flex-col">
         <TopBar onSelectNavTab={handleSelectNavTab} activeNavTab={activeTab} />
-        <div className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 flex-1 flex gap-6 pb-20 lg:pb-8">
+        <div className="facebook-layout w-full mx-auto px-0 sm:px-3 py-0 sm:py-3 flex-1 flex gap-3 pb-16 lg:pb-6">
           <LeftSidebar activeTab={activeTab} onSelectTab={handleSelectNavTab} />
-          <main className="flex-1 min-w-0 space-y-6">
+          <main className="facebook-feed flex-1 min-w-0 space-y-3">
             {activeTab === 'feed' && <MainFeed />}
             {activeTab === 'reels' && <ReelsTab />}
             {activeTab === 'x-trends' && <XTrendsTab />}
