@@ -27,7 +27,6 @@ import { StarostinDistrictsTab } from './components/social/StarostinDistrictsTab
 import { OpenDataTab } from './components/social/OpenDataTab';
 import { TourismCommunityTab } from './components/TourismCommunityTab';
 import { NetworkStatusModal } from './components/network/NetworkStatusModal';
-import { CoatOfArmsIcon } from './components/CoatOfArmsIcon';
 
 function MainAppShell() {
   const [activeTab, setActiveTab] = useState<string>('feed');
@@ -41,7 +40,7 @@ function MainAppShell() {
   const handleOpenAiWindow = () => {
     openWindow({
       id: 'ai-chat-window',
-      title: '🤖 Рокитне-Бот AI Консультант',
+      title: 'Машуня AI — помічник Рокитнівської громади',
       component: <AIAssistantPanel />,
       initialSize: { width: 540, height: 620 }
     });
