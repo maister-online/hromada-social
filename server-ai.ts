@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import { registerDataApi } from './server-data.ts';
 
 const PORT = Number(process.env.PORT || 3000);
@@ -40,6 +39,7 @@ async function main() {
 
   const distPath = path.resolve(process.cwd(), 'dist');
   if (!IS_PRODUCTION) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
     app.use(vite.middlewares);
   } else {
