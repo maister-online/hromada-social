@@ -27,7 +27,10 @@ import { StarostinDistrictsTab } from './components/social/StarostinDistrictsTab
 import { OpenDataTab } from './components/social/OpenDataTab';
 import { TourismCommunityTab } from './components/TourismCommunityTab';
 import { NetworkStatusModal } from './components/network/NetworkStatusModal';
-import { Sparkles, Users, MapPin, ShoppingBag, Bot } from 'lucide-react';
+import {
+  Sparkles, Users, MapPin, ShoppingBag, Bot, Building2, Landmark, FileText,
+  Droplets, School, HeartPulse, HandHeart, ChevronRight, ShieldCheck
+} from 'lucide-react';
 
 function CommunitySocialHeader({ onAi }: { onAi: () => void }) {
   return (
@@ -52,10 +55,80 @@ function CommunitySocialHeader({ onAi }: { onAi: () => void }) {
   );
 }
 
+function OfficialPortal({ onSelectTab }: { onSelectTab: (tab: string) => void }) {
+  const institutions = [
+    { title: 'Селищна рада', subtitle: 'Рішення, розпорядження, новини', icon: Landmark, accent: 'cyan', tab: 'documents' },
+    { title: 'Водоканал', subtitle: 'Вода, аварії, тарифи та повідомлення', icon: Droplets, accent: 'sky', tab: 'appeals' },
+    { title: 'КП Рокитне', subtitle: 'Комунальні послуги та благоустрій', icon: Building2, accent: 'emerald', tab: 'problems' },
+    { title: 'Освіта', subtitle: 'Заклади освіти та офіційні оголошення', icon: School, accent: 'amber', tab: 'documents' },
+    { title: 'Медицина', subtitle: 'Медичні установи та інформація', icon: HeartPulse, accent: 'rose', tab: 'documents' },
+    { title: 'Соціальний захист', subtitle: 'Допомога, пільги та соціальні послуги', icon: HandHeart, accent: 'violet', tab: 'cnap' },
+  ];
+
+  const services = [
+    ['Рішення та документи', 'Офіційні рішення, розпорядження та документи', 'documents'],
+    ['Бюджет та відкриті дані', 'Фінанси громади, набори даних і прозорість', 'opendata'],
+    ['ЦНАП та послуги', 'Адміністративні послуги для мешканців', 'cnap'],
+    ['Звернення громадян', 'Офіційні звернення та повідомлення про проблеми', 'appeals'],
+    ['Карта громади', 'Об’єкти, установи та інфраструктура', 'map'],
+    ['Старостинські округи', 'Офіційна інформація по округах', 'starostins'],
+  ];
+
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      <section className="official-hero rounded-3xl overflow-hidden border border-emerald-500/20">
+        <div className="relative p-6 sm:p-8">
+          <div className="official-grid" />
+          <div className="relative max-w-3xl">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-emerald-300 font-bold"><ShieldCheck className="w-4 h-4" /> Офіційний портал громади</div>
+            <h1 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight text-white">🏛️ ОФІЦІЙНІ</h1>
+            <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-2xl">Окремий простір для офіційної інформації Рокитнівської громади. Тут установи та органи громади не змішуються з дописами мешканців.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-end justify-between mb-3 px-1"><div><h2 className="text-lg font-black text-white">Установи громади</h2><p className="text-xs text-slate-500">Офіційні сторінки та інформаційні розділи</p></div><span className="official-badge">ОФІЦІЙНО</span></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {institutions.map(({ title, subtitle, icon: Icon, accent, tab }) => (
+            <button key={title} onClick={() => onSelectTab(tab)} className="official-institution-card text-left group">
+              <div className={`official-icon official-${accent}`}><Icon className="w-5 h-5" /></div>
+              <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h3 className="font-bold text-white truncate">{title}</h3><span className="text-[9px] font-bold text-emerald-400">✓</span></div><p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p></div>
+              <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 transition" />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-black text-white mb-3 px-1">Офіційні сервіси</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {services.map(([title, subtitle, tab]) => (
+            <button key={title} onClick={() => onSelectTab(tab)} className="official-service-card text-left group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center shrink-0"><FileText className="w-5 h-5 text-emerald-400" /></div>
+              <div className="min-w-0 flex-1"><h3 className="font-bold text-sm text-white">{title}</h3><p className="mt-1 text-xs text-slate-500">{subtitle}</p></div><ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400" />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SectionSwitcher({ mode, onChange }: { mode: 'official' | 'community'; onChange: (mode: 'official' | 'community') => void }) {
+  return (
+    <div className="section-switcher sticky top-2 z-30">
+      <button className={mode === 'official' ? 'section-switch active-official' : 'section-switch'} onClick={() => onChange('official')}><Landmark className="w-4 h-4" /><span>🏛️ ОФІЦІЙНІ</span><small>установи та документи</small></button>
+      <button className={mode === 'community' ? 'section-switch active-community' : 'section-switch'} onClick={() => onChange('community')}><Users className="w-4 h-4" /><span>👥 ГРОМАДА</span><small>мешканці та спілкування</small></button>
+    </div>
+  );
+}
+
 function MainAppShell() {
   const [activeTab, setActiveTab] = useState<string>('feed');
+  const [sectionMode, setSectionMode] = useState<'official' | 'community'>('community');
   const { openWindow } = useWindowContext();
-  const handleSelectNavTab = (tab: string) => { setActiveTab(tab); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const handleSelectNavTab = (tab: string) => { setSectionMode('community'); setActiveTab(tab); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const handleOpenAiWindow = () => openWindow({ id: 'ai-chat-window', title: 'Машуня AI — помічник Рокитнівської громади', component: <AIAssistantPanel />, initialSize: { width: 540, height: 620 } });
 
   return (
@@ -63,40 +136,45 @@ function MainAppShell() {
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden"><div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-cyan-400/10 rounded-full blur-[140px]" /><div className="absolute top-1/3 -right-40 w-[550px] h-[550px] bg-sky-400/10 rounded-full blur-[140px]" /></div>
       <div className="relative z-10 flex-1 flex flex-col">
         <TopBar onSelectNavTab={handleSelectNavTab} activeNavTab={activeTab} />
+        <div className="max-w-7xl w-full mx-auto px-3 sm:px-6 pt-3 flex-1">
+          <SectionSwitcher mode={sectionMode} onChange={(mode) => { setSectionMode(mode); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+        </div>
         <div className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 flex-1 flex gap-6 pb-20 lg:pb-8">
-          <LeftSidebar activeTab={activeTab} onSelectTab={handleSelectNavTab} />
+          {sectionMode === 'community' && <LeftSidebar activeTab={activeTab} onSelectTab={handleSelectNavTab} />}
           <main className="flex-1 min-w-0 space-y-6">
-            <CommunitySocialHeader onAi={handleOpenAiWindow} />
-            {activeTab === 'feed' && <MainFeed />}
-            {activeTab === 'reels' && <ReelsTab />}
-            {activeTab === 'x-trends' && <XTrendsTab />}
-            {activeTab === 'residents' && <ResidentsNetworkTab />}
-            {activeTab === 'groups' && <GroupsCommunitiesTab />}
-            {activeTab === 'events' && <CommunityEventsTab />}
-            {activeTab === 'chat' && <AIAssistantPanel />}
-            {activeTab === 'network' && <NetworkStatusModal initialTab="network" onClose={() => setActiveTab('feed')} />}
-            {activeTab === 'problems' && <CommunityProblemsTab />}
-            {activeTab === 'petitions' && <PetitionsTab />}
-            {activeTab === 'starostins' && <StarostinDistrictsTab />}
-            {activeTab === 'business' && <BusinessMarketplaceTab />}
-            {activeTab === 'business-auto' && <BusinessMarketplaceTab initialCategoryFilter="auto" />}
-            {activeTab === 'business-realty' && <BusinessMarketplaceTab initialCategoryFilter="realty" />}
-            {activeTab === 'business-services' && <BusinessMarketplaceTab initialCategoryFilter="services" />}
-            {activeTab === 'tourism' && <TourismCommunityTab />}
-            {activeTab === 'opendata' && <OpenDataTab />}
-            {activeTab === 'appeals' && <SocialInquiriesTab />}
-            {activeTab === 'cnap' && <CnapServicesTab />}
-            {activeTab === 'map' && <InteractiveCommunityMap />}
-            {activeTab === 'forum' && <GroupsCommunitiesTab />}
-            {activeTab === 'weather' && <InteractiveCommunityMap />}
-            {activeTab === 'documents' && <OpenDataTab />}
-            {activeTab === 'admin' && <AdminAnalyticsTab />}
-            {activeTab === 'profile' && <UserProfileTab />}
+            {sectionMode === 'official' ? <OfficialPortal onSelectTab={handleSelectNavTab} /> : <>
+              <CommunitySocialHeader onAi={handleOpenAiWindow} />
+              {activeTab === 'feed' && <MainFeed />}
+              {activeTab === 'reels' && <ReelsTab />}
+              {activeTab === 'x-trends' && <XTrendsTab />}
+              {activeTab === 'residents' && <ResidentsNetworkTab />}
+              {activeTab === 'groups' && <GroupsCommunitiesTab />}
+              {activeTab === 'events' && <CommunityEventsTab />}
+              {activeTab === 'chat' && <AIAssistantPanel />}
+              {activeTab === 'network' && <NetworkStatusModal initialTab="network" onClose={() => setActiveTab('feed')} />}
+              {activeTab === 'problems' && <CommunityProblemsTab />}
+              {activeTab === 'petitions' && <PetitionsTab />}
+              {activeTab === 'starostins' && <StarostinDistrictsTab />}
+              {activeTab === 'business' && <BusinessMarketplaceTab />}
+              {activeTab === 'business-auto' && <BusinessMarketplaceTab initialCategoryFilter="auto" />}
+              {activeTab === 'business-realty' && <BusinessMarketplaceTab initialCategoryFilter="realty" />}
+              {activeTab === 'business-services' && <BusinessMarketplaceTab initialCategoryFilter="services" />}
+              {activeTab === 'tourism' && <TourismCommunityTab />}
+              {activeTab === 'opendata' && <OpenDataTab />}
+              {activeTab === 'appeals' && <SocialInquiriesTab />}
+              {activeTab === 'cnap' && <CnapServicesTab />}
+              {activeTab === 'map' && <InteractiveCommunityMap />}
+              {activeTab === 'forum' && <GroupsCommunitiesTab />}
+              {activeTab === 'weather' && <InteractiveCommunityMap />}
+              {activeTab === 'documents' && <OpenDataTab />}
+              {activeTab === 'admin' && <AdminAnalyticsTab />}
+              {activeTab === 'profile' && <UserProfileTab />}
+            </>}
           </main>
-          <RightSidebar onSelectNavTab={handleSelectNavTab} />
+          {sectionMode === 'community' && <RightSidebar onSelectNavTab={handleSelectNavTab} />}
         </div>
       </div>
-      <WindowManager /><Taskbar /><BottomNavigation activeTab={activeTab} onSelectTab={handleSelectNavTab} /><GoogleSearchButton />
+      {sectionMode === 'community' && <><WindowManager /><Taskbar /><BottomNavigation activeTab={activeTab} onSelectTab={handleSelectNavTab} /><GoogleSearchButton /></>}
     </div>
   );
 }
