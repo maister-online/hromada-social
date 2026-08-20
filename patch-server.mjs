@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 
-// Keep the build-time patcher idempotent. It patches only source files and never
-// touches secrets or runtime data.
+// Idempotent build-time patcher. It patches source files only.
 const serverFile = 'server-ai.ts';
 let server = fs.readFileSync(serverFile, 'utf8');
 server = server.replace(/const GEMINI_MODEL = process\.env\.GEMINI_MODEL \|\| '[^']+';/, "const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';");
@@ -28,7 +27,7 @@ if (start >= 0 && end >= 0) {
       const lineEnd = portal.indexOf('\n', p);
       const line = portal.slice(p, lineEnd < 0 ? portal.length : lineEnd);
       if (!line.includes('url:')) {
-        portal = portal.replace(line, `${line}, url: '${url}'`);
+        portal = portal.replace(line, line.replace(/\s*},\s*$/, `, url: '${url}' },`));
       }
     }
   }
@@ -45,7 +44,7 @@ if (start >= 0 && end >= 0) {
     if (p >= 0) {
       const lineEnd = portal.indexOf('\n', p);
       const line = portal.slice(p, lineEnd < 0 ? portal.length : lineEnd);
-      if (!line.includes('null]') && !line.match(/https?:\/\//)) {
+      if (!line.includes('https://') && !line.includes('null')) {
         portal = portal.replace(line, line.replace(/\],?$/, `, ${url ? `'${url}'` : 'null'}],`));
       }
     }
