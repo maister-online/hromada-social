@@ -4,8 +4,8 @@ import fs from 'node:fs';
 const serverFile = 'server-ai.ts';
 let server = fs.readFileSync(serverFile, 'utf8');
 server = server.replace(/const GEMINI_MODEL = process\.env\.GEMINI_MODEL \|\| '[^']+';/, "const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';");
-server = server.replace('import { classifySearchIntent, prioritizeWebSources, WebSourceItem } from "./src/services/searchRouter";', 'import { classifySearchIntent, prioritizeWebSources, WebSourceItem } from "./src/services/searchRouter";\nimport { registerUploadApi } from "./server-upload";');
-server = server.replace('app.use(express.json());', 'app.use(express.json({ limit: "12mb" }));\n  registerUploadApi(app);');
+// Uploads are handled directly by server-ai.ts -> Supabase Storage.
+// Do not inject the legacy server-upload.ts implementation here.
 fs.writeFileSync(serverFile, server);
 
 const appFile = 'src/App.tsx';
