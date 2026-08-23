@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { registerDataApi } from './server-data.ts';
+import { isSupabaseConfigured, uploadImageToSupabase } from './server-supabase.ts';
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = '0.0.0.0';
@@ -28,8 +29,28 @@ async function main() {
 
   app.get('/api/health', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ ok: true, status: 'ONLINE', gemini: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL, persistentData: true, production: IS_PRODUCTION, port: PORT, timestamp: new Date().toISOString() });
+    res.status(200).json({ ok: true, status: 'ONLINE', gemini: Boolean(process.env.GEMINI_API_KEY), supabase: isSupabaseConfigured(), model: GEMINI_MODEL, persistentData: true, production: IS_PRODUCTION, port: PORT, timestamp: new Date().toISOString() });
   });
+
+  app.post('/api/upload/image', async (req, res) => {
+    try {
+      const data = typeof req.body?.data === 'string' ? req.body.data : '';
+      const mimeType = typeof req.body?.mimeType === 'string' ? req.body.mimeType : 'image/jpeg';
+      const originalName = typeof req.body?.name === 'string' ? req.body.name : 'image.jpg';
+      if (!data) return res.status(400).json({ ok: false, error: 'Фото не передано.' });
+      if (!/^image\/(jpeg|jpg|png|webp|gif)$/i.test(mimeType)) return res.status(415).json({ ok: false, error: 'Підтримуються JPG, PNG, WEBP та GIF.' });
+      const clean = data.replace(/^data:[^;]+;base64,/, '');
+      const buffer = Buffer.from(clean, 'base64');
+      if (!buffer.length || buffer.length > 8 * 1024 * 1024) return res.status(413).json({ ok: false, error: 'Фото має бути не більше 8 МБ.' });
+      if (!isSupabaseConfigured()) return res.status(503).json({ ok: false, error: 'Сховище Supabase ще не налаштоване.' });
+      const result = await uploadImageToSupabase(buffer, mimeType, originalName);
+      res.status(201).json({ ok: true, url: result.url, path: result.path, storage: 'supabase' });
+    } catch (error: any) {
+      console.error('SUPABASE_UPLOAD_ERROR', error);
+      res.status(500).json({ ok: false, error: 'Не вдалося завантажити фото в Supabase.' });
+    }
+  });
+
   app.post('/api/network/ping', (_req, res) => res.status(200).json({ ok: true, status: 'ONLINE', timestamp: new Date().toISOString() }));
   app.post('/api/network/analyze-error', async (req, res) => { const result = await answer(`Проаналізуй технічну помилку українською та дай конкретні кроки виправлення:\n${String(req.body?.errorText || '')}`); res.json({ ok: true, analysis: result.text, provider: result.provider }); });
   const chat = async (req: express.Request, res: express.Response) => { const message = typeof req.body?.message === 'string' ? req.body.message : ''; if (!message.trim()) return res.status(400).json({ ok: false, error: 'Не передано повідомлення.' }); const result = await answer(message, req.body?.conversationHistory || req.body?.history || []); res.json({ ok: true, answer: result.text, reply: result.text, sources: result.sources, webSources: result.sources, usedSearch: result.usedSearch, searchQueries: result.searchQueries, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, timestamp: new Date().toISOString() }); };
@@ -47,17 +68,11 @@ async function main() {
     app.use((_req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
-  app.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('HTTP_HANDLER_ERROR', error);
-    if (!res.headersSent) res.status(500).json({ ok: false, error: 'Внутрішня помилка сервера.' });
-  });
-
+  app.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => { console.error('HTTP_HANDLER_ERROR', error); if (!res.headersSent) res.status(500).json({ ok: false, error: 'Внутрішня помилка сервера.' }); });
   console.log(`Starting Hromada Social: production=${IS_PRODUCTION}, host=${HOST}, port=${PORT}`);
   const server = app.listen(PORT, HOST, () => console.log(`Hromada Social listening on ${HOST}:${PORT}`));
   server.on('error', (error) => { console.error('SERVER_LISTEN_ERROR', error); process.exit(1); });
 }
-
 process.on('uncaughtException', (error) => console.error('UNCAUGHT_EXCEPTION', error));
 process.on('unhandledRejection', (error) => console.error('UNHANDLED_REJECTION', error));
-
 main().catch(error => { console.error('SERVER_START_ERROR', error); process.exit(1); });
