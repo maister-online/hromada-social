@@ -1,10 +1,15 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously, type User } from 'firebase/auth';
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  type User,
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDFhw3i0Xa6_UeN7fjSMAHxS7kcfbQbuMo',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDFhw3i0Xa_UeN7fjSMAHxS7kcfbQbuMo',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'rokitne--yahmyrov.firebaseapp.com',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'rokitne--yahmyrov',
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'rokitne--yahmyrov.firebasestorage.app',
@@ -25,22 +30,33 @@ export const firebaseAuth = getAuth(app);
 export const firebaseDb = getFirestore(app);
 export const firebaseStorage = getStorage(app);
 
-let userPromise: Promise<User> | null = null;
+let loginPromise: Promise<User> | null = null;
 
+/**
+ * Storage requires an authenticated Firebase user.
+ * Anonymous auth is intentionally NOT used because Anonymous provider is
+ * disabled in this Firebase project and causes auth/admin-restricted-operation.
+ * If there is no session, use the already-enabled Google provider.
+ */
 export async function getFirebaseUser(): Promise<User> {
   if (!firebaseConfigured) {
     throw new Error(`Firebase не налаштований. Відсутні: ${missing.join(', ')}`);
   }
   if (firebaseAuth.currentUser) return firebaseAuth.currentUser;
-  if (!userPromise) {
-    userPromise = signInAnonymously(firebaseAuth)
+  if (!loginPromise) {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    loginPromise = signInWithPopup(firebaseAuth, provider)
       .then(result => result.user)
       .catch(error => {
-        userPromise = null;
+        loginPromise = null;
+        if (error?.code === 'auth/popup-closed-by-user') {
+          throw new Error('Вхід скасовано. Увійдіть через Google, щоб завантажити фото.');
+        }
         throw error;
       });
   }
-  return userPromise;
+  return loginPromise;
 }
 
 export async function uploadImageToFirebase(file: File, folder = 'users') {
@@ -59,14 +75,27 @@ export async function uploadImageToFirebase(file: File, folder = 'users') {
   const path = `${folder}/${user.uid}/${Date.now()}-${safeName}`;
   const objectRef = ref(firebaseStorage, path);
 
-  await uploadBytes(objectRef, file, {
-    contentType: file.type,
-    cacheControl: 'public,max-age=31536000',
-  });
-
-  return {
-    url: await getDownloadURL(objectRef),
-    path,
-    uid: user.uid,
-  };
+  try {
+    await uploadBytes(objectRef, file, {
+      contentType: file.type,
+      cacheControl: 'public,max-age=31536000',
+    });
+    const url = await getDownloadURL(objectRef);
+    return { url, path, uid: user.uid };
+  } catch (error: any) {
+    const code = error?.code || '';
+    if (code === 'storage/unauthorized') {
+      throw new Error('Firebase Storage заборонив запис. Перевірте Storage Rules для авторизованих користувачів.');
+    }
+    if (code === 'storage/object-not-found') {
+      throw new Error('Firebase Storage не знайшов завантажений файл.');
+    }
+    if (code === 'storage/quota-exceeded') {
+      throw new Error('Перевищено квоту Firebase Storage.');
+    }
+    if (code === 'storage/retry-limit-exceeded') {
+      throw new Error('Firebase Storage не відповідає. Спробуйте ще раз.');
+    }
+    throw error;
+  }
 }
