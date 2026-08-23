@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Send, Heart, MessageCircle, Share2, Camera, RefreshCw } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Send, Heart, MessageCircle, Share2, Camera, RefreshCw, X, Upload, Loader2 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { dataApi } from '../../services/dataApi';
+import { uploadImage } from '../../services/uploadService';
 import { SocialPost } from '../../types';
 
 export const MainFeed: React.FC = () => {
@@ -9,8 +10,11 @@ export const MainFeed: React.FC = () => {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [text, setText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoading(true); setError('');
@@ -23,6 +27,19 @@ export const MainFeed: React.FC = () => {
 
   useEffect(() => { void load(); }, []);
 
+  const selectPhoto = async (file?: File) => {
+    if (!file) return;
+    setError(''); setUploading(true);
+    try {
+      const uploaded = await uploadImage(file);
+      setImageUrl(uploaded.url);
+      setPreviewUrl(uploaded.url);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося завантажити фото'); }
+    finally { setUploading(false); }
+  };
+
+  const clearPhoto = () => { setImageUrl(''); setPreviewUrl(''); if (fileInputRef.current) fileInputRef.current.value = ''; };
+
   const publish = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!text.trim()) return;
@@ -31,10 +48,10 @@ export const MainFeed: React.FC = () => {
         author: user.name, authorName: user.name, authorAvatar: user.avatar, authorRole: user.role,
         isOfficialAccount: false, isVerified: true, settlement: 'Рокитнівська громада',
         timestamp: new Date().toISOString(), createdAt: new Date().toISOString(), privacy: 'public',
-        category: 'Оголошення мешканця', content: text.trim(), imageUrls: imageUrl ? [imageUrl.trim()] : undefined,
+        category: 'Оголошення мешканця', content: text.trim(), imageUrls: imageUrl ? [imageUrl] : undefined,
         reactions: { like: 0, love: 0, wow: 0, bravo: 0, helpful: 0 }, likesCount: 0, userLiked: false, commentsCount: 0, sharesCount: 0
       } as Omit<SocialPost, 'id'>);
-      setPosts(current => [post, ...current]); setText(''); setImageUrl('');
+      setPosts(current => [post, ...current]); setText(''); clearPhoto();
     } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося опублікувати допис'); }
   };
 
@@ -46,26 +63,25 @@ export const MainFeed: React.FC = () => {
   };
 
   return <main className="max-w-2xl mx-auto w-full pb-10 space-y-4 animate-fadeIn">
-    <section className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl p-5">
-      <div className="text-xs uppercase tracking-[0.2em] text-cyan-300 font-bold">Рокитне Live</div>
-      <h1 className="text-2xl font-black text-white mt-1">Стрічка громади</h1>
-      <p className="text-xs text-slate-500 mt-1">Дописи зберігаються на сервері, а не в демонстраційних масивах.</p>
-    </section>
+    <section className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl p-5"><div className="text-xs uppercase tracking-[0.2em] text-cyan-300 font-bold">Рокитне Live</div><h1 className="text-2xl font-black text-white mt-1">Стрічка громади</h1><p className="text-xs text-slate-500 mt-1">Дописи зберігаються на сервері.</p></section>
 
     <section className="rounded-3xl bg-slate-950 border border-slate-800 p-4">
       <form onSubmit={publish} className="space-y-3">
         <div className="flex gap-3"><img src={user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /><textarea value={text} onChange={e => setText(e.target.value)} rows={3} placeholder={`Що нового, ${user.name.split(' ')[0]}?`} className="flex-1 resize-none rounded-2xl bg-slate-900 border border-slate-800 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500" /></div>
-        <div className="flex gap-2"><div className="flex-1 flex items-center gap-2"><Camera className="w-4 h-4 text-emerald-400" /><input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="URL фото (необов'язково)" className="w-full bg-transparent text-xs text-slate-300 outline-none" /></div><button disabled={!text.trim()} className="px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-black text-xs flex items-center gap-2 disabled:opacity-40"><Send className="w-3.5 h-3.5" />Опублікувати</button></div>
+        {previewUrl && <div className="relative rounded-2xl overflow-hidden border border-slate-800"><img src={previewUrl} alt="Попередній перегляд" className="w-full max-h-72 object-cover" /><button type="button" onClick={clearPhoto} className="absolute top-2 right-2 p-2 rounded-full bg-slate-950/80 text-white"><X className="w-4 h-4" /></button></div>}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => void selectPhoto(e.target.files?.[0])} />
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="px-3 py-2 rounded-xl border border-slate-800 hover:border-emerald-500/50 text-emerald-400 text-xs font-bold flex items-center gap-2"><Camera className="w-4 h-4" />{uploading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Завантаження…</> : 'Додати фото'}</button>
+            <span className="hidden sm:inline text-[10px] text-slate-600">JPG, PNG, WEBP • до 8 МБ</span>
+          </div>
+          <button disabled={!text.trim() || uploading} className="px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-black text-xs flex items-center gap-2 disabled:opacity-40"><Send className="w-3.5 h-3.5" />Опублікувати</button>
+        </div>
       </form>
     </section>
 
     {error && <div className="rounded-2xl border border-rose-500/30 bg-rose-950/30 p-3 text-xs text-rose-300">{error}</div>}
     <div className="flex justify-end"><button onClick={() => void load()} className="text-xs text-cyan-300 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Оновити</button></div>
-    {loading ? <div className="rounded-3xl bg-slate-950 border border-slate-800 p-10 text-center text-sm text-slate-500">Завантаження стрічки…</div> : posts.length === 0 ? <div className="rounded-3xl bg-slate-950 border border-slate-800 p-10 text-center text-sm text-slate-500">Поки немає дописів. Створи перший.</div> : posts.map(post => <article key={post.id} className="rounded-3xl bg-slate-950 border border-slate-800 p-4 shadow-xl">
-      <div className="flex gap-3"><img src={post.authorAvatar || user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /><div><div className="font-bold text-white text-sm">{post.authorName || post.author || 'Мешканець громади'}</div><div className="text-[10px] text-slate-500">{post.settlement || 'Рокитнівська громада'} · {post.createdAt || post.timestamp || ''}</div></div></div>
-      <p className="mt-4 text-sm text-slate-200 whitespace-pre-wrap leading-6">{post.content}</p>
-      {post.imageUrls?.[0] && <img src={post.imageUrls[0]} alt="" className="mt-3 w-full max-h-[420px] object-cover rounded-2xl" />}
-      <div className="flex items-center gap-5 mt-4 pt-3 border-t border-slate-900 text-xs text-slate-500"><button onClick={() => void like(post)} className={`flex items-center gap-1.5 ${post.userLiked ? 'text-pink-400' : 'hover:text-pink-400'}`}><Heart className="w-4 h-4" />{post.likesCount || 0}</button><span className="flex items-center gap-1.5"><MessageCircle className="w-4 h-4" />{post.commentsCount || 0}</span><span className="flex items-center gap-1.5"><Share2 className="w-4 h-4" />{post.sharesCount || 0}</span></div>
-    </article>)}
+    {loading ? <div className="rounded-3xl bg-slate-950 border border-slate-800 p-10 text-center text-sm text-slate-500">Завантаження стрічки…</div> : posts.length === 0 ? <div className="rounded-3xl bg-slate-950 border border-slate-800 p-10 text-center text-sm text-slate-500">Поки немає дописів. Створи перший.</div> : posts.map(post => <article key={post.id} className="rounded-3xl bg-slate-950 border border-slate-800 p-4 shadow-xl"><div className="flex gap-3"><img src={post.authorAvatar || user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" /><div><div className="font-bold text-white text-sm">{post.authorName || post.author || 'Мешканець громади'}</div><div className="text-[10px] text-slate-500">{post.settlement || 'Рокитнівська громада'} · {post.createdAt || post.timestamp || ''}</div></div></div><p className="mt-4 text-sm text-slate-200 whitespace-pre-wrap leading-6">{post.content}</p>{post.imageUrls?.[0] && <img src={post.imageUrls[0]} alt="Фото допису" className="mt-3 w-full max-h-[420px] object-cover rounded-2xl" />}<div className="flex items-center gap-5 mt-4 pt-3 border-t border-slate-900 text-xs text-slate-500"><button onClick={() => void like(post)} className={`flex items-center gap-1.5 ${post.userLiked ? 'text-pink-400' : 'hover:text-pink-400'}`}><Heart className="w-4 h-4" />{post.likesCount || 0}</button><span className="flex items-center gap-1.5"><MessageCircle className="w-4 h-4" />{post.commentsCount || 0}</span><span className="flex items-center gap-1.5"><Share2 className="w-4 h-4" />{post.sharesCount || 0}</span></div></article>)}
   </main>;
 };
