@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { registerDataApi } from './server-data.ts';
-import { isSupabaseConfigured, uploadImageToSupabase } from './server-supabase.ts';
+import { isSupabaseConfigured, checkSupabaseStorage, uploadImageToSupabase } from './server-supabase.ts';
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = '0.0.0.0';
@@ -27,9 +27,10 @@ async function main() {
   app.use(express.json({ limit: '10mb' }));
   registerDataApi(app);
 
-  app.get('/api/health', (_req, res) => {
+  app.get('/api/health', async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ ok: true, status: 'ONLINE', gemini: Boolean(process.env.GEMINI_API_KEY), supabase: isSupabaseConfigured(), model: GEMINI_MODEL, persistentData: true, production: IS_PRODUCTION, port: PORT, timestamp: new Date().toISOString() });
+    const storage = await checkSupabaseStorage();
+    res.status(200).json({ ok: true, status: 'ONLINE', gemini: Boolean(process.env.GEMINI_API_KEY), supabase: isSupabaseConfigured(), supabaseUrlPresent: Boolean(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL), supabaseKeyPresent: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY), storage, model: GEMINI_MODEL, persistentData: true, production: IS_PRODUCTION, port: PORT, timestamp: new Date().toISOString() });
   });
 
   app.post('/api/upload/image', async (req, res) => {
