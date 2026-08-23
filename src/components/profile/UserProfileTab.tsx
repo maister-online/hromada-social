@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useUser } from '../../context/UserContext';
-import { User, FileText, FileSpreadsheet, Bookmark, CheckCircle2, ShieldCheck, Camera, Settings, LogOut, Loader2, Image as ImageIcon, MapPin, MoreHorizontal, Heart, MessageCircle, Share2, Pencil, Users, Grid3X3 } from 'lucide-react';
+import { User, FileText, FileSpreadsheet, Bookmark, CheckCircle2, ShieldCheck, Camera, Settings, LogOut, Loader2, Image as ImageIcon, MapPin, MoreHorizontal, Heart, MessageCircle, Share2, Pencil, Users, Grid3X3, Mail } from 'lucide-react';
 
 export const UserProfileTab: React.FC = () => {
   const { user, bookmarks, updateAvatar } = useUser();
@@ -13,8 +13,7 @@ export const UserProfileTab: React.FC = () => {
     if (file.size > 8 * 1024 * 1024) { setMessage('Фото має бути не більше 8 МБ.'); return; }
     setUploading(true); setMessage('Завантаження фото…');
     try {
-      const reader = new FileReader();
-      const data = await new Promise<string>((resolve, reject) => { reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file); });
+      const data = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file); });
       const response = await fetch('/api/upload/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data, mimeType: file.type, name: file.name }) });
       const result = await response.json();
       if (!response.ok || !result.url) throw new Error(result.error || 'Не вдалося завантажити фото.');
@@ -24,7 +23,6 @@ export const UserProfileTab: React.FC = () => {
   };
 
   return <div className="space-y-4 sm:space-y-6 text-slate-100 animate-fadeIn">
-    {/* Facebook-style cover + profile header */}
     <section className="overflow-hidden rounded-3xl bg-slate-950 border border-white/10 shadow-2xl">
       <div className="relative h-32 sm:h-52 bg-gradient-to-br from-cyan-950 via-slate-900 to-violet-950">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,.28),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(139,92,246,.25),transparent_40%)]" />
@@ -57,6 +55,7 @@ export const UserProfileTab: React.FC = () => {
       </div>
       <aside className="space-y-4"><section className="rounded-3xl bg-slate-950 border border-white/10 p-5"><h2 className="font-black text-white mb-4">Інформація</h2><div className="space-y-3 text-xs text-slate-300"><div className="flex gap-3"><MapPin className="w-4 h-4 text-cyan-400 shrink-0" /><span>Живе в <b className="text-white">{user.settlement}</b></span></div><div className="flex gap-3"><Users className="w-4 h-4 text-cyan-400 shrink-0" /><span>Мешканець громади</span></div><div className="flex gap-3"><Mail className="w-4 h-4 text-cyan-400 shrink-0" /><span>{user.email}</span></div></div></section><section className="rounded-3xl bg-slate-950 border border-white/10 p-5"><h2 className="font-black text-white mb-4">Ваша активність</h2><div className="grid grid-cols-3 gap-2 text-center"><div><div className="text-xl font-black text-white">2</div><div className="text-[10px] text-slate-500">Звернення</div></div><div><div className="text-xl font-black text-white">5</div><div className="text-[10px] text-slate-500">Петиції</div></div><div><div className="text-xl font-black text-white">{bookmarks.length}</div><div className="text-[10px] text-slate-500">Збережені</div></div></div></section></aside>
     </div>
+
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[[Settings,'Налаштування','Приватність, сповіщення, вигляд'],[ShieldCheck,'Безпека','Захист облікового запису'],[LogOut,'Вийти','Завершити сеанс на цьому пристрої']].map(([Icon,title,subtitle]: any) => <button key={title} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-cyan-400/30 text-left flex items-center gap-3"><span className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center"><Icon className="w-4 h-4 text-cyan-300" /></span><span><span className="block text-sm font-bold text-white">{title}</span><span className="block text-xs text-slate-500 mt-1">{subtitle}</span></span></button>)}</div>
   </div>;
 };
