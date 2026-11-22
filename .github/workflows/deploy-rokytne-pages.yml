@@ -3,6 +3,7 @@ name: Deploy Rokytne game to GitHub Pages
 on:
   push:
     branches:
+      - main
       - feature/rokytne-total-simulator
     paths:
       - "rokytne-total-simulator/**"
