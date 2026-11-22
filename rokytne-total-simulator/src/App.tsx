@@ -57,7 +57,7 @@ function makeStoryTalk(arc:StoryArc,step:number):Talk{
 function begin(_p:Place,n:NPC){
  setPlace(null);
  const choices:Choice[]=n.topics.map(topic=>({label:"Запитати: "+topic,text:n.name+" починає розмову про «"+topic+"».",npcId:n.id,next:makeTopicTalk(n,topic)}));
- for(const arc of getArcsForPerson(n.id)){const progress=getArcProgress(g.flags,arc.id);if(progress<arc.stages.length&&arc.stages[progress].actor===n.id){choices.unshift({label:(progress===0?"ПОЧАТИ ІСТОРІЮ: ":"ПРОДОВЖИТИ ІСТОРІЮ: ")+arc.title+" ("+(progress+1)+"/"+arc.stages.length+")",text:"Ти долучився до події «"+arc.title+"».",startStoryId:arc.id,next:makeStoryTalk(arc,progress)});}}
+ for(const arc of getArcsForPerson(n.id)){const progress=getArcProgress(g.flags,arc.id);if(!g.flags.includes("completed:"+arc.id)&&progress<arc.stages.length&&arc.stages[progress].actor===n.id){choices.unshift({label:(progress===0?"ПОЧАТИ ІСТОРІЮ: ":"ПРОДОВЖИТИ ІСТОРІЮ: ")+arc.title+" ("+(progress+1)+"/"+arc.stages.length+")",text:"Ти долучився до події «"+arc.title+"».",startStoryId:arc.id,next:makeStoryTalk(arc,progress)});}}
  const seen=g.memories[n.id]||[];
  setTalk({title:n.name+" — "+n.job,lines:[n.greeting,n.bio,"Риси характеру: "+n.traits.join(", ")+".",seen.length?"Пам'ятаю наші попередні розмови: "+seen.slice(-2).join(" ") : "Ми ще не знайомі. Можеш поставити запитання або долучитися до історії.","Обери, про що говоритимемо."],choices});
 }
