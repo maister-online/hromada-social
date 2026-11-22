@@ -1,62 +1,13 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import L from "leaflet";
 import "./style.css";
+import {peopleByPlace,storyArcs,getPerson,getArcsForPerson,getArcProgress,type Person,type StoryArc} from "./gameContent";
 type Role="Мешканець"|"Підприємець"|"Журналіст"|"Депутат"|"Працівник ради"|"Поліцейський";
 type Place={id:string;name:string;kind:string;lat:number;lng:number;desc:string};
 type Talk={title:string;lines:string[];choices:Choice[]};
-type Choice={label:string;text:string;money?:number;trust?:number;rep?:number;energy?:number;item?:string;quest?:string;next?:Talk;npcId?:string;flag?:string;memory?:string};
-type NPC={id:string;name:string;job:string;greeting:string;topics:string[]};
-const npcRoster:Record<string,NPC[]> = {
- square:[
- {id:"mykola",name:"Микола",job:"місцевий мешканець",greeting:"Вітаю! Я тутешній, знаю майже всіх у центрі.",topics:["Життя громади","Дороги й транспорт","Робота та заробіток","Сім'я і дозвілля","Чутки та новини","Запросити на подію"]},
- {id:"viktor",name:"Віктор",job:"водій",greeting:"Привіт. Щойно повернувся з рейсу.",topics:["Маршрути й автобуси","Стан доріг","Підробіток","Пасажири","Місцеві новини","Попрощатися"]},
- {id:"olha",name:"Ольга",job:"пенсіонерка",greeting:"Добридень, дитино. Чим можу допомогти?",topics:["Побутові проблеми","Допомога сусідам","Школа й діти","Медицина","Спогади про Рокитне","Попрощатися"]},
- {id:"taras",name:"Тарас",job:"молодий мешканець",greeting:"Йо! Збираємо компанію на вечір.",topics:["Друзі та відпочинок","Спорт","Соцмережі","Робота для молоді","Музика","Запросити погуляти"]}
- ],
- shop:[
- {id:"andrii",name:"Андрій",job:"продавець",greeting:"Вітаю! Я Андрій, сьогодні моя зміна. Що шукаєш?",topics:["Купити продукти","Повернути товар","Запитати про роботу","Поговорити про ціни","Місцеві новини","Поскаржитися на сервіс","Попрощатися"]},
- {id:"halyna",name:"Галина",job:"покупчиня",greeting:"Добрий день. Я часто тут купую продукти.",topics:["Порадити покупки","Ціни в магазинах","Рецепти Полісся","Плітки та новини","Попросити допомоги","Попрощатися"]},
- {id:"petro",name:"Петро",job:"постачальник",greeting:"Доброго дня! Привіз товар. Є хвилина поговорити.",topics:["Постачання товарів","Влаштуватися на роботу","Якість продукції","Проблеми доставки","Поговорити про бізнес","Попрощатися"]},
- {id:"sofia",name:"Софія",job:"касирка",greeting:"Привіт! Я Софія, працюю на касі.",topics:["Оплата й покупки","Знижки","Загублена річ","Робота в магазині","Поговорити про день","Попрощатися"]}
- ],
- council:[
- {id:"iryna",name:"Ірина",job:"спеціалістка звернень",greeting:"Добрий день. Я Ірина, приймаю звернення мешканців.",topics:["Подати звернення","Дізнатися про бюджет","Дороги та благоустрій","Записатися на прийом","Громадські слухання","Запит на публічну інформацію","Попрощатися"]},
- {id:"oleh",name:"Олег",job:"депутат",greeting:"Вітаю. Готовий вислухати пропозиції мешканців.",topics:["Місцеві проблеми","Бюджетні пріоритети","Зустріч із виборцями","Молодіжні ініціативи","Критика роботи ради","Співпраця","Попрощатися"]},
- {id:"nataliia",name:"Наталія",job:"відвідувачка",greeting:"Я прийшла з питанням щодо земельної ділянки.",topics:["Земельне питання","Комунальні послуги","Соціальна допомога","Черги та документи","Порадитися","Попрощатися"]},
- {id:"serhii_c",name:"Сергій",job:"керівник відділу",greeting:"Доброго дня. Я можу пояснити порядок звернень.",topics:["Дозвільні документи","Підприємництво","Комунальне майно","Робота установ","Оскарження рішення","Попрощатися"]}
- ],
- clinic:[
- {id:"olena",name:"Олена",job:"медсестра",greeting:"Вітаю. Я Олена. Що вас турбує?",topics:["Записатися на прийом","Поради щодо здоров'я","Аптечка та ліки","Вакцинація","Допомога літнім людям","Робота амбулаторії","Попрощатися"]},
- {id:"doctor",name:"Андрій Петрович",job:"сімейний лікар",greeting:"Добрий день. Розкажіть, що вас привело.",topics:["Консультація","Профілактичний огляд","Направлення до спеціаліста","Медична декларація","Графік прийому","Попрощатися"]},
- {id:"lidia",name:"Лідія",job:"пацієнтка",greeting:"Доброго дня. Чекаю своєї черги.",topics:["Черга та очікування","Медичні послуги","Поговорити про погоду","Попросити підтримки","Попрощатися"]},
- {id:"maksym",name:"Максим",job:"фельдшер",greeting:"Привіт. Я на чергуванні.",topics:["Виклик допомоги","Перша допомога","Медичне обладнання","Робота в медицині","Поговорити про громаду","Попрощатися"]}
- ],
- cafe:[
- {id:"mariia",name:"Марія",job:"відвідувачка",greeting:"Привіт! Я Марія. Тут часто збираються знайомі.",topics:["Познайомитися ближче","Події на вихідних","Робота та навчання","Стосунки й сім'я","Місцеві новини","Запросити на каву","Попрощатися"]},
- {id:"barista",name:"Денис",job:"бариста",greeting:"Вітаю! Що бажаєш замовити?",topics:["Замовити каву","Меню та ціни","Вакансія бариста","Відгук про заклад","Музика в кафе","Попрощатися"]},
- {id:"anna",name:"Анна",job:"студентка",greeting:"Привіт. Роблю тут домашнє завдання.",topics:["Навчання","Студентське життя","Плани на майбутнє","Молодіжні події","Соцмережі","Попрощатися"]},
- {id:"roman",name:"Роман",job:"підприємець",greeting:"Добрий день. Маю невелику справу в селищі.",topics:["Відкрити бізнес","Оренда приміщення","Клієнти й реклама","Податки та документи","Партнерство","Попрощатися"]}
- ],
- police:[
- {id:"serhii",name:"Сергій",job:"дільничний офіцер",greeting:"Добрий день. Я дільничний. Слухаю вас.",topics:["Подати заяву","Повідомити про проблему","Поради з безпеки","Дорожній рух","Знайдені речі","Права мешканців","Попрощатися"]},
- {id:"kateryna",name:"Катерина",job:"чергова",greeting:"Вітаю. Я чергова частини.",topics:["Як подати звернення","Графік прийому","Загублені документи","Порядок виклику служб","Попрощатися"]},
- {id:"dmytro",name:"Дмитро",job:"відвідувач",greeting:"Прийшов уточнити щодо свого звернення.",topics:["Статус звернення","Поговорити про безпеку","Попросити пояснення","Місцеві проблеми","Попрощатися"]},
- {id:"ira",name:"Ірина",job:"інспекторка",greeting:"Добрий день. Проводжу прийом громадян.",topics:["Профілактика правопорушень","Безпека дітей","Домашні конфлікти — куди звернутися","Шахрайство та захист","Попрощатися"]}
- ]
-};
-function npcChoices(n:NPC):Choice[]{return n.topics.map((topic,i)=>{
- const replies=[
- ["Звісно, розкажу. У громаді багато щоденних справ, і кожна залежить від активності мешканців.","Дякую за розмову. Можемо ще обговорити іншу тему."],
- ["Є кілька варіантів. Варто звернутися до відповідальної служби й уточнити деталі.","Я занотував твоє питання. Що ще хочеш дізнатися?"],
- ["Це питання часто обговорюють місцеві. Головне — перевіряти факти й чути різні сторони.","Радий, що ти цікавишся життям громади."],
- ["Можу поділитися власним досвідом. У кожного тут своя історія.","Можливо, ще зустрінемося й продовжимо."],
- ["Дякую за ініціативу! Такі розмови допомагають знаходити рішення.","Передам твою пропозицію в межах ігрового сюжету."],
- ["Цікава тема. Давай обговоримо спокійно та по суті.","Ти можеш повернутися до цієї розмови пізніше."]
- ];
- const pair=replies[i%replies.length];
- return {label:topic,text:n.name+": "+pair[0]+" "+pair[1],trust:i%3===0?2:1,rep:i%4===0?1:0,energy:topic==="Попрощатися"?0:undefined};
-});}
-
+type Choice={label:string;text:string;money?:number;trust?:number;rep?:number;energy?:number;item?:string;quest?:string;next?:Talk;npcId?:string;flag?:string;memory?:string;startStoryId?:string;storyId?:string;storyStep?:number};
+type NPC=Person;
+const npcRoster:Record<string,NPC[]>=peopleByPlace;
 const KEY="rokytne-total-simulator-v2";
 const roles:Role[]=["Мешканець","Підприємець","Журналіст","Депутат","Працівник ради","Поліцейський"];
 const places:Place[]=[
@@ -65,7 +16,13 @@ const places:Place[]=[
 {id:"council",name:"Селищна рада",kind:"Установа",lat:51.279,lng:27.208,desc:"Тут приймають звернення та обговорюють справи громади."},
 {id:"clinic",name:"Амбулаторія",kind:"Медицина",lat:51.283,lng:27.215,desc:"Медсестра Олена допоможе відновити сили."},
 {id:"cafe",name:"Кав'ярня «Зустріч»",kind:"Кав'ярня",lat:51.277,lng:27.214,desc:"Знайомства, розмови та місцеві новини."},
-{id:"police",name:"Поліцейська дільниця",kind:"Безпека",lat:51.282,lng:27.205,desc:"Дільничний Сергій приймає звернення."}
+{id:"police",name:"Поліцейська дільниця",kind:"Безпека",lat:51.282,lng:27.205,desc:"Дільничний Сергій приймає звернення."},
+{id:"school",name:"Школа",kind:"Освіта",lat:51.284,lng:27.208,desc:"Учні, батьки й педагоги вирішують питання навчання."},
+{id:"farm",name:"Фермерське господарство",kind:"Робота",lat:51.275,lng:27.222,desc:"Сезонна робота, ягоди, техніка та збут продукції."},
+{id:"market",name:"Ринок",kind:"Торгівля",lat:51.276,lng:27.205,desc:"Місцеві продавці, покупці та сезонні товари."},
+{id:"bus",name:"Автостанція",kind:"Транспорт",lat:51.286,lng:27.214,desc:"Маршрути, пасажири, розклад і перевізники."},
+{id:"park",name:"Парк",kind:"Відпочинок",lat:51.274,lng:27.211,desc:"Спорт, толоки, музика та громадські події."},
+{id:"library",name:"Бібліотека",kind:"Культура",lat:51.279,lng:27.22,desc:"Книги, історія Полісся, гуртки й цифрові ініціативи."}
 ];
 type Quest={id:string;title:string;text:string;done:boolean;reward:number};
 type Game={player:{name:string;role:Role;money:number;energy:number;trust:number;rep:number;lat:number;lng:number};day:number;quests:Quest[];log:string[];items:string[];posts:string[];flags:string[];relationships:Record<string,number>;memories:Record<string,string[]>};
@@ -82,91 +39,44 @@ const done=g.quests.filter(q=>q.done).length;
 const nearest=useMemo(()=>places.map(p=>({...p,d:Math.round(Math.hypot((p.lat-g.player.lat)*111000,(p.lng-g.player.lng)*111000*Math.cos(g.player.lat*Math.PI/180)))})).sort((a,b)=>a.d-b.d)[0],[g.player.lat,g.player.lng]);
 const changeTab=(t:string)=>{setTab(t);setMenu(false);setPlace(null);setTalk(null);};
 function log(s:Game,line:string):Game{return {...s,log:[line,...s.log].slice(0,80)};}
-const npcStories:Record<string,string>={
-mykola:"Микола давно живе в Рокитному й знає, як змінювалися вулиці та звички людей.",
-viktor:"Віктор щодня їздить маршрутами й найкраще помічає проблеми сполучення.",
-olha:"Ольга пам'ятає старі традиції та часто допомагає сусідам.",
-taras:"Тарас хоче, щоб молодь мала більше приводів залишатися й розвиватися тут.",
-andrii:"Андрій працює в магазині й бачить, які товари та послуги потрібні людям.",
-halyna:"Галина добре знає побутові потреби родин і любить практичні поради.",
-petro:"Петро відповідає за постачання й постійно шукає надійних партнерів.",
-sofia:"Софія уважна до покупців і пам'ятає, як важлива чесна ціна.",
-iryna:"Ірина пояснює процедури звернень і допомагає мешканцям правильно оформити питання.",
-oleh:"Олег представляє мешканців і має звітувати про рішення та їхні наслідки.",
-nataliia:"Наталія прийшла вирішити особисте питання й не хоче загубитися в бюрократії.",
-serhii_c:"Сергій керує роботою відділу та знає внутрішній порядок установи.",
-olena:"Олена щодня спілкується з пацієнтами й добре знає потреби амбулаторії.",
-doctor:"Андрій Петрович наголошує на профілактиці та відповідальному ставленні до здоров'я.",
-lidia:"Лідія часто відвідує амбулаторію й може розповісти про досвід пацієнтів.",
-maksym:"Максим працює на виїздах і цінує взаємодопомогу та чітку організацію.",
-mariia:"Марія любить знайомити людей і збирати друзів на місцеві події.",
-barista:"Денис стежить за атмосферою кав'ярні та мріє про цікаве меню.",
-anna:"Анна навчається й шукає можливості для молоді в громаді.",
-roman:"Роман розвиває власну справу та готовий обговорювати партнерство.",
-serhii:"Сергій працює дільничним і заохочує мешканців повідомляти про проблеми законним шляхом.",
-kateryna:"Катерина пояснює порядок звернень і допомагає зорієнтуватися у службах.",
-dmytro:"Дмитро прийшов за відповіддю на своє звернення й хоче ясності.",
-ira:"Ірина займається профілактикою та безпекою мешканців."
-};
-function topicKind(topic:string):string{
-const t=topic.toLowerCase();
-if(/бюджет|рада|звернен|депутат|громад|дорог|благоустр|слухан|рішенн|земел|документ|комунал/.test(t))return "civic";
-if(/робот|бізнес|підприєм|зароб|ваканс|постач|клієнт|оренд|подат|партнер|підробіт/.test(t))return "work";
-if(/медиц|здоров|лікар|аптеч|вакцина|допомог|перша допомог|амбулатор|черга|прийом/.test(t))return "health";
-if(/безпек|поліц|заяв|шахрай|правопоруш|дорожній рух|виклик служб/.test(t))return "safety";
-if(/сім|діти|школ|навчан|студент|стосунк|друзі|відпоч|погуля|підтрим/.test(t))return "people";
-if(/ціни|купити|покуп|товар|зниж|кава|меню|рецепт|сервіс|оплата/.test(t))return "trade";
-if(/новин|соцмереж|музик|поді|спогад|погода|спорт|дозвіл/.test(t))return "community";
-return "general";
-}
-function makeOutcome(n:NPC,topic:string,branch:number):Talk{
-const kind=topicKind(topic);
-const outcomes:Record<string,string[]> = {
-civic:["Тоді пропоную не обмежуватися розмовою: зафіксуй проблему, адресу й конкретний результат, якого очікуєш.","Є різні погляди. Давай попросимо документи та відкриті дані, перш ніж робити висновки.","Можна зібрати сусідів і підготувати спільну пропозицію. Так буде зрозуміло, скільки людей підтримують ідею."],
-work:["Почни з простого плану: витрати, покупці, терміни й відповідальні. Без цифр легко помилитися.","Я можу познайомити тебе з людиною, яка має досвід. Але домовленості краще записати.","Спробуй невеликий тестовий крок. Якщо буде попит, тоді розшириш справу."],
-health:["Найкраще звернутися до медичного працівника й описати симптоми. Не варто ставити собі діагноз за чутками.","Запиши запитання та уточни графік, доступні послуги й порядок отримання допомоги.","Підтримка близьких важлива. Можемо допомогти людині дістатися до амбулаторії або знайти офіційну інформацію."],
-safety:["Зафіксуй факти й звернися до відповідної служби. У разі безпосередньої небезпеки телефонуй 112 або 102.","Не поширюй неперевірені звинувачення. Збережи докази й передай їх уповноваженим органам.","Профілактика починається з уважності сусідів і безпечного способу повідомити про проблему."],
-people:["Домовмося про невелику спільну справу. Коли люди знайомі, їм легше підтримувати одне одного.","Важливо вислухати всіх і не тиснути. Я можу допомогти організувати спокійну зустріч.","Запропонуй конкретний час і місце. Так ідея перетвориться на реальну подію."],
-trade:["Порівняй якість, ціну та умови повернення. Покупець має отримати зрозумілу інформацію.","Давай уточнимо деталі й домовимося без поспіху. Чесний сервіс важливіший за гучні обіцянки.","Можна залишити відгук із конкретними фактами та пропозицією, як виправити ситуацію."],
-community:["Запропонуй тему для відкритої зустрічі. Можливо, до неї долучаться й інші мешканці.","Перевіримо інформацію та запросимо людей поділитися власним досвідом без образ.","Мені подобається ця ідея. Давай перетворимо її на невелику подію для громади."],
-general:["Давай визначимо, що саме можна зробити вже сьогодні, а що потребує більше часу.","Я готовий обговорити це ще раз, коли матимемо більше фактів.","Почнімо з маленького кроку й подивимося, до чого він приведе."]
-};
-const responses=outcomes[kind];
-const detail=responses[branch];
-const endings=[
-{label:"Домовитися про наступну зустріч",text:n.name+" погодився продовжити розмову пізніше.",trust:3,rep:1,flag:n.id+":"+topic+":meeting",memory:"Домовилися про наступну зустріч щодо теми «"+topic+"»."},
-{label:"Попросити конкретну допомогу",text:n.name+" занотував прохання й пообіцяв повернутися з відповіддю.",trust:2,rep:2,flag:n.id+":"+topic+":help",memory:"Попросив допомогу щодо теми «"+topic+"»."},
-{label:"Подякувати й завершити",text:"Ти подякував "+n.name+" за розмову. Ваші стосунки стали трохи кращими.",trust:1,flag:n.id+":"+topic+":talked",memory:"Обговорили тему «"+topic+"»."}
-];
-return {title:n.name+" — продовження розмови",lines:[detail,branch===0?"Що робитимеш далі?":branch===1?"Як хочеш діяти після цієї розмови?":"Який наступний крок обереш?"],choices:endings.map(x=>({...x,npcId:n.id}))};
-}
 function makeTopicTalk(n:NPC,topic:string):Talk{
-const kind=topicKind(topic);
-const prompts:Record<string,string[]> = {
-civic:["Я підтримаю прозорий шлях: звернення, строки та публічна відповідь.","Спершу хочу побачити документи й почути іншу сторону.","Можу зібрати сусідів і підготувати спільну пропозицію."],
-work:["Давай порахуємо витрати й перевіримо, чи є реальний попит.","Мені потрібен досвідчений партнер або наставник.","Почну з невеликого тесту, щоб не ризикувати всім одразу."],
-health:["Я уточню це в медичного працівника й не займатимусь самолікуванням.","Допоможу з'ясувати графік і порядок отримання послуги.","Можу підтримати людину й допомогти організувати візит."],
-safety:["Передам факти відповідній службі законним шляхом.","Спочатку перевірю інформацію й не поширюватиму чуток.","Запропоную профілактичну зустріч для мешканців."],
-people:["Запропоную зустріч або спільну справу для знайомих.","Хочу спершу вислухати всіх, кого це стосується.","Домовлюся про конкретний час і місце."],
-trade:["Уточню ціну, якість і правила повернення.","Попрошу пояснити умови й можливі альтернативи.","Залишу ввічливий відгук із конкретною пропозицією."],
-community:["Запропоную відкриту подію для мешканців.","Перевірю факти й запрошу різні думки.","Допоможу організувати невелику ініціативу."],
-general:["Давай визначимо перший реальний крок.","Хочу спершу зібрати більше інформації.","Готовий долучитися й допомогти."]
-};
-const choices=prompts[kind].map((label,i)=>({label,text:n.name+" почув твою позицію щодо теми «"+topic+"».",npcId:n.id,next:makeOutcome(n,topic,i)}));
-return {title:n.name+" — "+topic,lines:[n.name+": "+(npcStories[n.id]||n.greeting),"Ти порушив тему «"+topic+"». Як відповіси?"],choices};
+ const civic=/бюджет|рада|звернен|дорог|документ|земел|комунал|слухан/i.test(topic);
+ const work=/робот|бізнес|підприєм|зароб|ваканс|постач|клієнт|оренд|партнер/i.test(topic);
+ const health=/медиц|здоров|лікар|аптеч|вакцин|черга|прийом/i.test(topic);
+ const safety=/безпек|поліц|заяв|шахрай|правопоруш/i.test(topic);
+ const people=/сім|діти|школ|навчан|друзі|відпоч|підтрим/i.test(topic);
+ const replies=civic?["Спершу треба зафіксувати адресу, дату й конкретну проблему. Без цього звернення легко загубиться.","Попроси номер реєстрації, відповідального виконавця та строк письмової відповіді.","Можна об'єднати сусідів, але кожен факт потрібно перевірити."]:work?["Почни з реального попиту й витрат. Гарна ідея без розрахунку може стати боргом.","Домовленості про оплату, графік і відповідальність краще фіксувати письмово.","Я знаю людей у цій сфері. Можу познайомити, якщо підготуєш конкретну пропозицію."]:health?["Не став собі діагноз за чутками. Звернися до медичного працівника й опиши симптоми.","Уточни графік прийому, доступні послуги та порядок запису.","Можемо допомогти з організацією візиту, але медичні рішення має ухвалювати фахівець."]:safety?["Важливі конкретні факти: коли, де й що сталося. Не звинувачуй людей без доказів.","Звернення треба зареєструвати й зберегти його номер. У разі негайної небезпеки телефонуй 112 або 102.","Не публікуй чужі адреси, телефони чи приватні фото."]:people?["Давай вислухаємо всіх, кого це стосується. Не хочу, щоб суперечка зруйнувала стосунки.","Можемо домовитися про зустріч і розподілити конкретні справи.","Людям потрібні зрозумілі час, місце та відповідальний."]:["Перевірмо інформацію й запросімо різні думки.","Порівняй умови та попроси конкретні подробиці.","Я готовий долучитися, але треба визначити наступний крок."];
+ const actions=[{label:"Запропонувати конкретну допомогу",text:n.name+" погоджується обговорити допомогу й просить повернутися з планом.",trust:2,rep:1},{label:"Попросити контакт фахівця",text:n.name+" обіцяє познайомити тебе з потрібною людиною.",trust:2},{label:"Не погодитися й навести аргументи",text:"Ви не дійшли згоди, але розмова залишилася спокійною.",trust:-1},{label:"Домовитися про наступну зустріч",text:n.name+" записує тему й погоджується продовжити розмову.",trust:2,rep:1}];
+ const questions=["Що саме сталося і чому?","Які є варіанти вирішення?","Чим я можу допомогти?"];
+ return {title:n.name+" — "+topic,lines:[n.name+": "+n.bio,"Можеш поставити пряме запитання. Персонаж відповість, а потім обереш дію."],choices:questions.map((q,i)=>({label:q,text:"Ти запитав "+n.name+": "+q,npcId:n.id,next:{title:n.name+" — відповідь",lines:[replies[i],"Що робитимеш далі?"],choices:actions.map(x=>({...x,npcId:n.id,memory:"Обговорили «"+topic+"» із "+n.name+"."}))}}))};
 }
-function begin(_p:Place,n:NPC){setPlace(null);const seen=g.memories[n.id]||[];const relationship=g.relationships[n.id]||0;setTalk({title:n.name+" — "+n.job,lines:[n.greeting,npcStories[n.id]||"У цього персонажа є власна історія.",seen.length?"Я пам'ятаю наші попередні розмови: "+seen.slice(-2).join(" ") : "Ми ще не спілкувалися. Розкажи, що тебе цікавить.", "Рівень знайомства: "+relationship+". Обери тему."],choices:n.topics.map(topic=>({label:topic,text:n.name+" починає розмову про «"+topic+"».",npcId:n.id,next:makeTopicTalk(n,topic)}))});}
-function choose(c:Choice){setG(s=>{let relationships={...s.relationships},memories={...s.memories},flags=[...s.flags];if(c.npcId){relationships[c.npcId]=Math.max(-20,Math.min(100,(relationships[c.npcId]||0)+(c.trust||0)));if(c.memory)memories[c.npcId]=[...(memories[c.npcId]||[]),c.memory].slice(-12);}if(c.flag&&!flags.includes(c.flag))flags.push(c.flag);let n={...s,relationships,memories,flags,player:{...s.player,money:Math.max(0,s.player.money+(c.money||0)),trust:Math.max(0,Math.min(100,s.player.trust+(c.trust||0))),rep:Math.max(0,Math.min(100,s.player.rep+(c.rep||0))),energy:Math.max(0,Math.min(100,s.player.energy+(c.energy||0)))},items:c.item?[...s.items,c.item]:s.items};if(c.quest)n.quests=n.quests.map(q=>q.id===c.quest?{...q,done:true}:q);return log(n,c.text);});setNotice(c.text);setTalk(c.next||null);}
+function makeStoryTalk(arc:StoryArc,step:number):Talk{
+ const stage=arc.stages[step];
+ return {title:arc.title+" · "+stage.title,lines:[stage.scene,...stage.dialogue],choices:stage.choices.map(c=>({label:c.label,text:c.reply+" "+c.consequence,trust:c.trust||0,rep:c.rep||0,money:c.money||0,item:c.item,npcId:stage.actor,flag:c.flag,storyId:arc.id,storyStep:step,memory:"Історія «"+arc.title+"»: "+c.consequence}))};
+}
+function begin(_p:Place,n:NPC){
+ setPlace(null);
+ const choices:Choice[]=n.topics.map(topic=>({label:"Запитати: "+topic,text:n.name+" починає розмову про «"+topic+"».",npcId:n.id,next:makeTopicTalk(n,topic)}));
+ for(const arc of getArcsForPerson(n.id)){const progress=getArcProgress(g.flags,arc.id);if(!g.flags.includes("completed:"+arc.id)&&progress<arc.stages.length&&arc.stages[progress].actor===n.id){choices.unshift({label:(progress===0?"ПОЧАТИ ІСТОРІЮ: ":"ПРОДОВЖИТИ ІСТОРІЮ: ")+arc.title+" ("+(progress+1)+"/"+arc.stages.length+")",text:"Ти долучився до події «"+arc.title+"».",startStoryId:arc.id,next:makeStoryTalk(arc,progress)});}}
+ const seen=g.memories[n.id]||[];
+ setTalk({title:n.name+" — "+n.job,lines:[n.greeting,n.bio,"Риси характеру: "+n.traits.join(", ")+".",seen.length?"Пам'ятаю наші попередні розмови: "+seen.slice(-2).join(" ") : "Ми ще не знайомі. Можеш поставити запитання або долучитися до історії.","Обери, про що говоритимемо."],choices});
+}
+function choose(c:Choice){
+ setG(s=>{let relationships={...s.relationships},memories={...s.memories},flags=[...s.flags];if(c.npcId){relationships[c.npcId]=Math.max(-20,Math.min(100,(relationships[c.npcId]||0)+(c.trust||0)));if(c.memory)memories[c.npcId]=[...(memories[c.npcId]||[]),c.memory].slice(-20);}if(c.flag&&!flags.includes(c.flag))flags.push(c.flag);if(c.storyId&&c.storyStep!==undefined){const arc=storyArcs.find(a=>a.id===c.storyId);const next=c.storyStep+1;if(arc){flags=flags.filter(x=>!x.startsWith("progress:"+arc.id+":"));if(next<arc.stages.length)flags.push("progress:"+arc.id+":"+next);else flags.push("completed:"+arc.id);}}if(c.startStoryId&&!flags.includes("progress:"+c.startStoryId+":0"))flags.push("progress:"+c.startStoryId+":0");let n={...s,relationships,memories,flags,player:{...s.player,money:Math.max(0,s.player.money+(c.money||0)),trust:Math.max(0,Math.min(100,s.player.trust+(c.trust||0))),rep:Math.max(0,Math.min(100,s.player.rep+(c.rep||0))),energy:Math.max(0,Math.min(100,s.player.energy+(c.energy||0)))},items:c.item?[...s.items,c.item]:s.items};if(c.quest)n.quests=n.quests.map(q=>q.id===c.quest?{...q,done:true}:q);return log(n,c.text);});
+ setNotice(c.text);
+ if(c.storyId&&c.storyStep!==undefined){const arc=storyArcs.find(a=>a.id===c.storyId)!;const next=c.storyStep+1;if(next<arc.stages.length){const actor=getPerson(arc.stages[next].actor);setTalk({title:"Наступний етап: "+arc.title,lines:["Твій вибір змінив перебіг подій.","Наступний крок: "+arc.stages[next].title+".","Знайди персонажа "+(actor?.name||"мешканця")+" ("+(actor?.job||"NPC")+") у локації «"+(actor?.place||"")+"».",arc.stages[next].scene],choices:[{label:"Зрозуміло. Піду до наступного персонажа.",text:"Ти вирушаєш до наступного учасника історії."}]});}else setTalk({title:"Історію завершено: "+arc.title,lines:["Твоя гілка сюжету завершена.","Наслідок: "+c.text,"Історія збережена в журналі. Інші рішення могли б привести до іншого результату."],choices:[{label:"Повернутися до гри",text:"Ти завершив історію «"+arc.title+"»."}]});}
+ else setTalk(c.next||null);
+}
 function enter(p:Place){setG(s=>({...s,player:{...s.player,lat:p.lat,lng:p.lng}}));hero.current?.setLatLng([p.lat,p.lng]);map.current?.setView([p.lat,p.lng],17);setPlace(p);}
 function nextDay(){setG(s=>log({...s,day:s.day+1,player:{...s.player,energy:Math.min(100,s.player.energy+25)}}, "Почався день "+(s.day+1)+". Ти відновив сили."));setNotice("Новий день розпочався.");}
 function publish(){if(!post.trim())return;setG(s=>log({...s,posts:[post.trim(),...s.posts]},s.player.name+" опублікував: "+post.trim()));setPost("");}
-const nav=[["Світ","⌖"],["Завдання","✓"],["Персонаж","◉"],["Стрічка","▤"],["Журнал","☰"]];
+const nav=[["Світ","⌖"],["Події","✦"],["Завдання","✓"],["Персонаж","◉"],["Стрічка","▤"],["Журнал","☰"]];
 return <div className="game-shell">
 <header className="topbar"><button className="menu-toggle" onClick={()=>setMenu(v=>!v)}>{menu?"✕":"☰"}</button><div className="brand"><span className="brand-mark">Р</span><div><b>РОКИТНЕ</b><small>ЖИТТЯ ГРОМАДИ</small></div></div><div className="top-stats"><span>ДЕНЬ <b>{g.day}</b></span><span>ГРОШІ <b>{g.player.money} ₴</b></span><span>ЕНЕРГІЯ <b>{Math.round(g.player.energy)}%</b></span></div><button className="profile-chip" onClick={()=>changeTab("Персонаж")}>{g.player.name}</button></header>
 <main className="game-layout"><section className="map-stage"><div id="map" ref={mapEl}/><div className="map-title"><b>РОКИТНЕ · ВІДКРИТИЙ СВІТ</b><span>Натисни на значок локації</span></div><div className="map-legend"><span>● Ти</span><span>● Локації</span></div><div className="move-help">РУХ: WASD / СТРІЛКИ</div></section>
 <aside className={"side-panel "+(menu?"is-open":"")}><div className="panel-head"><div><small>ІГРОВИЙ ІНТЕРФЕЙС</small><h2>{tab}</h2></div><button className="close-menu" onClick={()=>setMenu(false)}>✕</button></div><nav className="side-nav">{nav.map(([n,ico])=><button key={n} className={tab===n?"selected":""} onClick={()=>changeTab(n)}><span>{ico}</span>{n}</button>)}</nav>
 {tab==="Світ"&&<div className="panel-content"><div className="welcome-card"><small>ТВОЯ ІСТОРІЯ ПОЧИНАЄТЬСЯ ТУТ</small><h3>Вітаємо у Рокитному, {g.player.name}!</h3><p>{notice}</p></div><div className="section-title">ПОБЛИЗУ ТЕБЕ</div><button className="location-card" onClick={()=>setPlace(places.find(p=>p.id===nearest.id)||places[0])}><span className="location-symbol">⌖</span><span><b>{nearest.name}</b><small>{nearest.kind} · {nearest.d} м</small></span><strong>›</strong></button><div className="section-title">ШВИДКІ ДІЇ</div><div className="quick-actions"><button onClick={nextDay}>Наступний день</button><button onClick={()=>setG(s=>log({...s,player:{...s.player,energy:Math.min(100,s.player.energy+20)}},"Ти відпочив і відновив 20% енергії."))}>Відпочити +20%</button></div><div className="section-title">АКТИВНЕ ЗАВДАННЯ</div><div className="quest-mini">{g.quests.find(q=>!q.done)?.title||"Початкові завдання виконано"}<p>{g.quests.find(q=>!q.done)?.text||"Шукай нові пригоди."}</p><button onClick={()=>changeTab("Завдання")}>Усі завдання →</button></div></div>}
-{tab==="Завдання"&&<div className="panel-content"><div className="progress-card"><b>ІСТОРІЯ ГРОМАДИ</b><strong>{done}/{g.quests.length}</strong><div className="progress-track"><i style={{width:(done/g.quests.length*100)+"%"}}/></div></div>{g.quests.map(q=><article className={"quest-card "+(q.done?"done":"")} key={q.id}><span>{q.done?"✓":"○"}</span><div><b>{q.title}</b><p>{q.text}</p><small>{q.done?"ВИКОНАНО":"НАГОРОДА: "+q.reward+" ₴"}</small></div></article>)}</div>}
+{tab==="Події"&&<div className="panel-content"><div className="section-title">СЮЖЕТНІ ЛІНІЇ ГРОМАДИ</div><p className="event-intro">Кожна історія має кілька етапів. Твої рішення змінюють наслідки. Щоб продовжити, знайди персонажа наступного етапу на карті.</p>{storyArcs.map(a=>{const progress=getArcProgress(g.flags,a.id);const completed=g.flags.includes("completed:"+a.id);const stage=a.stages[Math.min(progress,a.stages.length-1)];const person=getPerson(stage.actor);return <article className="quest-card" key={a.id}><span>{completed?"✓":progress?"◷":"○"}</span><div><b>{a.title}</b><p>{a.summary}</p><small>{completed?"ЗАВЕРШЕНО":"ЕТАП "+Math.min(progress+1,a.stages.length)+" / "+a.stages.length+" · "+(person?.name||"")}</small><p>{completed?"Історія завершена.":"Наступна локація: "+(person?.place||"")+" — "+(person?.job||"")}</p></div></article>})}</div>}{tab==="Завдання"&&<div className="panel-content"><div className="progress-card"><b>ІСТОРІЯ ГРОМАДИ</b><strong>{done}/{g.quests.length}</strong><div className="progress-track"><i style={{width:(done/g.quests.length*100)+"%"}}/></div></div>{g.quests.map(q=><article className={"quest-card "+(q.done?"done":"")} key={q.id}><span>{q.done?"✓":"○"}</span><div><b>{q.title}</b><p>{q.text}</p><small>{q.done?"ВИКОНАНО":"НАГОРОДА: "+q.reward+" ₴"}</small></div></article>)}</div>}
 {tab==="Персонаж"&&<div className="panel-content"><div className="character-card"><div className="avatar">Г</div><h3>{g.player.name}</h3><p>{g.player.role}</p></div><label>Ім'я<input value={g.player.name} onChange={e=>setG(s=>({...s,player:{...s.player,name:e.target.value}}))}/></label><label>Роль<select value={g.player.role} onChange={e=>setG(s=>({...s,player:{...s.player,role:e.target.value as Role}}))}>{roles.map(r=><option key={r}>{r}</option>)}</select></label><div className="stat-grid"><div><small>ДОВІРА</small><b>{g.player.trust}/100</b></div><div><small>РЕПУТАЦІЯ</small><b>{g.player.rep}/100</b></div><div><small>ЕНЕРГІЯ</small><b>{Math.round(g.player.energy)}%</b></div><div><small>ГРОШІ</small><b>{g.player.money} ₴</b></div></div><div className="section-title">ІНВЕНТАР</div><div className="inventory">{g.items.map((x,i)=><span key={i}>{x}</span>)}</div></div>}
 {tab==="Стрічка"&&<div className="panel-content"><div className="section-title">ІГРОВА СТРІЧКА МЕШКАНЦІВ</div><textarea value={post} onChange={e=>setPost(e.target.value)} placeholder="Напиши допис..."/><button className="primary-btn full" onClick={publish}>Опублікувати</button><article className="feed-card"><b>Марія · мешканка</b><small>Сьогодні · NPC</small><p>Може, організуємо толоку біля парку? Разом зробимо містечко кращим!</p></article>{g.posts.map((x,i)=><article className="feed-card" key={i}><b>{g.player.name}</b><p>{x}</p></article>)}</div>}
 {tab==="Журнал"&&<div className="panel-content"><div className="section-title">ІСТОРІЯ ТВОЇХ РІШЕНЬ</div>{g.log.map((x,i)=><article className="log-entry" key={i}>{x}</article>)}<button className="secondary-btn full" onClick={()=>{localStorage.removeItem(KEY);location.reload();}}>Почати спочатку</button></div>}
