@@ -3,3 +3,19 @@
 @media(max-width:850px){.topbar{height:60px;padding:0 12px;gap:10px}.menu-toggle{display:block;padding:8px 11px}.brand{min-width:0}.brand b{font-size:11px}.brand-mark{width:32px;height:32px}.top-stats{gap:10px}.top-stats span{font-size:8px}.profile-chip{display:none}.game-layout{display:block}.map-stage{height:100%;width:100%}.side-panel{position:fixed;top:60px;bottom:22px;left:0;width:min(355px,88vw);transform:translateX(-105%);transition:transform .22s ease;box-shadow:15px 0 40px #0005}.side-panel.is-open{transform:translateX(0)}.close-menu{display:block;background:#293b2e;border:0;color:#fff;border-radius:8px;padding:8px}.scrim{display:block;position:fixed;inset:60px 0 22px;z-index:650;border:0;background:#0007}.toast{right:12px;bottom:34px;max-width:calc(100vw - 24px)}.map-title{top:12px;left:10px}.map-legend{top:auto;right:10px;bottom:55px}.move-help{bottom:55px;left:10px}.bottom-note{font-size:7px}.top-stats span:nth-child(3){display:none}}
 @media(min-width:851px){.side-panel{display:block}.close-menu{display:none}}
 @media(max-width:420px){.top-stats span:nth-child(2){display:none}.map-title b{font-size:9px}.map-title span{font-size:9px}.modal-actions{flex-direction:column}}
+
+
+/* NPC roster and expanded conversation UI */
+.npc-roster{display:grid;gap:8px;max-height:42vh;overflow:auto;padding-right:3px}
+.npc-card{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:11px;background:#223329;border:1px solid #405646;border-radius:11px;color:#f1f5f1}
+.npc-card:active{transform:scale(.99);background:#304837}
+.npc-avatar{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#d8b05e,#8b6935);color:#172019;font-weight:800;font-size:16px}
+.npc-card>span:nth-child(2){flex:1;min-width:0}
+.npc-card b,.npc-card small{display:block}
+.npc-card b{font-size:12px}
+.npc-card small{font-size:10px;color:#adbdaf;margin-top:4px}
+.npc-card strong{font-size:22px;color:#e8c16d}
+.place-modal{max-height:88dvh;overflow:auto}
+.dialogue-choices{max-height:48vh;overflow:auto;padding-right:3px}
+.dialogue-choices button{min-height:44px}
+@media(max-width:700px){.npc-roster{max-height:48vh}.place-modal{width:min(94vw,480px);padding:22px 18px}.dialogue-modal{width:min(94vw,480px);max-height:90dvh;overflow:auto}}
