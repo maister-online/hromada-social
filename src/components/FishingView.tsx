@@ -5,7 +5,6 @@ import {
   BookMarked,
   Box,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CloudFog,
@@ -17,7 +16,6 @@ import {
   Scissors,
   ScrollText,
   Shield,
-  Sparkles,
   Sun,
   Warehouse,
   Wrench,
@@ -1597,6 +1595,21 @@ export const FishingView: React.FC<FishingViewProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
+              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setShowBaitDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Наживка · {bait.name}</button>
+              {activeGbDef && activeGb ? (
+                <div className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 flex items-center text-xs text-emerald-300">Прикормлено · {activeGb.castsLeft} закидів</div>
+              ) : (() => {
+                const availGb = GROUNDBAITS.find((g) => (gameState.groundbaitInventory[g.id] ?? 0) > 0);
+                return availGb ? <button type="button" onClick={() => { onThrowGroundbait(availGb.id); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold">Прикормка · {availGb.name}</button> : <div className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 flex items-center text-xs text-slate-500">Немає прикормки</div>;
+              })()}
+              {antiradQty > 0 && gameState.radiation > 5 && <button type="button" onClick={() => { onUseConsumable('antirad_ai2'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Антирад ({antiradQty})</button>}
+              {energyQty > 0 && !isEnergyActive && <button type="button" onClick={() => { onUseConsumable('energy_stalker'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Енергетик ({energyQty})</button>}
+              {gameState.sanity < 85 && sanityFoods.slice(0, 2).map((food) => {
+                const qty = gameState.consumableInventory[food.id] ?? 0;
+                const label = food.id === 'herbal_tea' ? 'Чай' : food.id === 'canned_stew' ? 'Тушкованка' : 'Шоколад';
+                return <button key={food.id} type="button" onClick={() => { onUseConsumable(food.id); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">{label} ({qty})</button>;
+              })}
+
               <button type="button" onClick={() => { setShowLocationMenu(false); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Wrench className="mr-2 inline h-4 w-4 text-sky-300" />Монтаж снасті</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); setShowKeepnet(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Package className="mr-2 inline h-4 w-4 text-amber-300" />Садок ({gameState.keepnet.length})</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenInventory(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Shield className="mr-2 inline h-4 w-4 text-sky-300" />Рюкзак</button>
@@ -1767,50 +1780,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
             </div>
           )}
 
-          {/* Touch Bait Picker Button */}
-          <button
-            type="button"
-            onClick={() => setShowBaitDrawer(true)}
-            disabled={phase !== 'IDLE'}
-            className="btn-tactile btn-field min-h-[46px] inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-55"
-            aria-label="Вибір наживки"
-          >
-            <span className="truncate max-w-[140px] sm:max-w-[180px]">{bait.name}</span>
-            <span className="font-mono-num text-amber-300">
-              {bait.category === 'lure'
-                ? (gameState.baitInventory[bait.id] ?? 0) > 0
-                  ? '∞'
-                  : 0
-                : gameState.baitInventory[bait.id] ?? 0}
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          </button>
-
-          {/* Groundbait Touch Button */}
-          {activeGbDef && activeGb ? (
-            <span className="min-h-[46px] inline-flex items-center text-xs text-emerald-300 font-semibold px-3 py-2 bg-emerald-950/75 border border-emerald-500/35 rounded-lg whitespace-nowrap">
-              Прикормлено ({activeGb.castsLeft})
-            </span>
-          ) : (
-            (() => {
-              const availGb = GROUNDBAITS.find(
-                (g) => (gameState.groundbaitInventory[g.id] ?? 0) > 0
-              );
-              return availGb ? (
-                <button
-                  type="button"
-                  onClick={() => onThrowGroundbait(availGb.id)}
-                  className="btn-tactile min-h-[46px] inline-flex items-center gap-1.5 px-3 py-2 bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 border border-teal-400/40 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Прикормити
-                </button>
-              ) : null;
-            })()
-          )}
-
-
-
           {/* Quick Touch Fishing Depth Control */}
           <div className="flex items-center gap-1 pl-1.5 border-l border-white/10">
             <button
@@ -1867,46 +1836,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
               +
             </button>
           </div>
-
-          {/* Quick Consumables */}
-          {antiradQty > 0 && gameState.radiation > 5 && (
-            <button
-              type="button"
-              onClick={() => onUseConsumable('antirad_ai2')}
-              className="btn-tactile min-h-[46px] inline-flex items-center gap-1.5 px-3 py-2 bg-rose-500/25 hover:bg-rose-500/40 text-rose-200 border border-rose-400/45 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap"
-            >
-              Антирад ({antiradQty})
-            </button>
-          )}
-          {energyQty > 0 && !isEnergyActive && (
-            <button
-              type="button"
-              onClick={() => onUseConsumable('energy_stalker')}
-              className="btn-tactile min-h-[46px] inline-flex items-center gap-1.5 px-3 py-2 bg-sky-500/25 hover:bg-sky-500/40 text-sky-200 border border-sky-400/45 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap"
-            >
-              Енергетик ({energyQty})
-            </button>
-          )}
-          {gameState.sanity < 85 &&
-            sanityFoods.slice(0, 2).map((food) => {
-              const qty = gameState.consumableInventory[food.id] ?? 0;
-              return (
-                <button
-                  key={food.id}
-                  type="button"
-                  onClick={() => onUseConsumable(food.id)}
-                  className="btn-tactile min-h-[46px] inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-500/25 hover:bg-indigo-500/40 text-indigo-100 border border-indigo-400/45 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap"
-                  title={food.effectLabel}
-                >
-                  {food.id === 'herbal_tea'
-                    ? 'Чай'
-                    : food.id === 'canned_stew'
-                      ? 'Тушкованка'
-                      : 'Шоколад'}{' '}
-                  ({qty})
-                </button>
-              );
-            })}
         </div>
 
         {/* Right Thumb Cluster: Drag Brake & Big Primary Cast/Strike/Reel Touch Button */}
