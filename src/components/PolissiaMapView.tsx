@@ -86,7 +86,6 @@ async function loadCommunityMapPoints():Promise<SettlementPoint[]> {
  const anchors=MAP_ANCHORS.map(a=>{const p=find(a.name,a.kind),l=LOCATIONS[a.gameId];return p&&l?{lat:p.lat,lon:p.lon,x:l.mapX,y:l.mapY}:null;}).filter(Boolean) as Array<{lat:number;lon:number;x:number;y:number}>;
  if(anchors.length<3)throw new Error('Не вдалося прив’язати географію до ігрової карти');
  const projection=solveMapProjection(anchors);
- const anchorPlaces=MAP_ANCHORS.map(a=>({id:a.gameId,place:find(a.name,a.kind)})).filter(a=>a.place);
  const anchorPlaces = MAP_ANCHORS.map(a => ({ id: a.gameId, place: find(a.name, a.kind) }))
    .filter((a): a is { id: LocationId; place: OSMPlace } => Boolean(a.place));
  const result: SettlementPoint[] = [];
@@ -622,9 +621,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 </button>
               );
             })}
-          </div>
-
-          {            {/* Населені пункти громади — позначки поверх тієї самої аномальної карти */}
+            {/* Населені пункти громади — позначки поверх тієї самої аномальної карти */}
             {communityPoints.map((point) => {
               const invScale = 1 / Math.max(1, Math.pow(zoom, 0.52));
               return (
@@ -642,7 +639,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 </button>
               );
             })}
-/* Touch Zoom Controls Overlay */}
+          </div>
+
+          {/* Touch Zoom Controls Overlay */}
           <div className="absolute bottom-4 left-4 z-30 flex items-center gap-1.5 panel-field rounded-xl p-1.5">
             <button
               type="button"
