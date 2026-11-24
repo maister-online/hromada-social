@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  AlertTriangle, BookMarked, BookOpen, Compass, List, MapPin, Maximize2,
-  Music, Navigation, Package, Search, ScrollText, Shield, Volume2,
+  AlertTriangle, BookMarked, BookOpen, List, MapPin, Maximize2,
+  Music, Navigation, Package, Search, ScrollText, Volume2,
   VolumeX, Warehouse, X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { LOCATIONS, formatClock } from '../game/data';
@@ -147,7 +147,7 @@ async function loadOpenStreetMapSettlements(): Promise<SettlementOnMap[]> {
     const match =
       sameName.find((candidate) => candidate.place === preferredPlace && !used.has(candidate.id)) ??
       sameName.find((candidate) => !used.has(candidate.id)) ??
-      sameName[0];
+      (sameName.length === 1 && !used.has(sameName[0].id) ? sameName[0] : undefined);
     if (match) used.add(match.id);
     return {
       ...settlement,
@@ -166,8 +166,9 @@ const WEATHER_LABELS: Record<WeatherType, string> = {
 };
 
 export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
-  day, timeOfDay, weather, credits, level, keepnetWeightKg, keepnetCapacityKg, lootCount,
-  readyQuestsCount, muted,
+  currentLocationId, day, timeOfDay, weather, credits, level, radSuitLevel,
+  sanity, keepnetCount, keepnetWeightKg, keepnetCapacityKg, lootCount,
+  readyQuestsCount, visitedLocationIds, activeGroundbaitLocs, muted,
   musicEnabled, onSelectDestination, onOpenInventory, onOpenQuests,
   onOpenBestiary, onOpenJournal, onToggleMute, onToggleMusic,
 }) => {
@@ -188,6 +189,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   const selectedLocation = selectedSettlement?.gameLocationId
     ? LOCATIONS[selectedSettlement.gameLocationId]
     : null;
+  const currentName = LOCATIONS[currentLocationId]?.name ?? 'Полісся';
 
   const gameLocations = useMemo(
     () => GAME_SPOT_IDS.map((id) => LOCATIONS[id]).filter(Boolean) as LocationDef[],
@@ -342,7 +344,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
           <div className="min-w-0">
             <div className="truncate text-sm font-bold sm:text-base">Полісся · Рокитнівська громада</div>
             <div className="hidden text-[10px] text-slate-300 sm:block">
-              День {day} · {clock} · {WEATHER_LABELS[weather]} · Рівень {level}
+              День {day} · {clock} · {WEATHER_LABELS[weather]} · Рівень {level} · {currentName.split('·')[0].trim()} · Розсудок {Math.round(sanity)}%
             </div>
           </div>
         </div>
@@ -352,7 +354,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             ₴ {credits}
           </span>
           <span className="hidden rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 font-mono-num text-emerald-200 lg:inline">
-            Садок {keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг
+            Садок {keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг ({keepnetCount})
           </span>
           <button type="button" onClick={onOpenInventory} className="map-toolbar-button" title="Рюкзак">
             <Package className="h-4 w-4" /><span className="hidden sm:inline">Рюкзак{lootCount ? ` (${lootCount})` : ''}</span>
@@ -429,11 +431,19 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                     <div className="mt-1 font-semibold text-white">{selectedLocation.name}</div>
                     <p className="mt-1 text-xs leading-relaxed text-slate-300">{selectedLocation.description}</p>
                   </div>
+                  {hasVisitedTarget && <div className="text-[11px] text-emerald-300">Цю водойму вже відвідано</div>}
+                  {isGroundbaited && <div className="text-[11px] text-amber-200">★ На цій водоймі активний закорм</div>}
                 </>
               ) : (
                 <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs leading-relaxed text-slate-300">
                   Населений пункт нанесено за геоданими OpenStreetMap. Для нього немає окремої рибальської сцени, тому можна перейти до найближчої доступної ігрової водойми.
                   {nearestGameLocation && <div className="mt-2 font-semibold text-amber-200">{nearestGameLocation.name}</div>}
+                </div>
+              )}
+              {radWarning && (
+                <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-950/40 p-3 text-xs text-rose-100">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" />
+                  <span>Небезпечно: для цієї водойми потрібен захисний костюм рівня {nearestGameLocation?.radiationLevel ?? 0}. Твій рівень захисту: {radSuitLevel}.</span>
                 </div>
               )}
               {selectedSettlement.lat === null && (
