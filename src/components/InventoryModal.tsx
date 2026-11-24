@@ -689,14 +689,16 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                     return (
                       <div
                         key={g.id}
-                        className="p-3 rounded-xl border border-white/10 bg-[#070d0a] flex items-center justify-between gap-2 text-xs"
+                        className="p-3 rounded-xl border border-white/10 bg-[#070d0a] flex flex-col gap-2 text-xs"
                       >
-
-                      <CatalogPhoto query={`fishing groundbait ${g.name}`} fallbackQueries={['fishing groundbait']} alt={g.name} className="w-full h-20 rounded-lg mb-2" />                        <div>
-                          <div className="font-semibold text-slate-100">{g.name}</div>
-                          <div className="text-[11px] text-slate-400">{g.targetNote}</div>
+                        <CatalogPhoto query={`fishing groundbait ${g.name}`} fallbackQueries={['fishing groundbait']} alt={g.name} className="w-full h-20 rounded-lg" />
+                        <div className="flex w-full items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-slate-100">{g.name}</div>
+                            <div className="text-[11px] text-slate-400">{g.targetNote}</div>
+                          </div>
+                          <span className="font-mono-num font-semibold text-teal-300">{qty} шт.</span>
                         </div>
-                        <span className="font-mono-num font-semibold text-teal-300">{qty} шт.</span>
                       </div>
                     );
                   })}

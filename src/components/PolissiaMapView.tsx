@@ -7,7 +7,7 @@ import {
   VolumeX, Warehouse, X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { LOCATIONS, formatClock } from '../game/data';
-import { LocationDef, LocationId, WeatherType } from '../game/types';
+import { LocationId, WeatherType } from '../game/types';
 
 interface PolissiaMapViewProps {
   currentLocationId: LocationId;
@@ -60,7 +60,7 @@ const OFFICIAL_SETTLEMENTS: OfficialSettlement[] = [
   { id: 'bilovizh', name: 'Біловіж', kind: 'село', gameLocationId: 'bilovizh' },
   { id: 'bilsk', name: 'Більськ', kind: 'село' },
   { id: 'dert', name: 'Дерть', kind: 'село' },
-  { id: 'zalavya', name: "Залав’я", kind: 'село' },
+  { id: 'zalavya', name: "Залав'я", kind: 'село' },
   { id: 'karpylivka', name: 'Карпилівка', kind: 'село', gameLocationId: 'karpylivka' },
   { id: 'kysorychi', name: 'Кисоричі', kind: 'село', gameLocationId: 'kysorychi' },
   { id: 'kupel', name: 'Купель', kind: 'село' },
@@ -77,24 +77,31 @@ const OFFICIAL_SETTLEMENTS: OfficialSettlement[] = [
   { id: 'tomashhorod-village', name: 'Томашгород', kind: 'село' },
 ];
 
-const GAME_SPOT_IDS: LocationId[] = [
-  'rokitne', 'masevychi', 'karpylivka', 'tomashgorod',
-  'snovydovychi', 'kysorychi', 'bilovizh', 'borove', 'blazhove',
-];
-
 const REGION_CENTER: [number, number] = [51.2908, 27.2796];
-const REGION_BOUNDS: L.LatLngBoundsExpression = [[50.96, 26.78], [51.67, 27.88]];
+const REGION_BOUNDS: L.LatLngBoundsExpression = [[50.90, 26.65], [51.75, 28.00]];
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
 ];
-const OVERPASS_QUERY = `[out:json][timeout:25];
-(
-  node["place"](50.90,26.65,51.75,28.00);
-  way["place"](50.90,26.65,51.75,28.00);
-  relation["place"](50.90,26.65,51.75,28.00);
-);
-out center tags;`;
+const COMMUNITY_BOUNDS = '(50.90,26.65,51.75,28.00)';
+const OVERPASS_QUERIES = [
+  `[out:json][timeout:35];
+  rel["boundary"="administrative"]["name"~"Рокитнівська|Rokytnivska"]${COMMUNITY_BOUNDS}->.community;
+  .community map_to_area->.communityArea;
+  (
+    node(area.communityArea)["place"];
+    way(area.communityArea)["place"];
+    relation(area.communityArea)["place"];
+  );
+  out center tags;`,
+  `[out:json][timeout:35];
+  (
+    node["place"]${COMMUNITY_BOUNDS};
+    way["place"]${COMMUNITY_BOUNDS};
+    relation["place"]${COMMUNITY_BOUNDS};
+  );
+  out center tags;`,
+];
 
 const normalizeName = (value: string) =>
   value.toLocaleLowerCase('uk-UA').replace(/[’'\u0060]/g, '').replace(/[‐‑–—]/g, '-').trim();
@@ -109,53 +116,74 @@ const placeCoords = (item: any): [number, number] | null => {
 };
 
 async function loadOpenStreetMapSettlements(): Promise<SettlementOnMap[]> {
-  let elements: any[] = [];
+  let bestElements: any[] = [];
+  let bestMatchCount = -1;
   let lastError: unknown = null;
-  for (const endpoint of OVERPASS_ENDPOINTS) {
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: new URLSearchParams({ data: OVERPASS_QUERY }).toString(),
-      });
-      if (!response.ok) throw new Error(`OpenStreetMap API: ${response.status}`);
-      const payload = await response.json();
-      elements = Array.isArray(payload?.elements) ? payload.elements : [];
-      if (elements.length) break;
-    } catch (error) {
-      lastError = error;
+
+  for (const query of OVERPASS_QUERIES) {
+    for (const endpoint of OVERPASS_ENDPOINTS) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: new URLSearchParams({ data: query }).toString(),
+        });
+        if (!response.ok) throw new Error(`OpenStreetMap API: ${response.status}`);
+        const payload = await response.json();
+        const elements = Array.isArray(payload?.elements) ? payload.elements : [];
+        const candidates = elements
+          .map((element) => {
+            const coords = placeCoords(element);
+            const tags = element?.tags ?? {};
+            const name = tags['name:uk'] || tags['official_name:uk'] || tags.name || tags.official_name;
+            if (!coords || !name) return null;
+            return {
+              name: String(name),
+              coords,
+              place: String(tags.place || ''),
+              id: String(element.id),
+            };
+          })
+          .filter(Boolean) as Array<{ name: string; coords: [number, number]; place: string; id: string }>;
+
+        const used = new Set<string>();
+        let matched = 0;
+        const resolved = OFFICIAL_SETTLEMENTS.map((settlement) => {
+          const sameName = candidates.filter((candidate) =>
+            normalizeName(candidate.name) === normalizeName(settlement.name) && !used.has(candidate.id)
+          );
+          const preferredPlaces = settlement.kind === 'селище'
+            ? ['town', 'city']
+            : ['village', 'hamlet'];
+          const match = preferredPlaces
+            .map((place) => sameName.find((candidate) => candidate.place === place))
+            .find(Boolean) ?? (sameName.length === 1 ? sameName[0] : undefined);
+
+          if (match) {
+            used.add(match.id);
+            matched += 1;
+          }
+          return {
+            ...settlement,
+            lat: match?.coords[0] ?? null,
+            lon: match?.coords[1] ?? null,
+            osmPlace: match?.place,
+          };
+        });
+
+        if (matched > bestMatchCount) {
+          bestElements = resolved;
+          bestMatchCount = matched;
+        }
+        if (matched === OFFICIAL_SETTLEMENTS.length) return resolved;
+      } catch (error) {
+        lastError = error;
+      }
     }
   }
-  if (!elements.length) throw lastError ?? new Error('Не вдалося завантажити геодані OpenStreetMap');
 
-  const candidates = elements
-    .map((element) => {
-      const coords = placeCoords(element);
-      const tags = element?.tags ?? {};
-      const name = tags['name:uk'] || tags.name || tags['official_name'];
-      if (!coords || !name) return null;
-      return { name: String(name), coords, place: String(tags.place || ''), id: String(element.id) };
-    })
-    .filter(Boolean) as Array<{ name: string; coords: [number, number]; place: string; id: string }>;
-
-  const used = new Set<string>();
-  return OFFICIAL_SETTLEMENTS.map((settlement) => {
-    const sameName = candidates.filter((candidate) =>
-      normalizeName(candidate.name) === normalizeName(settlement.name)
-    );
-    const preferredPlace = settlement.kind === 'селище' ? 'town' : 'village';
-    const match =
-      sameName.find((candidate) => candidate.place === preferredPlace && !used.has(candidate.id)) ??
-      sameName.find((candidate) => !used.has(candidate.id)) ??
-      (sameName.length === 1 && !used.has(sameName[0].id) ? sameName[0] : undefined);
-    if (match) used.add(match.id);
-    return {
-      ...settlement,
-      lat: match?.coords[0] ?? null,
-      lon: match?.coords[1] ?? null,
-      osmPlace: match?.place,
-    };
-  });
+  if (bestMatchCount >= 0) return bestElements;
+  throw lastError ?? new Error('Не вдалося завантажити геодані OpenStreetMap');
 }
 
 const WEATHER_LABELS: Record<WeatherType, string> = {
@@ -191,11 +219,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     : null;
   const currentName = LOCATIONS[currentLocationId]?.name ?? 'Полісся';
 
-  const gameLocations = useMemo(
-    () => GAME_SPOT_IDS.map((id) => LOCATIONS[id]).filter(Boolean) as LocationDef[],
-    []
-  );
-
   const openSettlement = useCallback((settlement: SettlementOnMap) => {
     setSelectedSettlementId(settlement.id);
     setShowDirectory(false);
@@ -206,14 +229,15 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   }, []);
 
   const nearestGameLocation = useMemo(() => {
-    if (!selectedSettlement || selectedSettlement.lat === null || selectedSettlement.lon === null) {
-      return gameLocations[0] ?? null;
-    }
+    if (!selectedSettlement) return null;
     if (selectedLocation) return selectedLocation;
+    if (selectedSettlement.lat === null || selectedSettlement.lon === null) return null;
+
     const withCoords = settlements.filter(
       (item) => item.gameLocationId && item.lat !== null && item.lon !== null
     );
-    if (!withCoords.length) return gameLocations[0] ?? null;
+    if (!withCoords.length) return null;
+
     const distance = (aLat: number, aLon: number, bLat: number, bLon: number) => {
       const rad = Math.PI / 180;
       const dLat = (bLat - aLat) * rad;
@@ -229,8 +253,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
       );
       return !best || d < best.distance ? { item, distance: d } : best;
     }, null as { item: SettlementOnMap; distance: number } | null);
-    return closest?.item.gameLocationId ? LOCATIONS[closest.item.gameLocationId] : gameLocations[0] ?? null;
-  }, [gameLocations, selectedLocation, selectedSettlement, settlements]);
+
+    return closest?.item.gameLocationId ? LOCATIONS[closest.item.gameLocationId] ?? null : null;
+  }, [selectedLocation, selectedSettlement, settlements]);
 
   const radWarning = Boolean(nearestGameLocation && nearestGameLocation.radiationLevel > radSuitLevel);
   const hasVisitedTarget = Boolean(nearestGameLocation && visitedLocationIds.includes(nearestGameLocation.id));
@@ -247,6 +272,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
       maxBoundsViscosity: 0.72,
       preferCanvas: true,
     }).setView(REGION_CENTER, 10);
+    map.fitBounds(REGION_BOUNDS, { padding: [36, 36], animate: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       minZoom: 8,
       maxZoom: 19,
@@ -272,6 +298,13 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
       .then((items) => {
         if (cancelled) return;
         setSettlements(items);
+        const mappedPoints = items
+          .filter((item) => item.lat !== null && item.lon !== null)
+          .map((item) => [item.lat!, item.lon!] as [number, number]);
+        if (mappedPoints.length > 0) {
+          const map = mapRef.current;
+          if (map) map.fitBounds(L.latLngBounds(mappedPoints).pad(0.14), { maxZoom: 10 });
+        }
         const missing = items.filter((item) => item.lat === null || item.lon === null);
         setMapError(
           missing.length
@@ -342,7 +375,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     <div className="fixed inset-0 z-0 h-[100dvh] w-screen overflow-hidden bg-[#0b1714] text-slate-100">
       <div ref={mapElementRef} className="absolute inset-0 z-0 h-full w-full" />
 
-      <header className="absolute left-0 right-0 top-0 z-[500] flex flex-wrap items-center justify-between gap-2 border-b border-emerald-300/20 bg-[#07120eea] px-3 py-2 shadow-lg backdrop-blur-md sm:px-4">
+      <header className="region-map-topbar absolute left-0 right-0 top-0 z-[500] flex flex-wrap items-center justify-between gap-2 border-b border-emerald-300/20 bg-[#07120eea] px-3 py-2 shadow-lg backdrop-blur-md sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="h-5 w-5 shrink-0 text-emerald-300" />
           <div className="min-w-0">
@@ -384,7 +417,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         </div>
       </header>
 
-      <div className="absolute bottom-4 left-3 z-[500] flex items-center gap-1.5 rounded-xl border border-emerald-300/25 bg-[#07120ee8] p-1.5 shadow-xl backdrop-blur-md">
+      <div className="region-map-bottom-controls absolute bottom-4 left-3 z-[500] flex items-center gap-1.5 rounded-xl border border-emerald-300/25 bg-[#07120ee8] p-1.5 shadow-xl backdrop-blur-md">
         <button type="button" onClick={() => mapRef.current?.zoomOut()} className="map-toolbar-icon" aria-label="Віддалити карту"><ZoomOut className="h-4 w-4" /></button>
         <button type="button" onClick={() => mapRef.current?.zoomIn()} className="map-toolbar-icon" aria-label="Наблизити карту"><ZoomIn className="h-4 w-4" /></button>
         <button type="button" onClick={() => mapRef.current?.fitBounds(REGION_BOUNDS, { padding: [24, 24] })} className="map-toolbar-icon" aria-label="Показати всю громаду"><Maximize2 className="h-4 w-4" /></button>
@@ -394,7 +427,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
       <button
         type="button"
         onClick={() => setShowDirectory(true)}
-        className="absolute bottom-4 right-3 z-[500] inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-emerald-300/30 bg-[#07120eea] px-4 py-3 text-xs font-bold text-emerald-100 shadow-xl backdrop-blur-md"
+        className="region-map-bottom-controls absolute bottom-4 right-3 z-[500] inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-emerald-300/30 bg-[#07120eea] px-4 py-3 text-xs font-bold text-emerald-100 shadow-xl backdrop-blur-md"
       >
         <List className="h-4 w-4" /> Населені пункти (25)
       </button>
@@ -440,8 +473,10 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 </>
               ) : (
                 <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs leading-relaxed text-slate-300">
-                  Населений пункт нанесено за геоданими OpenStreetMap. Для нього немає окремої рибальської сцени, тому можна перейти до найближчої доступної ігрової водойми.
-                  {nearestGameLocation && <div className="mt-2 font-semibold text-amber-200">{nearestGameLocation.name}</div>}
+                  Для цього населеного пункту немає окремої рибальської сцени.
+                  {nearestGameLocation
+                    ? <div className="mt-2">Найближча доступна водойма: <span className="font-semibold text-amber-200">{nearestGameLocation.name}</span></div>
+                    : <div className="mt-2 text-amber-200">Координати населеного пункту не знайдені, тому неможливо точно визначити найближчу водойму.</div>}
                 </div>
               )}
               {radWarning && (
@@ -484,14 +519,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                   <MapPin className="h-4 w-4 shrink-0 text-emerald-300" />
                 </button>
               ))}
-            </div>
-            <div className="border-t border-white/10 p-3">
-              <div className="mb-2 text-[11px] font-semibold text-slate-300">Ігрові локації</div>
-              <div className="flex flex-wrap gap-1.5">
-                {gameLocations.map((location) => (
-                  <button key={location.id} type="button" onClick={() => onSelectDestination(location.id)} className="rounded-lg border border-amber-300/20 bg-amber-950/20 px-2.5 py-2 text-[10px] text-amber-100">{location.name}</button>
-                ))}
-              </div>
             </div>
           </section>
         </div>
