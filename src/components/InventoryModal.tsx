@@ -24,6 +24,7 @@ import {
 import { SaveState } from '../game/types';
 import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
+import { CatalogPhoto } from './CatalogPhoto';
 
 export type InventoryTabId =
   | 'rods'
@@ -278,7 +279,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
+
+                      <CatalogPhoto query={`fishing rod ${r.name}`} fallbackQueries={['fishing rod']} alt={r.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-slate-100">{r.name}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`font-mono-num text-xs font-bold ${durColor(r.id)}`}>
@@ -319,7 +321,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
+
+                      <CatalogPhoto query={`fishing reel ${r.name}`} fallbackQueries={['fishing reel']} alt={r.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-semibold text-slate-100">{r.name}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`font-mono-num text-xs font-bold ${durColor(r.id)}`}>
@@ -357,7 +360,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+
+                      <CatalogPhoto query={`fishing line spool ${l.name}`} fallbackQueries={['fishing line spool']} alt={l.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-slate-100">{l.name}</span>
                         {active && <Check className="w-4 h-4 text-emerald-400" />}
                       </div>
@@ -390,7 +394,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
+
+                      <CatalogPhoto query={`fishing float ${f.name}`} fallbackQueries={['fishing float']} alt={f.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span
                             className="w-3 h-3 rounded-full border border-white/40 shrink-0"
@@ -433,7 +438,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+
+                      <CatalogPhoto query={`fishing hook ${h.name}`} fallbackQueries={['fishing hook']} alt={h.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-slate-100">{h.name}</span>
                         {active && <Check className="w-4 h-4 text-emerald-400" />}
                       </div>
@@ -466,7 +472,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+
+                      <CatalogPhoto query={`fishing sinker ${s.name}`} fallbackQueries={['fishing sinker']} alt={s.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-slate-100">{s.name}</span>
                         {active && <Check className="w-4 h-4 text-emerald-400" />}
                       </div>
@@ -501,7 +508,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                               : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-2">
+
+                      <CatalogPhoto query={`fishing rig ${r.name}`} fallbackQueries={['fishing rig']} alt={r.name} className="w-full h-20 rounded-lg mb-2" />                          <div className="flex items-center justify-between gap-2">
                             <span className="text-sm font-semibold text-slate-100">{r.name}</span>
                             <div className="flex items-center gap-2 shrink-0">
                               {r.id !== 'brig_none' && (
@@ -539,7 +547,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                             : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
+
+                      <CatalogPhoto query={`fishing feeder ${f.name}`} fallbackQueries={['fishing feeder']} alt={f.name} className="w-full h-20 rounded-lg mb-2" />                        <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-slate-100">{f.name}</span>
                           {active && <Check className="w-4 h-4 text-emerald-400" />}
                         </div>
@@ -619,7 +628,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                               : 'bg-[#050806] border-white/5 opacity-45 cursor-not-allowed'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-1 text-xs font-semibold text-slate-100">
+
+                      <CatalogPhoto query={`fishing bait ${b.name}`} fallbackQueries={['fishing bait']} alt={b.name} className="w-full h-20 rounded-lg mb-2" />                        <div className="flex items-center justify-between gap-1 text-xs font-semibold text-slate-100">
                           <span className="truncate">{b.name}</span>
                           <span className="font-mono-num text-amber-300 shrink-0">{qty}</span>
                         </div>
@@ -655,7 +665,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                               : 'bg-[#050806] border-white/5 opacity-45 cursor-not-allowed'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-1 text-xs font-semibold text-slate-100">
+
+                      <CatalogPhoto query={`fishing bait flavor ${fl.name}`} fallbackQueries={['fishing bait flavor']} alt={fl.name} className="w-full h-20 rounded-lg mb-2" />                        <div className="flex items-center justify-between gap-1 text-xs font-semibold text-slate-100">
                           <span className="truncate">{fl.name}</span>
                           {fl.id !== 'flav_none' && (
                             <span className="font-mono-num text-teal-300 shrink-0">{qty}</span>
@@ -680,7 +691,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                         key={g.id}
                         className="p-3 rounded-xl border border-white/10 bg-[#070d0a] flex items-center justify-between gap-2 text-xs"
                       >
-                        <div>
+
+                      <CatalogPhoto query={`fishing groundbait ${g.name}`} fallbackQueries={['fishing groundbait']} alt={g.name} className="w-full h-20 rounded-lg mb-2" />                        <div>
                           <div className="font-semibold text-slate-100">{g.name}</div>
                           <div className="text-[11px] text-slate-400">{g.targetNote}</div>
                         </div>
@@ -716,7 +728,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                             : 'bg-[#050806] border-white/5 opacity-45 cursor-not-allowed'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-100">
+
+                      <CatalogPhoto query={`fishing lure ${b.name}`} fallbackQueries={['fishing lure', 'fishing bait']} alt={b.name} className="w-full h-20 rounded-lg mb-2" />                      <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-100">
                         <span className="truncate">{b.name}</span>
                         <span className="font-mono-num text-amber-300 shrink-0">{qty} шт.</span>
                       </div>
@@ -856,7 +869,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                             : 'bg-[#070d0a] border-white/10 hover:border-white/25'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2">
+
+                      <CatalogPhoto query={`fishing gear equipment ${g.name}`} fallbackQueries={['fishing gear equipment']} alt={g.name} className="w-full h-20 rounded-lg mb-2" />                        <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-semibold text-slate-100">{g.name}</span>
                           <span className="text-[11px] font-semibold text-emerald-300 shrink-0">
                             {active ? 'Активно' : 'В резерві'} · {durText(g.id)}
