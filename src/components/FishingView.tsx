@@ -429,6 +429,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     null
   );
   const [showKeepnet, setShowKeepnet] = useState(false);
+  const [showLocationMenu, setShowLocationMenu] = useState(false);
   const [showBaitDrawer, setShowBaitDrawer] = useState(false);
   const [baitFilter, setBaitFilter] = useState<BaitFilterTab>('all');
   const [showRigDrawer, setShowRigDrawer] = useState(false);
@@ -1557,243 +1558,64 @@ export const FishingView: React.FC<FishingViewProps> = ({
         isPhotoMode={Boolean(location.backdropPhotoUrl)}
       />
 
-      {/* TOP HUD & MENU BAR */}
-      <div className="relative z-20 pointer-events-none flex flex-wrap items-start justify-between gap-2.5 p-2.5 sm:p-4">
-        {/* Location & Telemetry Panel */}
-        <div className="pointer-events-auto panel-field rounded-xl px-3.5 py-2.5 space-y-2 max-w-[94vw] sm:max-w-sm">
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span className="font-mono-num text-amber-300 font-semibold">
-              День {gameState.day} · {clock} ({phaseLabel})
-            </span>
-            <span className="font-mono-num text-emerald-300 font-bold">
-              ₴ {gameState.credits}
-            </span>
-          </div>
+      {/* COMPACT LOCATION MENU — keeps the fishing view clear */}
+      <button
+        type="button"
+        onClick={() => setShowLocationMenu(true)}
+        className="fixed top-3 right-3 z-30 btn-tactile btn-field min-h-[44px] inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold shadow-xl"
+        aria-label="Відкрити меню локації"
+      >
+        <Compass className="w-4 h-4 text-teal-300" />
+        Меню
+      </button>
 
-          <div className="border-t border-white/10 pt-1.5 flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="font-display text-sm sm:text-base font-bold text-slate-100 leading-tight truncate">
-                {location.name}
-              </h2>
-              <p className="text-[11px] text-slate-400">
-                {location.waterLabel} · Глиб. {location.depthRangeM[0]}–{location.depthRangeM[1]} м · Аном. {location.anomalyActivity}%
-              </p>
-            </div>
-            <div
-              className={`inline-flex items-center gap-1 text-[11px] font-medium shrink-0 ${weatherMeta.colorClass}`}
-              title={`Погода: ${weatherMeta.label}`}
-            >
-              <WeatherIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{weatherMeta.label}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 text-[11px]">
-            <div>
-              <div className="flex justify-between text-slate-400 mb-1">
-                <span>Садок</span>
-                <span className="font-mono-num text-slate-200">
-                  {keepnetWeight.toFixed(1)}/{keepnetCap}
-                </span>
+      {showLocationMenu && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#020604]/80 p-3 pt-14 backdrop-blur-sm"
+          onClick={() => setShowLocationMenu(false)}
+        >
+          <section
+            className="panel-window w-full max-w-xl rounded-2xl border border-emerald-400/25 p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="min-w-0">
+                <h2 className="font-display text-lg font-bold text-slate-100">Меню локації</h2>
+                <p className="truncate text-xs text-slate-400">{location.name} · {weatherMeta.label}</p>
               </div>
-              <div className="h-1.5 bg-slate-900/90 border border-white/5 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-amber-400 transition-all"
-                  style={{ width: `${Math.min(100, (keepnetWeight / keepnetCap) * 100)}%` }}
-                />
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationMenu(false)}
+                className="btn-tactile btn-field inline-flex min-h-[42px] min-w-[42px] items-center justify-center rounded-lg"
+                aria-label="Закрити меню"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            <div>
-              <div className="flex justify-between text-slate-400 mb-1">
-                <span>Радіація</span>
-                <span
-                  className={`font-mono-num ${
-                    gameState.radiation > 40 ? 'text-rose-400' : 'text-emerald-300'
-                  }`}
-                >
-                  {Math.round(gameState.radiation)} мЗв
-                </span>
-              </div>
-              <div className="h-1.5 bg-slate-900/90 border border-white/5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    gameState.radiation > 60
-                      ? 'bg-rose-500'
-                      : gameState.radiation > 25
-                        ? 'bg-amber-400'
-                        : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, gameState.radiation)}%` }}
-                />
-              </div>
+            <div className="mb-4 grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-black/25 p-3 text-[11px]">
+              <div><div className="text-slate-400">Час</div><div className="font-mono-num font-semibold text-amber-300">{clock}</div></div>
+              <div><div className="text-slate-400">Баланс</div><div className="font-mono-num font-semibold text-emerald-300">₴ {gameState.credits}</div></div>
+              <div><div className="text-slate-400">Садок</div><div className="font-mono-num font-semibold text-slate-100">{keepnetWeight.toFixed(1)} / {keepnetCap} кг</div></div>
+              <div><div className="text-slate-400">Радіація</div><div className="font-mono-num text-slate-100">{Math.round(gameState.radiation)} мЗв</div></div>
+              <div><div className="text-slate-400">Розсудливість</div><div className="font-mono-num text-slate-100">{Math.round(gameState.sanity)}%</div></div>
+              <div><div className="text-slate-400">Вудка</div><div className="truncate text-slate-100">{Math.round(rodDurability)}%</div></div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-slate-400 mb-1">
-                <span>Розсудл.</span>
-                <span
-                  className={`font-mono-num ${
-                    gameState.sanity <= 30
-                      ? 'text-rose-400 font-semibold'
-                      : gameState.sanity <= 60
-                        ? 'text-amber-300'
-                        : 'text-indigo-300'
-                  }`}
-                >
-                  {Math.round(gameState.sanity)}%
-                </span>
-              </div>
-              <div className="h-1.5 bg-slate-900/90 border border-white/5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    gameState.sanity <= 30
-                      ? 'bg-rose-500'
-                      : gameState.sanity <= 60
-                        ? 'bg-amber-400'
-                        : 'bg-indigo-400'
-                  }`}
-                  style={{ width: `${Math.max(0, Math.min(100, gameState.sanity))}%` }}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => { setShowLocationMenu(false); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Wrench className="mr-2 inline h-4 w-4 text-sky-300" />Монтаж снасті</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); setShowKeepnet(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Package className="mr-2 inline h-4 w-4 text-amber-300" />Садок ({gameState.keepnet.length})</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); onOpenInventory(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Shield className="mr-2 inline h-4 w-4 text-sky-300" />Рюкзак</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); onOpenJournal(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><BookMarked className="mr-2 inline h-4 w-4 text-teal-300" />Журнал</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); onOpenQuests(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><ScrollText className="mr-2 inline h-4 w-4 text-emerald-300" />Завдання</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); onOpenMap(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Compass className="mr-2 inline h-4 w-4 text-teal-300" />Карта</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); onGoToBunker(); }} className="btn-tactile btn-primary-emerald col-span-2 min-h-[48px] rounded-xl px-3 text-sm font-bold"><Warehouse className="mr-2 inline h-4 w-4" />Повернутися до бункера</button>
+              <button type="button" onClick={onToggleMusic} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}</button>
+              <button type="button" onClick={onToggleMute} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{muted ? 'Увімкнути звук' : 'Вимкнути звук'}</button>
             </div>
-          </div>
-
-          {/* Active Tackle Micro-Summary */}
-          <div className="border-t border-white/10 pt-1.5 flex items-center justify-between gap-2 text-[10px] text-slate-300">
-            <span className="truncate">
-              {rod.name} ({Math.round(rodDurability)}%) · {floatDef.name}
-            </span>
-            <span className="font-mono-num text-amber-300 shrink-0">
-              Ліміт {rigStats.maxGearLoadKg.toFixed(1)} кг
-            </span>
-          </div>
-
-          {isRodBroken && (
-            <div className="flex items-center gap-1.5 text-[11px] text-rose-300 font-semibold">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              Вудлище зламане! Полагодьте у Бункері або змініть у Монтажі.
-            </div>
-          )}
-
-          {radTooHigh && (
-            <div className="flex items-center gap-1.5 text-[11px] text-rose-300">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              Слабкий захист! Радіація накопичується.
-            </div>
-          )}
-
-          {gameState.weather === 'anomaly_surge' && (
-            <div className="flex items-center gap-1.5 text-[11px] text-cyan-300">
-              <Zap className="w-3.5 h-3.5 shrink-0" />
-              Викид! Розсудливість зменшується — вживіть провізію або укрийтесь у Бункері.
-            </div>
-          )}
-
-          {gameState.sanity <= 35 && gameState.weather !== 'anomaly_surge' && (
-            <div className="flex items-center gap-1.5 text-[11px] text-amber-300">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              Низька розсудливість ({Math.round(gameState.sanity)}%)! Поїжте або відпочиньте в Бункері.
-            </div>
-          )}
-
-          {isEnergyActive && (
-            <div className="flex items-center gap-1.5 text-[11px] text-sky-300">
-              <Zap className="w-3.5 h-3.5 shrink-0" />
-              Активний енергетик (+30% тяги котушки)
-            </div>
-          )}
+          </section>
         </div>
-
-        {/* Top-Right Touch Game Menu Buttons */}
-        <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          <button
-            type="button"
-            onClick={() => setShowRigDrawer(true)}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <Wrench className="w-4 h-4 text-sky-300" />
-            Монтаж
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowKeepnet((s) => !s)}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <Package className="w-4 h-4 text-amber-300" />
-            Садок ({gameState.keepnet.length})
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenInventory}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <Shield className="w-4 h-4 text-sky-300" />
-            Рюкзак
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenJournal}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <BookMarked className="w-4 h-4 text-teal-300" />
-            Журнал
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenQuests}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <ScrollText className="w-4 h-4 text-emerald-300" />
-            Завдання
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenMap}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <Compass className="w-4 h-4 text-teal-300" />
-            Карта
-          </button>
-
-          <button
-            type="button"
-            onClick={onGoToBunker}
-            className="btn-tactile btn-primary-emerald min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold cursor-pointer"
-          >
-            <Warehouse className="w-4 h-4" />
-            Бункер
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleMusic}
-            className={`btn-tactile min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg cursor-pointer border ${
-              musicEnabled && !muted
-                ? 'bg-emerald-950/75 border-emerald-400/50 text-emerald-300'
-                : 'btn-field text-slate-400'
-            }`}
-            aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-            title={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-          >
-            <Music className="w-4 h-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleMute}
-            className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-            aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
-          >
-            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* CENTER STATUS, FIGHTING, SNAGGED & LANDING NET GAUGES */}
       <div className="pointer-events-none fixed inset-x-0 bottom-38 sm:bottom-32 z-20 flex flex-col items-center gap-2.5 px-4">
