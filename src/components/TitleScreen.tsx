@@ -39,35 +39,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       />
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
-      <div className="relative z-10 flex items-start justify-end gap-2 p-3 sm:p-5">
-        <button
-          type="button"
-          onClick={onOpenBestiary}
-          className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl cursor-pointer bg-black/65 border border-white/20 text-white"
-        >
-          <BookOpen className="w-4 h-4 text-teal-300" />
-          Бестіарій ({discoveredCount}/{totalSpeciesCount})
-        </button>
-        <button
-          type="button"
-          onClick={onToggleMusic}
-          className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl cursor-pointer bg-black/65 border border-white/20 text-white"
-          aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-        >
-          <Music className="w-4 h-4" />
-          <span className="hidden sm:inline">{musicEnabled ? 'Музика' : 'Без музики'}</span>
-        </button>
-        <button
-          type="button"
-          onClick={onToggleMute}
-          className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl cursor-pointer bg-black/65 border border-white/20 text-white"
-          aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
-        >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
-      </div>
-
-      <main className="relative z-10 flex-1 flex items-end justify-center px-4 pb-8 sm:pb-12">
+      <main className="relative z-10 flex-1 flex items-end justify-center px-4 pb-3 sm:pb-5">
         <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl bg-black/55 border border-white/15 p-3 backdrop-blur-sm">
           {hasSave && (
             <button
@@ -87,6 +59,34 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </button>
         </div>
       </main>
+
+      <div className="relative z-10 flex items-center justify-center gap-2 px-3 pb-3 sm:pb-5">
+        <button
+          type="button"
+          onClick={onOpenBestiary}
+          className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl cursor-pointer bg-black/70 border border-white/20 text-white"
+        >
+          <BookOpen className="w-4 h-4 text-teal-300" />
+          Бестіарій ({discoveredCount}/{totalSpeciesCount})
+        </button>
+        <button
+          type="button"
+          onClick={onToggleMusic}
+          className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl cursor-pointer bg-black/70 border border-white/20 text-white"
+          aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
+        >
+          <Music className="w-4 h-4" />
+          <span className="hidden sm:inline">{musicEnabled ? 'Музика' : 'Без музики'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={onToggleMute}
+          className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl cursor-pointer bg-black/70 border border-white/20 text-white"
+          aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
+        >
+          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
+      </div>
     </div>
   );
 };
