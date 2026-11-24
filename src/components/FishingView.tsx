@@ -1633,13 +1633,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setShowBaitDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Наживка · {bait.name}</button>
-              {activeGbDef && activeGb ? (
-                <div className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 flex items-center text-xs text-emerald-300">Прикормлено · {activeGb.castsLeft} закидів</div>
-              ) : (() => {
-                const availGb = GROUNDBAITS.find((g) => (gameState.groundbaitInventory[g.id] ?? 0) > 0);
-                return availGb ? <button type="button" onClick={() => { onThrowGroundbait(availGb.id); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold">Прикормка · {availGb.name}</button> : <div className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 flex items-center text-xs text-slate-500">Немає прикормки</div>;
-              })()}
+              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setRigTab('bait'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Наживка · {bait.name}</button>
+              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setRigTab('groundbait'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Прикормка · {activeGbDef?.name ?? (activeGb ? 'Активна' : 'обрати')}</button>
               {antiradQty > 0 && gameState.radiation > 5 && <button type="button" onClick={() => { onUseConsumable('antirad_ai2'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Антирад ({antiradQty})</button>}
               {energyQty > 0 && !isEnergyActive && <button type="button" onClick={() => { onUseConsumable('energy_stalker'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Енергетик ({energyQty})</button>}
               {gameState.sanity < 85 && sanityFoods.slice(0, 2).map((food) => {
