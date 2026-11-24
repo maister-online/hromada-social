@@ -60,7 +60,7 @@ const OFFICIAL_SETTLEMENTS: OfficialSettlement[] = [
   { id: 'bilovizh', name: 'Біловіж', kind: 'село', gameLocationId: 'bilovizh' },
   { id: 'bilsk', name: 'Більськ', kind: 'село' },
   { id: 'dert', name: 'Дерть', kind: 'село' },
-  { id: 'zalavya', name: "Залав’я", kind: 'село' },
+  { id: 'zalavya', name: "Залав'я", kind: 'село' },
   { id: 'karpylivka', name: 'Карпилівка', kind: 'село', gameLocationId: 'karpylivka' },
   { id: 'kysorychi', name: 'Кисоричі', kind: 'село', gameLocationId: 'kysorychi' },
   { id: 'kupel', name: 'Купель', kind: 'село' },
@@ -78,7 +78,7 @@ const OFFICIAL_SETTLEMENTS: OfficialSettlement[] = [
 ];
 
 const REGION_CENTER: [number, number] = [51.2908, 27.2796];
-const REGION_BOUNDS: L.LatLngBoundsExpression = [[50.96, 26.78], [51.67, 27.88]];
+const REGION_BOUNDS: L.LatLngBoundsExpression = [[50.90, 26.65], [51.75, 28.00]];
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -298,6 +298,13 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
       .then((items) => {
         if (cancelled) return;
         setSettlements(items);
+        const mappedPoints = items
+          .filter((item) => item.lat !== null && item.lon !== null)
+          .map((item) => [item.lat!, item.lon!] as [number, number]);
+        if (mappedPoints.length > 0) {
+          const map = mapRef.current;
+          if (map) map.fitBounds(L.latLngBounds(mappedPoints).pad(0.14), { maxZoom: 10 });
+        }
         const missing = items.filter((item) => item.lat === null || item.lon === null);
         setMapError(
           missing.length
