@@ -245,3 +245,128 @@
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.45);
 }
+
+
+/* Full-screen OpenStreetMap region view */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #0b1714;
+  color: #e2e8f0;
+  font-family: var(--font-sans);
+}
+.leaflet-control-attribution {
+  background: rgba(5, 12, 9, 0.78) !important;
+  color: #cbd5e1 !important;
+  font-size: 9px !important;
+}
+.leaflet-control-attribution a { color: #6ee7b7 !important; }
+.region-place-icon {
+  background: transparent !important;
+  border: 0 !important;
+}
+.region-place-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 150px;
+  pointer-events: auto;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.95));
+}
+.region-place-dot {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #d97706;
+  color: #04120c;
+  font-size: 10px;
+  line-height: 1;
+  box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 0 12px rgba(245,158,11,.65);
+}
+.region-place-marker.has-fishing .region-place-dot {
+  background: #34d399;
+  box-shadow: 0 0 0 3px rgba(0,0,0,.4), 0 0 14px rgba(52,211,153,.75);
+}
+.region-place-label {
+  margin-top: 2px;
+  max-width: 148px;
+  padding: 2px 5px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 5px;
+  background: rgba(3,9,7,.86);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+.region-place-kind {
+  margin-top: 1px;
+  color: #d1fae5;
+  font-size: 9px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px #000;
+}
+.map-toolbar-button,
+.map-toolbar-icon {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 10px;
+  background: rgba(15,29,22,.92);
+  padding: 7px 10px;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 3px 9px rgba(0,0,0,.28);
+}
+.map-toolbar-button:hover,
+.map-toolbar-icon:hover {
+  border-color: rgba(110,231,183,.55);
+  background: rgba(20,50,36,.96);
+}
+.map-toolbar-icon { min-width: 40px; padding: 7px; }
+.map-toolbar-primary {
+  border-color: rgba(110,231,183,.45);
+  background: linear-gradient(180deg,#10b981,#047857);
+  color: #04120c;
+}
+.map-dialog-primary,
+.map-dialog-secondary {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 11px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.map-dialog-primary {
+  border: 1px solid rgba(253,230,138,.45);
+  background: linear-gradient(180deg,#fbbf24,#d97706);
+  color: #1c1204;
+}
+.map-dialog-secondary {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: #e2e8f0;
+}
+@media (max-width: 640px) {
+  .region-place-label { font-size: 10px; padding: 2px 4px; }
+  .region-place-dot { width: 17px; height: 17px; }
+  .map-toolbar-button { min-height: 38px; padding: 6px 8px; }
+  .map-toolbar-icon { min-width: 38px; min-height: 38px; }
+}

@@ -1713,6 +1713,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={b.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                                <CatalogPhoto query={`fishing bait ${b.name}`} fallbackQueries={['fishing bait']} alt={b.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between gap-2 text-xs">
                                     <span className="text-emerald-300 font-medium">
@@ -1757,6 +1758,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={fl.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                                <CatalogPhoto query={`fishing bait flavor ${fl.name}`} fallbackQueries={['fishing bait flavor']} alt={fl.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between gap-2 text-xs">
                                     <span className="text-teal-300 font-medium">
