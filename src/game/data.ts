@@ -1,4 +1,5 @@
 import { BAITS_CATALOG, FLAVORINGS_CATALOG } from './catalogBaitsLures';
+import bunkerPhoto from '../../Improve_gaming_graphics_quality_fd249ac9_2K.jpg';
 import {
   ALL_FAUNA_CATALOG,
   CRAYFISH_SPECIES as CRAYFISH_CAT,
@@ -54,8 +55,7 @@ export const TOMASHGOROD_PHOTO_URL =
 export const ROKITNE_PHOTO_URL =
   `${import.meta.env.BASE_URL}assets/aistudio/Make_second_location_similar_37788a2b_2K_f2d6511e.jpg`;
 
-export const BUNKER_PHOTO_URL =
-  `${import.meta.env.BASE_URL}assets/aistudio/Four_people_sitting_in_bunker_10fbe33d_2K_fb20483c.jpg`;
+export const BUNKER_PHOTO_URL = bunkerPhoto;
 
 const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
   rokitne_bunker: {
