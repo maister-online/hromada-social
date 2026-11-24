@@ -269,7 +269,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   return (
     <div className="w-screen h-screen bg-[#050806] text-slate-100 flex flex-col overflow-hidden select-none">
       {/* Bunker Header */}
-      <header className="relative z-20 px-4 sm:px-6 py-2.5 bg-[#09100c]/95 border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <header className="absolute top-0 left-0 right-0 z-30 px-3 sm:px-6 py-2.5 bg-[#09100c]/75 backdrop-blur-sm border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="font-display text-lg sm:text-2xl font-bold text-slate-100">
             Бункер «Щит-04» · Рокитне
@@ -360,9 +360,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       </header>
 
       {/* Main Interactive Bunker Scene */}
-      <div className="relative flex-1 min-h-0 flex flex-col items-center justify-center overflow-y-auto lg:overflow-hidden bg-[#040705] p-2 sm:p-4">
+      <div className="absolute inset-0 min-h-0 flex flex-col items-center justify-center overflow-hidden bg-[#040705] p-0">
         {/* Locked 16:9 Photo Stage so clickable hotspots stay pixel-locked to the 4 people */}
-        <div className="relative w-full max-w-[1380px] aspect-video max-h-full rounded-xl overflow-hidden border border-emerald-500/20 shadow-2xl bg-[#070b09] shrink-0">
+        <div className="absolute inset-0 w-full h-full max-w-none aspect-auto max-h-none rounded-none overflow-hidden border-0 shadow-2xl bg-[#070b09] shrink-0">
           <img
             src={BUNKER_PHOTO_URL}
             alt="Бункер Щит-04 у Рокитному: Тарас Гнатович, Віктор Величко, Олег Кравчук та Єльцин"
@@ -453,7 +453,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
         </div>
 
         {/* Touch Quick-Select Cards Below Photo on Mobile / Tablet */}
-        <div className="w-full max-w-[1380px] grid grid-cols-2 lg:hidden gap-2.5 mt-3">
+        <div className="hidden">
           {BUNKER_HOTSPOTS.map((spot) => {
             const char = CHARACTERS[spot.id];
             const readyCount = getReadyQuestsCount(spot.id);
