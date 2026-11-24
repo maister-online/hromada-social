@@ -125,6 +125,7 @@ interface BunkerHotspot {
   heightPct: number;
   labelLeftPct: number;
   labelTopPct: number;
+  displayName: string;
   shortAction: string;
 }
 
@@ -138,7 +139,8 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 60,
     labelLeftPct: 22.5,
     labelTopPct: 21,
-    shortAction: 'Комірник · Улов і провізія',
+    displayName: 'Комірник',
+    shortAction: 'Улов · Провізія · Відпочинок',
   },
   {
     id: 'velychko',
@@ -148,7 +150,8 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 47,
     labelLeftPct: 42,
     labelTopPct: 21,
-    shortAction: 'Науковець · Дослідження',
+    displayName: 'Науковець',
+    shortAction: 'Дослідження · Бестіарій',
   },
   {
     id: 'oleg',
@@ -158,7 +161,8 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 45,
     labelLeftPct: 61,
     labelTopPct: 18,
-    shortAction: 'Майстер · Снасті й ремонт',
+    displayName: 'Майстер',
+    shortAction: 'Снасті · Ремонт',
   },
   {
     id: 'baryga',
@@ -168,7 +172,8 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 51,
     labelLeftPct: 82.5,
     labelTopPct: 20,
-    shortAction: 'Єльцин · Торговець',
+    displayName: 'Єльцин',
+    shortAction: 'Торговець · Скупка',
   },
 ];
 
@@ -363,9 +368,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
         <div className="relative w-full max-w-[1380px] aspect-video max-h-full rounded-xl overflow-hidden border border-emerald-500/20 shadow-2xl bg-[#070b09] shrink-0">
           <img
             src={BUNKER_PHOTO_URL}
-            alt="Бункер Щит-04 у Рокитному: Тарас Гнатович, Віктор Величко, Олег Кравчук та Єльцин"
+            alt="Інтер’єр бункера Щит-04 з чотирма сталкерами"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
             draggable={false}
           />
 
@@ -406,7 +411,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         : 'none',
                   }}
                   className="absolute rounded-2xl border-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                  aria-label={`Відкрити меню: ${char.name} (${char.callsign})`}
+                  aria-label={`Відкрити: ${spot.displayName}`}
                 />
 
                 {/* Clean interactive nameplate anchored above each character */}
@@ -425,7 +430,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 >
                   <div className="flex items-center gap-1.5 whitespace-nowrap">
                     <span className="text-[10px] sm:text-xs font-bold text-slate-100 truncate">
-                      {char.name}
+                      {spot.displayName}
                     </span>
                     {readyCount > 0 && (
                       <span className="font-mono-num text-[10px] font-bold text-amber-300">
@@ -468,7 +473,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-slate-100 truncate">{char.name}</span>
+                    <span className="text-xs font-bold text-slate-100 truncate">{spot.displayName}</span>
                     {readyCount > 0 && (
                       <span className="text-[11px] font-mono-num font-bold text-amber-300">
                         !{readyCount}
@@ -476,9 +481,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                     )}
                   </div>
                   <div className="text-[11px] font-medium truncate" style={{ color: char.accentHex }}>
-                    {char.callsign}
+                    {spot.shortAction}
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate">{spot.shortAction}</div>
+                  <div className="text-[10px] text-slate-400 truncate">Натисніть, щоб відкрити</div>
                 </div>
               </button>
             );
@@ -514,7 +519,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           : 'btn-field text-slate-300'
                       }`}
                     >
-                      <span>{c.name}</span>
+                      <span>{spot.displayName}</span>
                       {readyCount > 0 && (
                         <span className="font-mono-num text-[11px] font-bold text-amber-300">
                           !{readyCount}
@@ -549,7 +554,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                     {npc.roomName} · {npc.callsign}
                   </div>
                   <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-100">
-                    {npc.name}
+                    {BUNKER_HOTSPOTS.find((spot) => spot.id === npc.id)?.displayName ?? npc.callsign}
                   </h2>
                   <p className="text-xs text-slate-300 italic leading-relaxed">«{npc.greeting}»</p>
                   <p className="text-[11px] text-slate-400">{npc.bio}</p>
