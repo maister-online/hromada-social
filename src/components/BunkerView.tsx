@@ -411,7 +411,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         : 'none',
                   }}
                   className="absolute rounded-2xl border-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                  aria-label={`Відкрити: ${spot.displayName}` }
+                  aria-label={`Відкрити: ${spot.displayName}`}
                 />
 
                 {/* Clean interactive nameplate anchored above each character */}
@@ -483,7 +483,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                   <div className="text-[11px] font-medium truncate" style={{ color: char.accentHex }}>
                     {spot.shortAction}
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate">{spot.shortAction}</div>
+                  <div className="text-[10px] text-slate-400 truncate">Натисніть, щоб відкрити</div>
                 </div>
               </button>
             );
