@@ -38,6 +38,8 @@ interface PolissiaMapViewProps {
   muted: boolean;
   musicEnabled: boolean;
   onSelectDestination: (locId: LocationId) => void;
+  compact?: boolean;
+  onClose?: () => void;
   onOpenInventory: () => void;
   onOpenQuests: () => void;
   onOpenBestiary: () => void;
@@ -158,6 +160,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   muted,
   musicEnabled,
   onSelectDestination,
+  compact = false,
+  onClose,
   onOpenInventory,
   onOpenQuests,
   onOpenBestiary,
@@ -426,7 +430,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   const radWarning = selectedLoc.radiationLevel > radSuitLevel;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#060a09] flex flex-col select-none">
+    <div className={compact ? 'fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm' : 'relative w-screen h-screen overflow-hidden bg-[#060a09] flex flex-col select-none'}>
+      <div className={compact ? 'relative w-[96vw] max-w-[1280px] h-[84vh] max-h-[900px] overflow-hidden rounded-2xl border border-emerald-400/35 bg-[#060a09] shadow-2xl' : 'relative w-full h-full overflow-hidden'}>
       {/* Top Game Menu Bar */}
       <header className="absolute top-0 left-0 right-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d]/90 backdrop-blur-sm border-b border-emerald-500/20">
         <div className="flex items-center gap-3">
@@ -535,6 +540,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
         </div>
+        {compact && onClose && <button type="button" onClick={onClose} className="absolute right-3 top-3 z-[60] min-h-[42px] rounded-lg border border-white/20 bg-black/80 px-4 text-sm font-bold text-white shadow-lg">Закрити ✕</button>}
       </header>
 
       {/* Main Interactive Zoomable Map + Tactical Inspector */}
@@ -605,7 +611,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 <button
                   key={loc.id}
                   type="button"
-                  onClick={() => focusLocationOnMap(loc, true)}
+                  onClick={() => compact ? onSelectDestination(loc.id) : focusLocationOnMap(loc, true)}
                   onDoubleClick={() => onSelectDestination(loc.id)}
                   style={{
                     left: `${loc.mapX}%`,
@@ -651,7 +657,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               return (
                 <button key={point.id} type="button"
                   onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => { event.stopPropagation(); setSelectedCommunityPoint(point); }}
+                  onClick={(event) => { event.stopPropagation(); if (compact) onSelectDestination(point.nearestLocationId); else setSelectedCommunityPoint(point); }}
                   style={{ left: `${point.mapX}%`, top: `${point.mapY}%`, transform: `translate(-50%, -50%) scale(${invScale})`, touchAction: 'none' }}
                   className="absolute z-20 group flex min-h-[38px] flex-col items-center justify-center gap-0.5 cursor-pointer"
                   title={`${point.name} — ${point.kind}`}>
@@ -873,6 +879,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
           </div>
         )}
         {communityMapError && <div className="pointer-events-none fixed bottom-3 left-1/2 z-40 -translate-x-1/2 rounded-lg border border-amber-400/30 bg-black/80 px-3 py-2 text-center text-[10px] text-amber-200">{communityMapError}</div>}
+      </div>
     </div>
   );
 };
