@@ -87,7 +87,25 @@ async function loadCommunityMapPoints():Promise<SettlementPoint[]> {
  if(anchors.length<3)throw new Error('Не вдалося прив’язати географію до ігрової карти');
  const projection=solveMapProjection(anchors);
  const anchorPlaces=MAP_ANCHORS.map(a=>({id:a.gameId,place:find(a.name,a.kind)})).filter(a=>a.place);
- return COMMUNITY_SETTLEMENTS.map(s=>{const p=find(s.name,s.kind);if(!p)return null;const x=projection.x[0]*p.lat+projection.x[1]*p.lon+projection.x[2],y=projection.y[0]*p.lat+projection.y[1]*p.lon+projection.y[2];const nearest=anchorPlaces.reduce((best,a)=>{const d=Math.hypot((p.lat-a.place!.lat)*111,(p.lon-a.place!.lon)*70);return !best||d<best.d?{id:a.id,d}:best;},null as {id:LocationId;d:number}|null);return nearest?{...s,lat:p.lat,lon:p.lon,mapX:x,mapY:y,nearestLocationId:s.gameId??nearest.id}:null;}).filter((p):p is SettlementPoint=>Boolean(p)&&p.mapX>=0&&p.mapX<=100&&p.mapY>=0&&p.mapY<=100);
+ const anchorPlaces = MAP_ANCHORS.map(a => ({ id: a.gameId, place: find(a.name, a.kind) }))
+   .filter((a): a is { id: LocationId; place: OSMPlace } => Boolean(a.place));
+ const result: SettlementPoint[] = [];
+ for (const settlement of COMMUNITY_SETTLEMENTS) {
+   const place = find(settlement.name, settlement.kind);
+   if (!place) continue;
+   const mapX = projection.x[0] * place.lat + projection.x[1] * place.lon + projection.x[2];
+   const mapY = projection.y[0] * place.lat + projection.y[1] * place.lon + projection.y[2];
+   if (mapX < 0 || mapX > 100 || mapY < 0 || mapY > 100) continue;
+   const nearest = anchorPlaces.reduce((best, anchor) => {
+     const distance = Math.hypot((place.lat - anchor.place.lat) * 111, (place.lon - anchor.place.lon) * 70);
+     return !best || distance < best.distance ? { id: anchor.id, distance } : best;
+   }, null as { id: LocationId; distance: number } | null);
+   if (nearest) result.push({
+     ...settlement, lat: place.lat, lon: place.lon, mapX, mapY,
+     nearestLocationId: settlement.gameId ?? nearest.id,
+   });
+ }
+ return result;
 }
 
 const WEATHER_LABELS: Record<WeatherType, string> = {
