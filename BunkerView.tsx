@@ -126,7 +126,7 @@ interface BunkerHotspot {
   shortAction: string;
 }
 
-// Calibrated over Four_people_sitting_in_bunker_10fbe33d_2K_fb20483c.jpg (16:9 locked stage)
+// Hotspot positions are measured relative to the bunker photo, not the screen.
 const BUNKER_HOTSPOTS: BunkerHotspot[] = [
   {
     id: 'taras',
