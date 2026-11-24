@@ -13,6 +13,7 @@ import {
   Droplets,
   Package,
   RotateCcw,
+  Radar,
   Scissors,
   ScrollText,
   Shield,
@@ -104,6 +105,8 @@ type RigTab =
   | 'hooks_sinkers'
   | 'rigs'
   | 'flavor_acc'
+  | 'bait'
+  | 'groundbait'
   | 'gear';
 
 type BaitFilterTab = 'all' | BaitDef['category'];
@@ -430,6 +433,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [baitFilter, setBaitFilter] = useState<BaitFilterTab>('all');
   const [showRigDrawer, setShowRigDrawer] = useState(false);
   const [rigTab, setRigTab] = useState<RigTab>('rod');
+  const [showSonar, setShowSonar] = useState(false);
+  const [sonarRange, setSonarRange] = useState(10);
+  const [sonarScan, setSonarScan] = useState(0);
   const [reticlePos, setReticlePos] = useState<{
     xPct: number;
     yPct: number;
@@ -483,6 +489,31 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => getWaterSpotInfo(location, aimYaw, castDistM, maxCastM),
     [aimYaw, castDistM, location, maxCastM]
   );
+  const hasSonar = gameState.ownedGearIds.includes('gear_sonar_module');
+  const sonarEquipped = gameState.equippedGearIds.includes('gear_sonar_module');
+  const sonarMaxDepth = Math.max(sonarRange, currentWaterSpot.depthM + 1);
+  const sonarBottomY = 26 + (currentWaterSpot.depthM / sonarMaxDepth) * 150;
+  const sonarEchoes = useMemo(() => {
+    const pool = location.speciesIds
+      .map((id) => FISH_MAP[id])
+      .filter((species) => species && (!species.faunaKind || species.faunaKind === 'fish' || species.faunaKind === 'mutant'));
+    const count = Math.min(6, Math.max(2, Math.ceil(pool.length / 4)));
+    return Array.from({ length: count }, (_, index) => {
+      const species = pool[(index * 3 + sonarScan) % Math.max(1, pool.length)];
+      const phaseValue = (index * 37 + sonarScan * 19 + location.anomalyActivity) % 100;
+      const depthFactor =
+        species?.preferredDepth === 'surface' ? 0.2 :
+        species?.preferredDepth === 'bottom' ? 0.86 :
+        species?.preferredDepth === 'mid' ? 0.55 :
+        0.28 + (phaseValue % 55) / 100;
+      const depthM = Math.max(0.25, currentWaterSpot.depthM * depthFactor);
+      return {
+        x: 28 + ((index * 59 + sonarScan * 23 + 17) % 300),
+        y: 26 + (depthM / sonarMaxDepth) * 150,
+        strength: 0.38 + (phaseValue % 58) / 100,
+      };
+    });
+  }, [currentWaterSpot.depthM, location.anomalyActivity, location.speciesIds, sonarMaxDepth, sonarScan]);
 
   const effectiveFishingDepthM = useMemo(() => {
     const maxSafe = Math.max(0.4, Number((currentWaterSpot.depthM - 0.1).toFixed(1)));
@@ -833,6 +864,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     rigStats.gearSanityShieldBonus,
     showKeepnet,
     showRigDrawer,
+    showSonar,
   ]);
 
   // Real-time fishing physics loop
@@ -1098,7 +1130,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       audioEngine.init();
       if (isRodBroken) {
         setStatusMsg(
-          'Вудлище зламане (0%)! Полагодьте у майстра Олега або виберіть інше в «Монтажі».'
+          'Вудлище зламане (0%)! Полагодьте у майстра Олега або виберіть інше в «Екіпіровці».'
         );
         return;
       }
@@ -1315,6 +1347,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     };
     const isBlocked =
       isModalOpen ||
+      showSonar ||
       Boolean(caughtResult) ||
       Boolean(caughtLoot) ||
       showKeepnet ||
@@ -1327,6 +1360,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
           setShowKeepnet(false);
           setShowBaitDrawer(false);
           setShowRigDrawer(false);
+          setShowSonar(false);
         }
         return;
       }
@@ -1381,6 +1415,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     showBaitDrawer,
     showKeepnet,
     showRigDrawer,
+    showSonar,
   ]);
 
   const { clock } = formatClock(gameState.timeOfDay);
@@ -1443,7 +1478,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
             caughtLoot ||
             showKeepnet ||
             showBaitDrawer ||
-            showRigDrawer
+            showRigDrawer ||
+            showSonar
           ) {
             return;
           }
@@ -1476,7 +1512,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
             caughtLoot ||
             showKeepnet ||
             showBaitDrawer ||
-            showRigDrawer
+            showRigDrawer ||
+            showSonar
           ) {
             return;
           }
@@ -1596,13 +1633,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setShowBaitDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Наживка · {bait.name}</button>
-              {activeGbDef && activeGb ? (
-                <div className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 flex items-center text-xs text-emerald-300">Прикормлено · {activeGb.castsLeft} закидів</div>
-              ) : (() => {
-                const availGb = GROUNDBAITS.find((g) => (gameState.groundbaitInventory[g.id] ?? 0) > 0);
-                return availGb ? <button type="button" onClick={() => { onThrowGroundbait(availGb.id); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold">Прикормка · {availGb.name}</button> : <div className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 flex items-center text-xs text-slate-500">Немає прикормки</div>;
-              })()}
+              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setRigTab('bait'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Наживка · {bait.name}</button>
+              <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setRigTab('groundbait'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Прикормка · {activeGbDef?.name ?? (activeGb ? 'Активна' : 'обрати')}</button>
               {antiradQty > 0 && gameState.radiation > 5 && <button type="button" onClick={() => { onUseConsumable('antirad_ai2'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Антирад ({antiradQty})</button>}
               {energyQty > 0 && !isEnergyActive && <button type="button" onClick={() => { onUseConsumable('energy_stalker'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Енергетик ({energyQty})</button>}
               {gameState.sanity < 85 && sanityFoods.slice(0, 2).map((food) => {
@@ -1611,7 +1643,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 return <button key={food.id} type="button" onClick={() => { onUseConsumable(food.id); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">{label} ({qty})</button>;
               })}
 
-              <button type="button" onClick={() => { setShowLocationMenu(false); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Wrench className="mr-2 inline h-4 w-4 text-sky-300" />Монтаж снасті</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); setRigTab('rod'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Wrench className="mr-2 inline h-4 w-4 text-sky-300" />Екіпіровка</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); setShowSonar(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Radar className="mr-2 inline h-4 w-4 text-cyan-300" />Ехолот {sonarEquipped ? '· LIVE' : ''}</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); setShowKeepnet(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Package className="mr-2 inline h-4 w-4 text-amber-300" />Садок ({gameState.keepnet.length})</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenInventory(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Shield className="mr-2 inline h-4 w-4 text-sky-300" />Рюкзак</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenJournal(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><BookMarked className="mr-2 inline h-4 w-4 text-teal-300" />Журнал</button>
@@ -1621,6 +1654,86 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <button type="button" onClick={onToggleMusic} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}</button>
               <button type="button" onClick={onToggleMute} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{muted ? 'Увімкнути звук' : 'Вимкнути звук'}</button>
             </div>
+          </section>
+        </div>
+      )}
+
+      {/* MODERN FISH FINDER */}
+      {showSonar && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#02070c]/90 p-3 backdrop-blur-sm" onClick={() => setShowSonar(false)}>
+          <section className="w-full max-w-2xl overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#07131d] shadow-[0_0_50px_rgba(8,145,178,0.18)]" onClick={(e) => e.stopPropagation()}>
+            <header className="flex items-center justify-between border-b border-cyan-300/15 bg-[#0a1b28] px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 p-2 text-cyan-300"><Radar className="h-5 w-5" /></div>
+                <div>
+                  <div className="text-sm font-black tracking-[0.18em] text-cyan-100">POLISSIA SONAR PRO</div>
+                  <div className="text-[10px] uppercase tracking-widest text-cyan-500">Digital CHIRP · Fish finder</div>
+                </div>
+              </div>
+              <button type="button" onClick={() => setShowSonar(false)} className="rounded-lg border border-white/10 p-2 text-slate-300"><X className="h-5 w-5" /></button>
+            </header>
+            {sonarEquipped ? (
+              <div className="space-y-3 p-3 sm:p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono-num">
+                  <span className="inline-flex items-center gap-1.5 text-emerald-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" /> LIVE SCAN</span>
+                  <span className="text-cyan-200">{location.name}</span>
+                  <span className="text-slate-400">Скан №{sonarScan + 1}</span>
+                </div>
+                <div className="rounded-xl border border-cyan-300/25 bg-[#03101a] p-2 shadow-inner shadow-cyan-950">
+                  <div className="mb-1 flex items-center justify-between px-1 text-[10px] font-mono-num text-cyan-300"><span>SONAR / CHIRP</span><span>ДІАПАЗОН {sonarRange} м</span></div>
+                  <svg viewBox="0 0 360 210" className="block w-full rounded-lg" role="img" aria-label="Сонарна карта товщі води, рибних сигналів і рельєфу дна">
+                    <defs>
+                      <linearGradient id="sonarWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#06283a" /><stop offset="100%" stopColor="#020912" /></linearGradient>
+                      <linearGradient id="sonarBottom" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8b6b35" stopOpacity="0.72" /><stop offset="100%" stopColor="#3b2b19" stopOpacity="0.96" /></linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="360" height="210" rx="7" fill="url(#sonarWater)" />
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <g key={`sonar-grid-${i}`}>
+                        <line x1="0" y1={26 + i * 37} x2="360" y2={26 + i * 37} stroke="#15516a" strokeOpacity="0.55" strokeDasharray="3 5" />
+                        <text x="5" y={22 + i * 37} fill="#67b8d2" fontSize="8">{(sonarMaxDepth * i / 4).toFixed(1)}м</text>
+                      </g>
+                    ))}
+                    {[60,120,180,240,300].map((x) => <line key={`sonar-v-${x}`} x1={x} y1="18" x2={x} y2="190" stroke="#15516a" strokeOpacity="0.28" strokeDasharray="2 6" />)}
+                    <path d={`M0 ${sonarBottomY} Q55 ${sonarBottomY - 7} 105 ${sonarBottomY + 1} T210 ${sonarBottomY - 4} T360 ${sonarBottomY + 2} L360 210 L0 210 Z`} fill="url(#sonarBottom)" />
+                    <path d={`M0 ${sonarBottomY} Q55 ${sonarBottomY - 7} 105 ${sonarBottomY + 1} T210 ${sonarBottomY - 4} T360 ${sonarBottomY + 2}`} fill="none" stroke="#e7b65b" strokeWidth="2" />
+                    {sonarEchoes.map((echo, index) => (
+                      <g key={`echo-${index}`} opacity={0.55 + echo.strength * 0.45}>
+                        <path d={`M${echo.x - 12} ${echo.y + 3} Q${echo.x} ${echo.y - 7 - echo.strength * 5} ${echo.x + 12} ${echo.y + 3}`} fill="none" stroke={echo.strength > 0.78 ? '#fbbf24' : '#45e6f5'} strokeWidth={1.5 + echo.strength} strokeLinecap="round" />
+                        <ellipse cx={echo.x} cy={echo.y + 4} rx={4 + echo.strength * 5} ry="2.5" fill={echo.strength > 0.78 ? '#fbbf24' : '#45e6f5'} opacity="0.8" />
+                      </g>
+                    ))}
+                    <line x1={18 + ((sonarScan * 41) % 324)} y1="18" x2={18 + ((sonarScan * 41) % 324)} y2={sonarBottomY} stroke="#6df7ff" strokeOpacity="0.75" strokeWidth="1.5" />
+                    <text x="354" y="12" fill="#67e8f9" fontSize="8" textAnchor="end">LIVE</text>
+                  </svg>
+                  <div className="mt-1 flex justify-between px-1 text-[9px] font-mono-num text-slate-500"><span>ЛІВИЙ БОРТ</span><span>ЦЕНТР</span><span>ПРАВИЙ БОРТ</span></div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Глибина</div><div className="font-mono-num text-lg font-bold text-cyan-200">{currentWaterSpot.depthM.toFixed(1)} м</div></div>
+                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Сигнали</div><div className="font-mono-num text-lg font-bold text-amber-300">{sonarEchoes.length}</div></div>
+                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Дно</div><div className="truncate text-sm font-bold text-amber-200">{currentWaterSpot.zoneLabel}</div></div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    {[5,10,20].map((range) => <button key={range} type="button" onClick={() => setSonarRange(range)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${sonarRange === range ? 'border-cyan-300/60 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-black/20 text-slate-400'}`}>{range} м</button>)}
+                  </div>
+                  <button type="button" onClick={() => setSonarScan((value) => value + 1)} className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-cyan-300/40 bg-cyan-500/15 px-4 text-xs font-bold text-cyan-100"><Radar className="h-4 w-4" />ОНОВИТИ СКАН</button>
+                </div>
+                <p className="text-[10px] leading-relaxed text-slate-500">Ехолот показує орієнтовні рибні відбитки та форму дна в зоні поточного прицілювання. Це підказка для вибору глибини й місця закиду, а не гарантія клювання.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 p-5">
+                <div className="text-center">
+                  <Radar className="mx-auto h-12 w-12 text-cyan-300" />
+                  <h3 className="mt-3 text-lg font-bold text-white">{hasSonar ? 'Ехолот лежить у рюкзаку' : 'Ехолот не придбано'}</h3>
+                  <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">{hasSonar ? 'Встанови портативний Pro у вкладці «Одяг і спорядження», щоб увімкнути сканування.' : 'Портативний ехолот Pro доступний у майстерні Олега Кравчука в бункері за ₴420.'}</p>
+                </div>
+                {hasSonar ? (
+                  <button type="button" onClick={() => { setShowSonar(false); setRigTab('gear'); setShowRigDrawer(true); }} className="w-full rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-3 text-sm font-bold text-emerald-200">ВСТАНОВИТИ В ЕКІПІРОВЦІ</button>
+                ) : (
+                  <button type="button" onClick={() => { setShowSonar(false); onGoToBunker(); }} className="w-full rounded-xl border border-cyan-300/40 bg-cyan-500/15 px-4 py-3 text-sm font-bold text-cyan-100">ДО МАЙСТЕРНІ ОЛЕГА</button>
+                )}
+              </div>
+            )}
           </section>
         </div>
       )}
@@ -1938,7 +2051,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-nowrap gap-1.5 overflow-x-auto custom-scroll pb-1">
               {(
                 [
                   { id: 'all', label: 'Усі' },
@@ -2019,7 +2132,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div>
                 <h3 className="font-display text-lg sm:text-xl font-bold text-slate-100">
-                  Монтаж снасті та спорядження
+                  Екіпіровка рибалки та монтаж снасті
                 </h3>
                 <p className="text-xs text-slate-400">
                   Макс. закид {maxCastM.toFixed(0)} м · Ліміт навантаження{' '}
@@ -2038,7 +2151,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-nowrap gap-1.5 overflow-x-auto custom-scroll pb-1">
               {(
                 [
                   { id: 'rod', label: 'Вудка' },
@@ -2047,8 +2160,10 @@ export const FishingView: React.FC<FishingViewProps> = ({
                   { id: 'float', label: 'Поплавок' },
                   { id: 'hooks_sinkers', label: 'Гачок і груз' },
                   { id: 'rigs', label: 'Донка / Годівн.' },
-                  { id: 'flavor_acc', label: 'Аромат і дрібн.' },
-                  { id: 'gear', label: 'Спорядження' },
+                  { id: 'flavor_acc', label: 'Фурнітура' },
+                  { id: 'bait', label: 'Наживка' },
+                  { id: 'groundbait', label: 'Прикормка' },
+                  { id: 'gear', label: 'Одяг і спорядження' },
                 ] as { id: RigTab; label: string }[]
               ).map((tab) => (
                 <button
@@ -2067,6 +2182,78 @@ export const FishingView: React.FC<FishingViewProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scroll space-y-2.5 pr-1">
+              {rigTab === 'bait' && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        { id: 'all', label: 'Усі' },
+                        { id: 'natural', label: 'Живі' },
+                        { id: 'plant', label: 'Рослинні' },
+                        { id: 'lure', label: 'Штучні' },
+                        { id: 'anomaly', label: 'Аномальні' },
+                      ] as { id: BaitFilterTab; label: string }[]
+                    ).map((tab) => (
+                      <button key={tab.id} type="button" onClick={() => setBaitFilter(tab.id)}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${baitFilter === tab.id ? 'border-amber-400/60 bg-amber-500/20 text-amber-200' : 'border-white/10 bg-[#08100c] text-slate-400'}`}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-400">Обрана наживка встановлюється на гачок. Витрата відбувається під час закиду; штучні приманки багаторазові.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {filteredBaits.map((item) => {
+                      const qty = gameState.baitInventory[item.id] ?? 0;
+                      const active = bait.id === item.id;
+                      return (
+                        <button key={item.id} type="button" disabled={phase !== 'IDLE' || qty <= 0}
+                          onClick={() => onSelectBait(item.id)}
+                          className={`rounded-xl border p-3 text-left disabled:opacity-40 ${active ? 'border-amber-400/70 bg-amber-950/50' : 'border-white/10 bg-[#09120e]'}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-slate-100">{item.name}</span>
+                            <span className="text-xs font-mono-num text-amber-300">{item.category === 'lure' ? (qty > 0 ? `${qty} · багаторазова` : '0') : `${qty} шт.`}</span>
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-400">{item.description}</div>
+                          <div className="mt-1 text-[11px] text-emerald-300">Кльов ×{item.biteSpeedBonus} · бонус мутантів +{Math.round(item.mutantBonus * 100)}%</div>
+                          {active && <div className="mt-2 text-[10px] font-bold uppercase tracking-wide text-amber-300">Встановлено на снасть</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {rigTab === 'groundbait' && (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-emerald-400/20 bg-emerald-950/20 p-3">
+                    <div className="text-xs font-bold text-emerald-300">Закормлена точка</div>
+                    {activeGbDef && activeGb
+                      ? <div className="mt-1 text-sm text-slate-100">{activeGbDef.name} · залишилось {activeGb.castsLeft} закидів</div>
+                      : <div className="mt-1 text-xs text-slate-400">На цій локації точка ще не закормлена.</div>}
+                    <p className="mt-1 text-[11px] text-slate-400">Прикормка діє на поточній водоймі протягом п’яти закидів. Повторний закорм замінює попередній.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {GROUNDBAITS.map((item) => {
+                      const qty = gameState.groundbaitInventory[item.id] ?? 0;
+                      const active = activeGb?.groundbaitId === item.id;
+                      return (
+                        <button key={item.id} type="button" disabled={phase !== 'IDLE' || qty <= 0}
+                          onClick={() => { onThrowGroundbait(item.id); setShowRigDrawer(false); }}
+                          className={`rounded-xl border p-3 text-left disabled:opacity-40 ${active ? 'border-emerald-400/60 bg-emerald-950/40' : 'border-white/10 bg-[#09120e]'}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-slate-100">{item.name}</span>
+                            <span className="text-xs font-mono-num text-amber-300">{qty} пач.</span>
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-400">{item.description}</div>
+                          <div className="mt-1 text-[11px] text-emerald-300">{item.targetNote} · ефект ×{item.biteRateBoost.toFixed(2)}</div>
+                          {active && <div className="mt-2 text-[10px] font-bold uppercase tracking-wide text-emerald-300">Активна на цій точці</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {rigTab === 'rod' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {RODS.filter((r) => gameState.ownedRodIds.includes(r.id)).map((item) => {
@@ -2408,12 +2595,17 @@ export const FishingView: React.FC<FishingViewProps> = ({
 
               {rigTab === 'gear' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="col-span-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                    Одяг, захист, інструменти, техніка та транспорт. Натисни на предмет, щоб одягнути або зняти його. Активні речі впливають на характеристики рибалки.
+                    <div className="mt-1 text-[11px] text-slate-500">Захист костюма: рівень {gameState.radSuitLevel} · Ехолот: {sonarEquipped ? 'підключено' : hasSonar ? 'є в рюкзаку, але не встановлено' : 'не придбано'}</div>
+                  </div>
                   {GEAR_ITEMS.filter((g) => gameState.ownedGearIds.includes(g.id)).map((item) => {
                     const active = gameState.equippedGearIds.includes(item.id);
                     return (
                       <button
                         key={item.id}
                         type="button"
+                        disabled={phase !== 'IDLE'}
                         onClick={() => onToggleGearItem(item.id)}
                         className={`text-left p-3 rounded-xl border cursor-pointer ${
                           active
