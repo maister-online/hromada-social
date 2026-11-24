@@ -99,6 +99,7 @@ interface BunkerViewProps {
   onFullRest: () => void;
   onAdvanceWeather: (targetWeather?: WeatherType) => void;
   onExitToMap: () => void;
+  onOpenMap: () => void;
 }
 
 type ShopCategory =
@@ -208,6 +209,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   onFullRest,
   onAdvanceWeather,
   onExitToMap,
+  onOpenMap,
 }) => {
   const [activeNpc, setActiveNpc] = useState<CharacterId | null>(null);
   const [hoveredNpc, setHoveredNpc] = useState<CharacterId | null>(null);
@@ -317,6 +319,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             </span>
           </div>
 
+          <button type="button" onClick={onOpenMap} className="btn-tactile btn-primary-emerald min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 font-bold text-xs rounded-xl cursor-pointer whitespace-nowrap">
+            <Compass className="w-4 h-4" />Карта
+          </button>
           <button
             type="button"
             onClick={onOpenJournal}

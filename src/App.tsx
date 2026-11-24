@@ -206,6 +206,7 @@ export default function App() {
   const [showInventory, setShowInventory] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showJournal, setShowJournal] = useState(false);
+  const [showBunkerMap, setShowBunkerMap] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const stateRef = useRef(gameState);
@@ -260,19 +261,20 @@ export default function App() {
     audioEngine.init();
     const fresh = createFreshSave();
     setGameState(fresh);
-    setScreen('MAP');
-    showToast('Оберіть локацію на карті Полісся (наприклад, Томашгород або Рокитне) або зайдіть у Бункер.');
+    setScreen('BUNKER');
+    showToast('Ви у бункері. Відкрийте карту, щоб обрати локацію.');
   }, [showToast]);
 
   const handleContinue = useCallback(() => {
     audioEngine.init();
     const loc = stateRef.current.currentLocationId;
-    setScreen(loc === 'rokitne_bunker' ? 'MAP' : 'FISHING');
+    setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : 'FISHING');
   }, []);
 
   const handleSelectDestination = useCallback(
     (locId: LocationId) => {
       audioEngine.init();
+      setShowBunkerMap(false);
       const target = LOCATIONS[locId];
       if (!target) return;
 
@@ -1524,6 +1526,7 @@ export default function App() {
       {screen === 'BUNKER' && (
         <BunkerView
           gameState={gameState}
+          onOpenMap={() => setShowBunkerMap(true)}
           muted={muted}
           musicEnabled={musicEnabled}
           onToggleMute={handleToggleMute}
@@ -1558,7 +1561,22 @@ export default function App() {
           onRestToTime={handleRestToTime}
           onFullRest={handleFullBunkerRest}
           onAdvanceWeather={handleAdvanceWeather}
-          onExitToMap={() => setScreen('MAP')}
+          onExitToMap={() => setShowBunkerMap(true)}
+        />
+      )}
+
+      {screen === 'BUNKER' && showBunkerMap && (
+        <PolissiaMapView
+          compact onClose={() => setShowBunkerMap(false)}
+          currentLocationId={gameState.currentLocationId} day={gameState.day} timeOfDay={gameState.timeOfDay}
+          weather={gameState.weather} credits={gameState.credits} level={gameState.level} radSuitLevel={gameState.radSuitLevel}
+          sanity={gameState.sanity} keepnetCount={gameState.keepnet.length} keepnetWeightKg={keepnetWeight}
+          keepnetCapacityKg={keepnetCap} lootCount={gameState.foundLoot.length} readyQuestsCount={readyQuestsCount}
+          visitedLocationIds={gameState.visitedLocationIds} activeGroundbaitLocs={activeGroundbaitLocs}
+          muted={muted} musicEnabled={musicEnabled} onSelectDestination={handleSelectDestination}
+          onOpenInventory={() => setShowInventory(true)} onOpenQuests={() => setShowQuests(true)}
+          onOpenBestiary={() => setShowBestiary(true)} onOpenJournal={() => setShowJournal(true)}
+          onToggleMute={handleToggleMute} onToggleMusic={handleToggleMusic}
         />
       )}
 
