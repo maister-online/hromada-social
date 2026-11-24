@@ -425,6 +425,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   );
   const [showKeepnet, setShowKeepnet] = useState(false);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
+  const [showFishingControls, setShowFishingControls] = useState(false);
   const [showBaitDrawer, setShowBaitDrawer] = useState(false);
   const [baitFilter, setBaitFilter] = useState<BaitFilterTab>('all');
   const [showRigDrawer, setShowRigDrawer] = useState(false);
@@ -1743,7 +1744,21 @@ export const FishingView: React.FC<FishingViewProps> = ({
         </div>
       </div>
 
+      {/* LOWER CONTROLS: hidden until requested */}
+      {!showFishingControls && (
+        <button
+          type="button"
+          onClick={() => setShowFishingControls(true)}
+          className="fixed bottom-3 left-1/2 z-30 -translate-x-1/2 btn-tactile btn-field min-h-[46px] inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-xl"
+          aria-label="Відкрити керування риболовлею"
+        >
+          <Anchor className="h-4 w-4 text-amber-300" />
+          Керування риболовлею
+        </button>
+      )}
+
       {/* BOTTOM TOUCH & DESKTOP CONTROLS DOCK */}
+      {showFishingControls && (
       <div className="fixed bottom-3 inset-x-0 z-20 flex flex-wrap items-end justify-between gap-2.5 px-2.5 sm:px-5 pointer-events-none">
         {/* Left Thumb Cluster */}
         <div className="pointer-events-auto panel-field rounded-xl p-2 flex flex-wrap items-center gap-1.5 sm:gap-2 max-w-full lg:max-w-[64vw]">
@@ -1840,6 +1855,15 @@ export const FishingView: React.FC<FishingViewProps> = ({
 
         {/* Right Thumb Cluster: Drag Brake & Big Primary Cast/Strike/Reel Touch Button */}
         <div className="pointer-events-auto panel-field rounded-xl p-2 flex items-center gap-2 ml-auto">
+          <button
+            type="button"
+            onClick={() => setShowFishingControls(false)}
+            className="btn-tactile btn-field min-w-[42px] min-h-[46px] inline-flex items-center justify-center rounded-lg"
+            aria-label="Згорнути керування риболовлею"
+            title="Згорнути панель"
+          >
+            <X className="h-4 w-4" />
+          </button>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -1899,6 +1923,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
           </button>
         </div>
       </div>
+      )}
 
       {/* TOUCH BAIT DRAWER MODAL */}
       {showBaitDrawer && (
