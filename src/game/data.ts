@@ -46,7 +46,7 @@ import {
 } from './types';
 
 export const MAP_IMAGE_URL =
-  `${import.meta.env.BASE_URL}assets/aistudio/Creating_anomalous_Polissia_fish__37d81507_2K_88189e59.jpg`;
+  `${import.meta.env.BASE_URL}assets/aistudio/Creating_anomalous_Polissia_fish…_127c1c69_2K.jpg`;
 
 export const TOMASHGOROD_PHOTO_URL =
   `${import.meta.env.BASE_URL}assets/aistudio/FB_IMG_1795501144474_c3dcf921.jpg`;
