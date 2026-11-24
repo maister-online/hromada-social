@@ -363,12 +363,14 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       </header>
 
       {/* Main Interactive Bunker Scene */}
-      <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden bg-[#040705] p-2 sm:p-4">
-        {/* Portrait 9:16 stage: show the complete uploaded bunker photo without cropping or stretching */}
+      <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden bg-[#040705] p-0">
+        {/* Responsive portrait stage: fills all available screen height and scales down to fit narrow screens */}
         <div
-          className="relative max-h-full max-w-full rounded-xl overflow-hidden border border-emerald-500/20 shadow-2xl bg-[#070b09] shrink-0"
+          className="relative h-full max-h-full max-w-full aspect-[9/16] overflow-hidden bg-[#070b09] shrink-0"
           style={{
-            width: 'min(100%, calc((100dvh - 160px) * 0.5625))',
+            height: '100%',
+            width: 'auto',
+            maxWidth: '100%',
             aspectRatio: '9 / 16',
           }}
         >
