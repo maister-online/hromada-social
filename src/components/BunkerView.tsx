@@ -354,14 +354,6 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
 
-          <button
-            type="button"
-            onClick={onExitToMap}
-            className="btn-tactile btn-primary-amber min-h-[44px] inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 font-bold text-xs rounded-xl cursor-pointer whitespace-nowrap"
-          >
-            <Compass className="w-4 h-4" />
-            Вийти на карту Полісся
-          </button>
         </div>
       </header>
 
