@@ -363,14 +363,19 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       </header>
 
       {/* Main Interactive Bunker Scene */}
-      <div className="relative flex-1 min-h-0 flex flex-col items-center justify-center overflow-y-auto lg:overflow-hidden bg-[#040705] p-2 sm:p-4">
-        {/* Locked 16:9 Photo Stage so clickable hotspots stay pixel-locked to the 4 people */}
-        <div className="relative w-full max-w-[1380px] aspect-video max-h-full rounded-xl overflow-hidden border border-emerald-500/20 shadow-2xl bg-[#070b09] shrink-0">
+      <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden bg-[#040705] p-2 sm:p-4">
+        {/* Portrait 9:16 stage: show the complete uploaded bunker photo without cropping or stretching */}
+        <div
+          className="relative max-h-full max-w-full rounded-xl overflow-hidden border border-emerald-500/20 shadow-2xl bg-[#070b09] shrink-0"
+          style={{
+            width: 'min(100%, calc((100dvh - 160px) * 0.5625))',
+            aspectRatio: '9 / 16',
+          }}
+        >
           <img
             src={BUNKER_PHOTO_URL}
             alt="Інтер’єр бункера Щит-04 з чотирма сталкерами"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+            className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
             draggable={false}
           />
 
