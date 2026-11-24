@@ -86,7 +86,7 @@ const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
   },
   rokitne: {
     id: 'rokitne',
-    name: 'Рокитне · Річка Льва (Старий міст)',
+    name: 'Рокитне · Річка Льва під мостом',
     regionLabel: 'Лісова річка з гравійним берегом, корінням сосен і містком',
     backdropPhotoUrl: ROKITNE_PHOTO_URL,
     depthRangeM: [1.4, 6.4],
@@ -211,7 +211,7 @@ const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
   },
   tomashgorod: {
     id: 'tomashgorod',
-    name: 'Томашгород · Гранітний кар’єр',
+    name: 'Томашгород · Польський кар’єрчик',
     regionLabel: 'Дзеркальне кар’єрне плесо біля соснового берега й містка',
     backdropPhotoUrl: TOMASHGOROD_PHOTO_URL,
     depthRangeM: [2.4, 9.2],
@@ -660,7 +660,7 @@ export const QUESTS: QuestDef[] = [
     id: 'q_bogdan_rokitne',
     giver: 'taras',
     title: 'Розвідка під Старим мостом',
-    description: 'Впіймайте 4 риби у локації «Рокитне · Річка Льва (Старий міст)».',
+    description: 'Впіймайте 4 риби у локації «Рокитне · Річка Льва під мостом».',
     dialoguePrompt:
       'Вийди на вигин річки під самим Рокитним біля старого мосту. Там під підмитим сосновим корінням і на гальці завжди стоїть сильний головень та щука.',
     dialogueComplete:
@@ -710,7 +710,7 @@ export const QUESTS: QuestDef[] = [
     id: 'q_oleg_pike',
     giver: 'oleg',
     title: 'Іспит перекатів',
-    description: 'Впіймайте 3 риби на швидкій річці «Томашгород · Гранітний кар’єр».',
+    description: 'Впіймайте 3 риби на швидкій річці «Томашгород · Польський кар’єрчик».',
     dialoguePrompt:
       'Побачимо, чи витримає твоя волосінь глибини Томашгорода! Закинь блешню або живця на кар’єр і витягни 3 рибини.',
     dialogueComplete:
