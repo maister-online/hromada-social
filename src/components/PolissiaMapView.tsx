@@ -431,7 +431,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
 
   return (
     <div className={compact ? 'fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm' : 'relative w-screen h-screen overflow-hidden bg-[#060a09] flex flex-col select-none'}>
-      <div className={compact ? 'relative w-[96vw] max-w-[1280px] h-[84vh] max-h-[900px] overflow-hidden rounded-2xl border border-emerald-400/35 bg-[#060a09] shadow-2xl' : 'relative w-full h-full overflow-hidden'}>
+      <div className={compact ? 'relative h-[84vh] max-h-[900px] aspect-[9/16] w-auto max-w-[96vw] overflow-hidden rounded-2xl border border-emerald-400/35 bg-[#060a09] shadow-2xl' : 'relative w-full h-full overflow-hidden'}>
       {/* Top Game Menu Bar */}
       <header className="absolute top-0 left-0 right-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d]/90 backdrop-blur-sm border-b border-emerald-500/20">
         <div className="flex items-center gap-3">
@@ -563,7 +563,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               perspective: 'none',
               transformStyle: 'flat',
             }}
-            className={`relative w-full h-full max-w-none aspect-auto rounded-none overflow-hidden border-0 shadow-none bg-[#050806] [perspective:none] [transform-style:flat] ${
+            className={`relative h-full w-auto aspect-[9/16] max-w-full rounded-none overflow-hidden border-0 shadow-none bg-[#050806] [perspective:none] [transform-style:flat] ${
               isInteracting ? '' : 'transition-transform duration-200 ease-out'
             }`}
           >
@@ -573,7 +573,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 alt="Інтерактивна карта Полісся: Рокитне, Томашгород, Блажове, Біловіж, Сновидовичі, Масевичі, Кисоричі, Карпилівка, Борове"
                 referrerPolicy="no-referrer"
                 onError={() => setMapImgErr(true)}
-                className="absolute inset-0 w-full h-full object-contain object-center select-none pointer-events-none"
+                className="absolute inset-0 w-full h-full object-fill object-center select-none pointer-events-none"
                 draggable={false}
               />
             ) : (
