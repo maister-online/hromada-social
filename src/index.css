@@ -370,3 +370,11 @@
   .map-toolbar-button { min-height: 38px; padding: 6px 8px; }
   .map-toolbar-icon { min-width: 38px; min-height: 38px; }
 }
+
+/* Keep map controls clear of phone notches and gesture areas */
+.region-map-topbar {
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+.region-map-bottom-controls {
+  bottom: max(12px, env(safe-area-inset-bottom));
+}

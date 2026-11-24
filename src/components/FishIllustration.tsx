@@ -80,6 +80,24 @@ export const FishIllustration: React.FC<FishIllustrationProps> = ({
     mutant_giant_leech: 'Hirudo medicinalis',
     mutant_swamp_frog: 'Pelophylax ridibundus',
     mutant_giant_beetle: 'Hydrophilus piceus',
+    beetle_mutant_rad: 'Hydrophilus piceus',
+    mutant_ghost_fish: 'Esox lucius',
+    mutant_water_predator: 'Silurus glanis',
+    crayfish_small: 'Astacus astacus',
+    crayfish_common: 'Astacus astacus',
+    crayfish_large: 'Pontastacus leptodactylus',
+    crayfish_blue: 'Cherax quadricarinatus',
+    crayfish_white: 'white freshwater crayfish',
+    crayfish_red: 'Procambarus clarkii',
+    crayfish_black: 'Cherax destructor',
+    crayfish_swamp: 'Procambarus clarkii',
+    crayfish_radiation: 'Astacus astacus',
+    crayfish_giant: 'Astacopsis gouldi',
+    crayfish_mutant: 'Astacus astacus',
+    crayfish_spider: 'Astacus astacus',
+    crayfish_twoheaded: 'Astacus astacus',
+    crayfish_berserk: 'Astacus astacus',
+    crayfish_yobnutyi: 'Astacus astacus',
   };
   const fallbackPhotoQueries =
     species.faunaKind === 'crayfish'
@@ -87,8 +105,8 @@ export const FishIllustration: React.FC<FishIllustrationProps> = ({
       : species.faunaKind === 'insect' || species.faunaKind === 'beetle'
         ? ['freshwater insect', 'water beetle']
         : species.faunaKind === 'wildlife'
-          ? ['freshwater wildlife']
-          : ['freshwater fish'];
+          ? [species.name, 'freshwater wildlife']
+          : [species.name, 'freshwater fish'];
   const remotePhoto = useCommonsPhoto(
     hasPhoto ? '' : (mutantBasePhotos[species.id] ?? species.latinName),
     fallbackPhotoQueries

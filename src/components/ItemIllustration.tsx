@@ -12,11 +12,10 @@ export const ItemIllustration: React.FC<ItemIllustrationProps> = ({
   className = 'w-16 h-12',
 }) => {
   const c = item.accentColor;
-  const remotePhoto = useCommonsPhoto(item.name, [
+  const remotePhoto = useCommonsPhoto(
     item.iconKey.replace(/_/g, ' '),
-    'antique object relic',
-    'fishing equipment',
-  ]);
+    [item.name, 'survival equipment', 'antique object relic']
+  );
 
   if (remotePhoto.src) {
     return (

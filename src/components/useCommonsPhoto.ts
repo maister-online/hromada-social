@@ -43,7 +43,9 @@ async function searchCommons(query: string): Promise<string | null> {
     }
   })();
   memoryCache.set(key, request);
-  return request;
+  const result = await request;
+  if (!result) memoryCache.delete(key);
+  return result;
 }
 
 export function useCommonsPhoto(query: string, fallbackQueries: string[] = []) {
@@ -68,6 +70,7 @@ export function useCommonsPhoto(query: string, fallbackQueries: string[] = []) {
   useEffect(() => {
     if (!visible || !query) return;
     let cancelled = false;
+    setSrc(null);
     (async () => {
       for (const term of [query, ...fallbackQueries]) {
         const result = await searchCommons(term);
