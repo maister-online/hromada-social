@@ -232,6 +232,10 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     return closest?.item.gameLocationId ? LOCATIONS[closest.item.gameLocationId] : gameLocations[0] ?? null;
   }, [gameLocations, selectedLocation, selectedSettlement, settlements]);
 
+  const radWarning = Boolean(nearestGameLocation && nearestGameLocation.radiationLevel > radSuitLevel);
+  const hasVisitedTarget = Boolean(nearestGameLocation && visitedLocationIds.includes(nearestGameLocation.id));
+  const isGroundbaited = Boolean(selectedSettlement?.gameLocationId && activeGroundbaitLocs.includes(selectedSettlement.gameLocationId));
+
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return;
     const map = L.map(mapElementRef.current, {
