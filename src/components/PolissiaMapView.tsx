@@ -68,6 +68,28 @@ const MAP_ANCHORS: Array<{gameId:LocationId;name:string;kind:SettlementKind}> = 
  {gameId:'snovydovychi',name:'Сновидовичі',kind:'село'},{gameId:'kysorychi',name:'Кисоричі',kind:'село'},
  {gameId:'bilovizh',name:'Біловіж',kind:'село'},{gameId:'borove',name:'Борове',kind:'село'},{gameId:'blazhove',name:'Блажове',kind:'село'}
 ];
+
+// Always-visible settlement positions on the original anomaly-map artwork.
+// Coordinates are percentages of the existing map image, not a replacement map.
+const COMMUNITY_MAP_POSITIONS: Record<string, { x: number; y: number }> = {
+ 'rokytne-town':{x:41.7,y:45.5}, 'tomashhorod-town':{x:37.5,y:31.2},
+ 'yelne':{x:30,y:58}, 'blazhove':{x:56.1,y:22.8}, 'borove':{x:48.2,y:76.8},
+ 'buda':{x:62,y:66}, 'budky-snovydovytski':{x:61,y:38}, 'bilovizh':{x:64.6,y:28.5},
+ 'bilsk':{x:25,y:32}, 'dert':{x:38,y:78}, 'zalavya':{x:46,y:39},
+ 'karpylivka':{x:46.1,y:66.2}, 'kysorychi':{x:50.1,y:59.6}, 'kupel':{x:72,y:68},
+ 'lisove':{x:28,y:70}, 'masevychi':{x:47.6,y:52.8}, 'mushni':{x:67,y:53},
+ 'netreba':{x:39,y:18}, 'oleksandrivka':{x:22,y:75}, 'osnytsk':{x:59,y:82},
+ 'ostky':{x:69,y:45}, 'rokytne-village':{x:44,y:48}, 'snovydovychi':{x:59.1,y:41.6},
+ 'staryky':{x:76,y:34}, 'tomashhorod-village':{x:35,y:34}
+};
+function makeFallbackCommunityPoints(): SettlementPoint[] {
+ return COMMUNITY_SETTLEMENTS.map((s) => {
+   const p = COMMUNITY_MAP_POSITIONS[s.id];
+   const nearest = s.gameId ?? 'rokitne';
+   return { ...s, lat: 0, lon: 0, mapX: p.x, mapY: p.y, nearestLocationId: nearest };
+ });
+}
+
 const OSM_SETTLEMENT_QUERY = `[out:json][timeout:35];(node["place"](50.90,26.65,51.75,28.00);way["place"](50.90,26.65,51.75,28.00);relation["place"](50.90,26.65,51.75,28.00););out center tags;`;
 const OSM_ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 const normalizeSettlementName=(n:string)=>n.toLocaleLowerCase('uk-UA').replace(/[’'\u0060]/g,'').replace(/[‐‑–—]/g,'-').trim();
@@ -147,7 +169,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     currentLocationId === 'rokitne_bunker' ? 'tomashgorod' : currentLocationId
   );
   const [mapImgErr, setMapImgErr] = useState(false);
-  const [communityPoints, setCommunityPoints] = useState<SettlementPoint[]>([]);
+  const [communityPoints, setCommunityPoints] = useState<SettlementPoint[]>(makeFallbackCommunityPoints);
   const [selectedCommunityPoint, setSelectedCommunityPoint] = useState<SettlementPoint | null>(null);
   const [communityMapError, setCommunityMapError] = useState<string | null>(null);
 
@@ -227,7 +249,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     let cancelled = false;
     loadCommunityMapPoints().then((points) => {
       if (cancelled) return;
-      setCommunityPoints(points);
+      // Keep every settlement visible even if Overpass omits a name or is unavailable.\n      const fallback = makeFallbackCommunityPoints();\n      const found = new Map(points.map((point) => [point.id, point]));\n      setCommunityPoints(fallback.map((point) => found.get(point.id) ?? point));
       setCommunityMapError(points.length < COMMUNITY_SETTLEMENTS.length
         ? `На карту нанесено ${points.length} із ${COMMUNITY_SETTLEMENTS.length} населених пунктів: для решти не знайдено точних координат.`
         : null);
@@ -406,7 +428,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#060a09] flex flex-col select-none">
       {/* Top Game Menu Bar */}
-      <header className="relative z-20 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d] border-b border-emerald-500/20">
+      <header className="absolute top-0 left-0 right-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d]/90 backdrop-blur-sm border-b border-emerald-500/20">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-lg sm:text-xl font-bold text-slate-100 whitespace-nowrap">
             Полісся: Карта регіону
@@ -516,7 +538,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
       </header>
 
       {/* Main Interactive Zoomable Map + Tactical Inspector */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_380px] bg-[#060a09]">
+      <div className="absolute inset-0 bg-[#060a09]">
         {/* Zoomable & Pannable Map Viewport (2-finger pinch + drag) */}
         <div
           ref={stageRef}
@@ -526,14 +548,14 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
           onPointerCancel={handlePointerUp}
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
-          className="relative flex items-center justify-center overflow-hidden bg-[#040706] touch-none cursor-grab active:cursor-grabbing"
+          className="absolute inset-0 flex items-center justify-center overflow-hidden bg-[#040706] touch-none cursor-grab active:cursor-grabbing"
         >
           <div
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'center center',
             }}
-            className={`relative w-full max-w-[1220px] aspect-video rounded-md overflow-hidden border border-emerald-500/25 shadow-2xl bg-[#0a130f] ${
+            className={`relative w-full h-full max-w-none aspect-auto rounded-none overflow-hidden border-0 shadow-2xl bg-[#0a130f] ${
               isInteracting ? '' : 'transition-transform duration-200 ease-out'
             }`}
           >
@@ -543,7 +565,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 alt="Інтерактивна карта Полісся: Рокитне, Томашгород, Блажове, Біловіж, Сновидовичі, Масевичі, Кисоричі, Карпилівка, Борове"
                 referrerPolicy="no-referrer"
                 onError={() => setMapImgErr(true)}
-                className="w-full h-full object-cover select-none pointer-events-none"
+                className="w-full h-full object-fill select-none pointer-events-none"
                 draggable={false}
               />
             ) : (
@@ -688,7 +710,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         </div>
 
         {/* Right Side Tactical Inspector + Location Directory */}
-        <aside className="bg-[#09110d] border-t lg:border-t-0 lg:border-l border-emerald-500/20 flex flex-col min-h-0 max-h-[42vh] lg:max-h-none">
+        <aside className="hidden">
           <div className="p-4 sm:p-5 border-b border-white/10 space-y-3 overflow-y-auto custom-scroll">
             {selectedLoc.backdropPhotoUrl && (
               <div className="relative w-full h-36 rounded-md overflow-hidden border border-white/15 bg-[#060a08]">
