@@ -55,7 +55,7 @@ export const ROKITNE_PHOTO_URL =
   `${import.meta.env.BASE_URL}assets/aistudio/Make_second_location_similar_37788a2b_2K_f2d6511e.jpg`;
 
 export const BUNKER_PHOTO_URL =
-  `${import.meta.env.BASE_URL}assets/aistudio/Four_people_sitting_in_bunker_10fbe33d_2K_fb20483c.jpg`;
+  `${import.meta.env.BASE_URL}Improve_gaming_graphics_quality_fd249ac9_2K.jpg`;
 
 const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
   rokitne_bunker: {
