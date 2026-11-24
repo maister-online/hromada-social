@@ -1626,7 +1626,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       )}
 
       {/* CENTER STATUS, FIGHTING, SNAGGED & LANDING NET GAUGES */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-38 sm:bottom-32 z-20 flex flex-col items-center gap-2.5 px-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-20 sm:bottom-24 z-20 flex flex-col items-center gap-2.5 px-4">
         {phase === 'CHARGING' && (
           <div className="w-64 panel-field rounded-xl p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
@@ -1640,59 +1640,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500"
                 style={{ width: `${chargeRatio * 100}%` }}
               />
-            </div>
-          </div>
-        )}
-
-        {phase === 'FIGHTING' && (
-          <div className="w-72 max-w-[92vw] panel-field rounded-xl p-3 pointer-events-auto flex items-stretch gap-3">
-            <div className="flex flex-col items-center justify-between gap-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 [writing-mode:vertical-rl] rotate-180">Навантаження</span>
-              <div className="relative h-36 w-4 rounded-full bg-slate-950/90 border border-white/15 overflow-hidden flex items-end">
-                <div
-                  className={`w-full rounded-b-full transition-all duration-75 ${
-                    tensionRatio > 0.85
-                      ? 'bg-rose-500'
-                      : tensionRatio > 0.55
-                        ? 'bg-amber-400'
-                        : 'bg-emerald-400'
-                  }`}
-                  style={{ height: `${Math.min(100, tensionRatio * 100)}%` }}
-                />
-                <div className="absolute inset-x-0 top-[15%] border-t border-white/40" />
-                <div className="absolute inset-x-0 top-[45%] border-t border-white/30" />
-                <div className="absolute inset-x-0 top-[70%] border-t border-white/30" />
-              </div>
-              <span className={`font-mono-num text-xs font-bold ${
-                tensionRatio > 0.85
-                  ? 'text-rose-400'
-                  : tensionRatio > 0.55
-                    ? 'text-amber-300'
-                    : 'text-emerald-300'
-              }`}>{Math.round(tensionRatio * 100)}%</span>
-            </div>
-            <div className="min-w-0 flex-1 flex flex-col justify-between gap-2">
-              <div>
-                <div className="text-xs font-semibold text-slate-100">Навантаження на снасть</div>
-                <div className="text-[10px] text-slate-400">Стеж за шкалою: червона зона — ризик обриву</div>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono-num">
-                <span>Фрикціон: {dragLevel}/10</span>
-                <span>До берега: {fishDistM.toFixed(1)} м</span>
-              </div>
-
-              {canShowLandingPrompt && (
-              <button
-                type="button"
-                onClick={handleLandingNetGrab}
-                className="btn-tactile btn-primary-emerald w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg text-xs font-bold cursor-pointer animate-pulse"
-              >
-                <Anchor className="w-4 h-4" />
-                {rigStats.hasLandingNet
-                  ? 'ПІДХОПИТИ ПІДСАКОМ! [E]'
-                  : 'ВИТЯГТИ НА БЕРЕГ! [E]'}
-              </button>
-              )}
             </div>
           </div>
         )}
@@ -1748,6 +1695,38 @@ export const FishingView: React.FC<FishingViewProps> = ({
           {statusMsg}
         </div>
       </div>
+
+      {/* COMPACT RIGHT-SIDE FISHING TENSION METER */}
+      {phase === 'FIGHTING' && (
+        <div
+          className="pointer-events-none fixed right-2 sm:right-3 top-1/2 -translate-y-1/2 z-30 panel-field rounded-lg px-1.5 py-2 flex flex-col items-center gap-1.5"
+          aria-label={`Навантаження на снасть: ${Math.round(tensionRatio * 100)} відсотків`}
+        >
+          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-300 [writing-mode:vertical-rl] rotate-180">Натяг</span>
+          <div className="relative h-32 w-2.5 rounded-full bg-slate-950/90 border border-white/20 overflow-hidden flex items-end">
+            <div
+              className={`w-full transition-all duration-75 ${
+                tensionRatio > 0.85
+                  ? 'bg-rose-500'
+                  : tensionRatio > 0.55
+                    ? 'bg-amber-400'
+                    : 'bg-emerald-400'
+              }`}
+              style={{ height: `${Math.min(100, tensionRatio * 100)}%` }}
+            />
+            <div className="absolute inset-x-0 top-[15%] border-t border-white/45" />
+            <div className="absolute inset-x-0 top-[45%] border-t border-white/35" />
+            <div className="absolute inset-x-0 top-[70%] border-t border-white/35" />
+          </div>
+          <span className={`font-mono-num text-[10px] font-bold ${
+            tensionRatio > 0.85
+              ? 'text-rose-400'
+              : tensionRatio > 0.55
+                ? 'text-amber-300'
+                : 'text-emerald-300'
+          }`}>{Math.round(tensionRatio * 100)}%</span>
+        </div>
+      )}
 
       {/* LOWER CONTROLS: hidden until requested */}
       {!showFishingControls && (

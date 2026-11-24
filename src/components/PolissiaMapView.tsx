@@ -546,7 +546,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                   <span
                     className={`text-[11px] sm:text-xs font-bold tracking-wide whitespace-nowrap leading-none pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] [text-shadow:0_1px_4px_#000,0_0_8px_#000] ${textColor}`}
                   >
-                    {loc.name.split('·')[0].trim()}
+                    {loc.name.split('·').slice(1).join('·').trim() || loc.name}
                     {isRadWarn ? ' ☢' : ''}
                     {isBaited ? ' ★' : ''}
                   </span>
@@ -597,7 +597,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               }`}
             >
               {selectedLoc.isBunker ? <Warehouse className="w-4 h-4" /> : <Navigation className="w-4 h-4" />}
-              {selectedLoc.name.split('·')[0].trim()} · Відкрити
+              {selectedLoc.name.split('·').slice(1).join('·').trim() || selectedLoc.name} · Відкрити
             </button>
           </div>
         </div>
