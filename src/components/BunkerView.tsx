@@ -414,81 +414,12 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                   aria-label={`Відкрити: ${spot.displayName}`}
                 />
 
-                {/* Clean interactive nameplate anchored above each character */}
-                <button
-                  type="button"
-                  onClick={() => setActiveNpc(spot.id)}
-                  onMouseEnter={() => setHoveredNpc(spot.id)}
-                  onMouseLeave={() => setHoveredNpc((prev) => (prev === spot.id ? null : prev))}
-                  style={{
-                    left: `${spot.labelLeftPct}%`,
-                    top: `${spot.labelTopPct}%`,
-                    borderColor:
-                      isHovered || isSelected ? char.accentHex : 'rgba(255,255,255,0.22)',
-                  }}
-                  className="absolute -translate-x-1/2 -translate-y-full px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#060c09]/90 border shadow-lg transition-transform duration-150 hover:scale-105 cursor-pointer text-left max-w-[24%]"
-                >
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-100 truncate">
-                      {spot.displayName}
-                    </span>
-                    {readyCount > 0 && (
-                      <span className="font-mono-num text-[10px] font-bold text-amber-300">
-                        !{readyCount}
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    className="hidden md:block text-[10px] font-medium truncate"
-                    style={{ color: char.accentHex }}
-                  >
-                    {spot.shortAction}
-                  </div>
-                </button>
               </React.Fragment>
             );
           })}
 
-          {/* Bottom Instruction Strip over Photo */}
-          <div className="hidden sm:flex absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none items-center gap-2 px-4 py-1.5 rounded-lg bg-[#060b08]/88 border border-white/15 text-xs text-slate-200 whitespace-nowrap">
-            Натисніть на будь-якого персонажа на фото, щоб відкрити меню його дій
-          </div>
         </div>
 
-        {/* Touch Quick-Select Cards Below Photo on Mobile / Tablet */}
-        <div className="w-full max-w-[1380px] grid grid-cols-2 lg:hidden gap-2.5 mt-3">
-          {BUNKER_HOTSPOTS.map((spot) => {
-            const char = CHARACTERS[spot.id];
-            const readyCount = getReadyQuestsCount(spot.id);
-            return (
-              <button
-                key={spot.id}
-                type="button"
-                onClick={() => setActiveNpc(spot.id)}
-                className="btn-tactile text-left p-3 rounded-xl border border-white/12 bg-[#0a120e] hover:border-emerald-400/50 flex items-center gap-2.5 cursor-pointer"
-              >
-                <CharacterPortrait
-                  characterId={spot.id}
-                  className="w-11 h-11 rounded-lg shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-slate-100 truncate">{spot.displayName}</span>
-                    {readyCount > 0 && (
-                      <span className="text-[11px] font-mono-num font-bold text-amber-300">
-                        !{readyCount}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[11px] font-medium truncate" style={{ color: char.accentHex }}>
-                    {spot.shortAction}
-                  </div>
-                  <div className="text-[10px] text-slate-400 truncate">Натисніть, щоб відкрити</div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* CHARACTER ACTION MENU OVERLAY (opened when clicking a character on the bunker photo) */}
@@ -501,43 +432,15 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             className="w-full max-w-5xl max-h-[92vh] panel-window rounded-2xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Quick Character Switcher + Close Bar */}
-            <div className="px-4 sm:px-5 py-3 bg-[#060b09] border-b border-white/10 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
-                {BUNKER_HOTSPOTS.map((spot) => {
-                  const c = CHARACTERS[spot.id];
-                  const isActive = activeNpc === spot.id;
-                  const readyCount = getReadyQuestsCount(spot.id);
-                  return (
-                    <button
-                      key={spot.id}
-                      type="button"
-                      onClick={() => setActiveNpc(spot.id)}
-                      className={`btn-tactile min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 cursor-pointer border ${
-                        isActive
-                          ? 'bg-[#13221b] text-slate-100 border-emerald-400/60'
-                          : 'btn-field text-slate-300'
-                      }`}
-                    >
-                      <span>{spot.displayName}</span>
-                      {readyCount > 0 && (
-                        <span className="font-mono-num text-[11px] font-bold text-amber-300">
-                          !{readyCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
+            <div className="px-4 sm:px-5 py-3 bg-[#060b09] border-b border-white/10 flex justify-end">
               <button
                 type="button"
                 onClick={() => setActiveNpc(null)}
-                className="btn-tactile btn-field min-h-[40px] px-3 py-1.5 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold cursor-pointer shrink-0"
+                className="btn-tactile btn-field min-h-[40px] px-3 py-1.5 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold cursor-pointer"
                 aria-label="Повернутися до огляду бункера"
               >
                 <X className="w-4 h-4" />
-                <span className="hidden sm:inline">До бункера</span>
+                <span>До бункера</span>
               </button>
             </div>
 
