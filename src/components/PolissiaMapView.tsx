@@ -1,13 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  AlertTriangle, BookMarked, BookOpen, List, MapPin, Maximize2,
-  Music, Navigation, Package, Search, ScrollText, Volume2,
-  VolumeX, Warehouse, X, ZoomIn, ZoomOut,
+  AlertTriangle,
+  BookMarked,
+  BookOpen,
+  Compass,
+  Maximize2,
+  Music,
+  Navigation,
+  Package,
+  ScrollText,
+  Shield,
+  Volume2,
+  VolumeX,
+  Warehouse,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
-import { LOCATIONS, formatClock } from '../game/data';
-import { LocationId, WeatherType } from '../game/types';
+import { LOCATIONS, MAP_IMAGE_URL, formatClock } from '../game/data';
+import { LocationDef, LocationId, WeatherType } from '../game/types';
 
 interface PolissiaMapViewProps {
   currentLocationId: LocationId;
@@ -36,154 +46,66 @@ interface PolissiaMapViewProps {
   onToggleMusic: () => void;
 }
 
+
 type SettlementKind = 'селище' | 'село';
-interface OfficialSettlement {
-  id: string;
-  name: string;
-  kind: SettlementKind;
-  gameLocationId?: LocationId;
+interface SettlementPoint { id: string; name: string; kind: SettlementKind; lat: number; lon: number; mapX: number; mapY: number; nearestLocationId: LocationId; }
+interface OSMPlace { name: string; lat: number; lon: number; place: string; }
+const COMMUNITY_SETTLEMENTS: Array<{ id: string; name: string; kind: SettlementKind; gameId?: LocationId }> = [
+ {id:'rokytne-town',name:'Рокитне',kind:'селище',gameId:'rokitne'},{id:'tomashhorod-town',name:'Томашгород',kind:'селище',gameId:'tomashgorod'},
+ {id:'yelne',name:'Єльне',kind:'село'},{id:'blazhove',name:'Блажове',kind:'село',gameId:'blazhove'},{id:'borove',name:'Борове',kind:'село',gameId:'borove'},
+ {id:'buda',name:'Буда',kind:'село'},{id:'budky-snovydovytski',name:'Будки-Сновидовицькі',kind:'село'},{id:'bilovizh',name:'Біловіж',kind:'село',gameId:'bilovizh'},
+ {id:'bilsk',name:'Більськ',kind:'село'},{id:'dert',name:'Дерть',kind:'село'},{id:'zalavya',name:"Залав'я",kind:'село'},
+ {id:'karpylivka',name:'Карпилівка',kind:'село',gameId:'karpylivka'},{id:'kysorychi',name:'Кисоричі',kind:'село',gameId:'kysorychi'},
+ {id:'kupel',name:'Купель',kind:'село'},{id:'lisove',name:'Лісове',kind:'село'},{id:'masevychi',name:'Масевичі',kind:'село',gameId:'masevychi'},
+ {id:'mushni',name:'Мушні',kind:'село'},{id:'netreba',name:'Нетреба',kind:'село'},{id:'oleksandrivka',name:'Олександрівка',kind:'село'},
+ {id:'osnytsk',name:'Осницьк',kind:'село'},{id:'ostky',name:'Остки',kind:'село'},{id:'rokytne-village',name:'Рокитне',kind:'село'},
+ {id:'snovydovychi',name:'Сновидовичі',kind:'село',gameId:'snovydovychi'},{id:'staryky',name:'Старики',kind:'село'},
+ {id:'tomashhorod-village',name:'Томашгород',kind:'село'}
+];
+const MAP_ANCHORS: Array<{gameId:LocationId;name:string;kind:SettlementKind}> = [
+ {gameId:'rokitne',name:'Рокитне',kind:'селище'},{gameId:'tomashgorod',name:'Томашгород',kind:'селище'},
+ {gameId:'masevychi',name:'Масевичі',kind:'село'},{gameId:'karpylivka',name:'Карпилівка',kind:'село'},
+ {gameId:'snovydovychi',name:'Сновидовичі',kind:'село'},{gameId:'kysorychi',name:'Кисоричі',kind:'село'},
+ {gameId:'bilovizh',name:'Біловіж',kind:'село'},{gameId:'borove',name:'Борове',kind:'село'},{gameId:'blazhove',name:'Блажове',kind:'село'}
+];
+const OSM_SETTLEMENT_QUERY = `[out:json][timeout:35];(node["place"](50.90,26.65,51.75,28.00);way["place"](50.90,26.65,51.75,28.00);relation["place"](50.90,26.65,51.75,28.00););out center tags;`;
+const OSM_ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+const normalizeSettlementName=(n:string)=>n.toLocaleLowerCase('uk-UA').replace(/[’'\u0060]/g,'').replace(/[‐‑–—]/g,'-').trim();
+function solveMapProjection(points:Array<{lat:number;lon:number;x:number;y:number}>) {
+ const s=points.reduce((a,p)=>({n:a.n+1,lat:a.lat+p.lat,lon:a.lon+p.lon,lat2:a.lat2+p.lat*p.lat,lon2:a.lon2+p.lon*p.lon,ll:a.ll+p.lat*p.lon,x:a.x+p.x,y:a.y+p.y,lx:a.lx+p.lat*p.x,ox:a.ox+p.lon*p.x,ly:a.ly+p.lat*p.y,oy:a.oy+p.lon*p.y}),{n:0,lat:0,lon:0,lat2:0,lon2:0,ll:0,x:0,y:0,lx:0,ox:0,ly:0,oy:0});
+ const m=[[s.lat2,s.ll,s.lat],[s.ll,s.lon2,s.lon],[s.lat,s.lon,s.n]];
+ const solve=(v:number[])=>{const a=m.map((r,i)=>[...r,v[i]]);for(let k=0;k<3;k++){let p=k;for(let i=k+1;i<3;i++)if(Math.abs(a[i][k])>Math.abs(a[p][k]))p=i;if(Math.abs(a[p][k])<1e-12)throw new Error('Недостатньо опорних точок');[a[k],a[p]]=[a[p],a[k]];const d=a[k][k];for(let j=k;j<4;j++)a[k][j]/=d;for(let i=0;i<3;i++)if(i!==k){const f=a[i][k];for(let j=k;j<4;j++)a[i][j]-=f*a[k][j];}}return [a[0][3],a[1][3],a[2][3]];};
+ return {x:solve([s.lx,s.ox,s.x]),y:solve([s.ly,s.oy,s.y])};
 }
-interface SettlementOnMap extends OfficialSettlement {
-  lat: number | null;
-  lon: number | null;
-  osmPlace?: string;
-}
-
-const OFFICIAL_SETTLEMENTS: OfficialSettlement[] = [
-  { id: 'rokytne-town', name: 'Рокитне', kind: 'селище', gameLocationId: 'rokitne' },
-  { id: 'tomashhorod-town', name: 'Томашгород', kind: 'селище', gameLocationId: 'tomashgorod' },
-  { id: 'yelne', name: 'Єльне', kind: 'село' },
-  { id: 'blazhove', name: 'Блажове', kind: 'село', gameLocationId: 'blazhove' },
-  { id: 'borove', name: 'Борове', kind: 'село', gameLocationId: 'borove' },
-  { id: 'buda', name: 'Буда', kind: 'село' },
-  { id: 'budky-snovydovytski', name: 'Будки-Сновидовицькі', kind: 'село' },
-  { id: 'bilovizh', name: 'Біловіж', kind: 'село', gameLocationId: 'bilovizh' },
-  { id: 'bilsk', name: 'Більськ', kind: 'село' },
-  { id: 'dert', name: 'Дерть', kind: 'село' },
-  { id: 'zalavya', name: "Залав'я", kind: 'село' },
-  { id: 'karpylivka', name: 'Карпилівка', kind: 'село', gameLocationId: 'karpylivka' },
-  { id: 'kysorychi', name: 'Кисоричі', kind: 'село', gameLocationId: 'kysorychi' },
-  { id: 'kupel', name: 'Купель', kind: 'село' },
-  { id: 'lisove', name: 'Лісове', kind: 'село' },
-  { id: 'masevychi', name: 'Масевичі', kind: 'село', gameLocationId: 'masevychi' },
-  { id: 'mushni', name: 'Мушні', kind: 'село' },
-  { id: 'netreba', name: 'Нетреба', kind: 'село' },
-  { id: 'oleksandrivka', name: 'Олександрівка', kind: 'село' },
-  { id: 'osnytsk', name: 'Осницьк', kind: 'село' },
-  { id: 'ostky', name: 'Остки', kind: 'село' },
-  { id: 'rokytne-village', name: 'Рокитне', kind: 'село' },
-  { id: 'snovydovychi', name: 'Сновидовичі', kind: 'село', gameLocationId: 'snovydovychi' },
-  { id: 'staryky', name: 'Старики', kind: 'село' },
-  { id: 'tomashhorod-village', name: 'Томашгород', kind: 'село' },
-];
-
-const REGION_CENTER: [number, number] = [51.2908, 27.2796];
-const REGION_BOUNDS: L.LatLngBoundsExpression = [[50.90, 26.65], [51.75, 28.00]];
-const OVERPASS_ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-];
-const COMMUNITY_BOUNDS = '(50.90,26.65,51.75,28.00)';
-const OVERPASS_QUERIES = [
-  `[out:json][timeout:35];
-  rel["boundary"="administrative"]["name"~"Рокитнівська|Rokytnivska"]${COMMUNITY_BOUNDS}->.community;
-  .community map_to_area->.communityArea;
-  (
-    node(area.communityArea)["place"];
-    way(area.communityArea)["place"];
-    relation(area.communityArea)["place"];
-  );
-  out center tags;`,
-  `[out:json][timeout:35];
-  (
-    node["place"]${COMMUNITY_BOUNDS};
-    way["place"]${COMMUNITY_BOUNDS};
-    relation["place"]${COMMUNITY_BOUNDS};
-  );
-  out center tags;`,
-];
-
-const normalizeName = (value: string) =>
-  value.toLocaleLowerCase('uk-UA').replace(/[’'\u0060]/g, '').replace(/[‐‑–—]/g, '-').trim();
-
-const escapeHtml = (value: string) =>
-  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-
-const placeCoords = (item: any): [number, number] | null => {
-  const lat = Number(item?.lat ?? item?.center?.lat);
-  const lon = Number(item?.lon ?? item?.center?.lon);
-  return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
-};
-
-async function loadOpenStreetMapSettlements(): Promise<SettlementOnMap[]> {
-  let bestElements: any[] = [];
-  let bestMatchCount = -1;
-  let lastError: unknown = null;
-
-  for (const query of OVERPASS_QUERIES) {
-    for (const endpoint of OVERPASS_ENDPOINTS) {
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body: new URLSearchParams({ data: query }).toString(),
-        });
-        if (!response.ok) throw new Error(`OpenStreetMap API: ${response.status}`);
-        const payload = await response.json();
-        const elements = Array.isArray(payload?.elements) ? payload.elements : [];
-        const candidates = elements
-          .map((element) => {
-            const coords = placeCoords(element);
-            const tags = element?.tags ?? {};
-            const name = tags['name:uk'] || tags['official_name:uk'] || tags.name || tags.official_name;
-            if (!coords || !name) return null;
-            return {
-              name: String(name),
-              coords,
-              place: String(tags.place || ''),
-              id: String(element.id),
-            };
-          })
-          .filter(Boolean) as Array<{ name: string; coords: [number, number]; place: string; id: string }>;
-
-        const used = new Set<string>();
-        let matched = 0;
-        const resolved = OFFICIAL_SETTLEMENTS.map((settlement) => {
-          const sameName = candidates.filter((candidate) =>
-            normalizeName(candidate.name) === normalizeName(settlement.name) && !used.has(candidate.id)
-          );
-          const preferredPlaces = settlement.kind === 'селище'
-            ? ['town', 'city']
-            : ['village', 'hamlet'];
-          const match = preferredPlaces
-            .map((place) => sameName.find((candidate) => candidate.place === place))
-            .find(Boolean) ?? (sameName.length === 1 ? sameName[0] : undefined);
-
-          if (match) {
-            used.add(match.id);
-            matched += 1;
-          }
-          return {
-            ...settlement,
-            lat: match?.coords[0] ?? null,
-            lon: match?.coords[1] ?? null,
-            osmPlace: match?.place,
-          };
-        });
-
-        if (matched > bestMatchCount) {
-          bestElements = resolved;
-          bestMatchCount = matched;
-        }
-        if (matched === OFFICIAL_SETTLEMENTS.length) return resolved;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-  }
-
-  if (bestMatchCount >= 0) return bestElements;
-  throw lastError ?? new Error('Не вдалося завантажити геодані OpenStreetMap');
+async function loadCommunityMapPoints():Promise<SettlementPoint[]> {
+ let elements:any[]=[];let lastError:unknown=null;
+ for(const endpoint of OSM_ENDPOINTS){try{const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:new URLSearchParams({data:OSM_SETTLEMENT_QUERY}).toString()});if(!r.ok)throw new Error(`OpenStreetMap: ${r.status}`);const j=await r.json();elements=Array.isArray(j?.elements)?j.elements:[];if(elements.length)break;}catch(e){lastError=e;}}
+ if(!elements.length)throw lastError??new Error('Немає геоданих');
+ const places:OSMPlace[]=elements.map((e:any)=>({name:String(e.tags?.['name:uk']||e.tags?.['official_name:uk']||e.tags?.name||e.tags?.official_name||''),lat:Number(e.lat??e.center?.lat),lon:Number(e.lon??e.center?.lon),place:String(e.tags?.place||'')})).filter(p=>p.name&&Number.isFinite(p.lat)&&Number.isFinite(p.lon));
+ const find=(name:string,kind:SettlementKind)=>{const a=places.filter(p=>normalizeSettlementName(p.name)===normalizeSettlementName(name));const types=kind==='селище'?['town','city']:['village','hamlet'];return types.map(t=>a.find(p=>p.place===t)).find(Boolean)??(a.length===1?a[0]:undefined);};
+ const anchors=MAP_ANCHORS.map(a=>{const p=find(a.name,a.kind),l=LOCATIONS[a.gameId];return p&&l?{lat:p.lat,lon:p.lon,x:l.mapX,y:l.mapY}:null;}).filter(Boolean) as Array<{lat:number;lon:number;x:number;y:number}>;
+ if(anchors.length<3)throw new Error('Не вдалося прив’язати географію до ігрової карти');
+ const projection=solveMapProjection(anchors);
+ const anchorPlaces=MAP_ANCHORS.map(a=>({id:a.gameId,place:find(a.name,a.kind)})).filter(a=>a.place);
+ const anchorPlaces = MAP_ANCHORS.map(a => ({ id: a.gameId, place: find(a.name, a.kind) }))
+   .filter((a): a is { id: LocationId; place: OSMPlace } => Boolean(a.place));
+ const result: SettlementPoint[] = [];
+ for (const settlement of COMMUNITY_SETTLEMENTS) {
+   const place = find(settlement.name, settlement.kind);
+   if (!place) continue;
+   const mapX = projection.x[0] * place.lat + projection.x[1] * place.lon + projection.x[2];
+   const mapY = projection.y[0] * place.lat + projection.y[1] * place.lon + projection.y[2];
+   if (mapX < 0 || mapX > 100 || mapY < 0 || mapY > 100) continue;
+   const nearest = anchorPlaces.reduce((best, anchor) => {
+     const distance = Math.hypot((place.lat - anchor.place.lat) * 111, (place.lon - anchor.place.lon) * 70);
+     return !best || distance < best.distance ? { id: anchor.id, distance } : best;
+   }, null as { id: LocationId; distance: number } | null);
+   if (nearest) result.push({
+     ...settlement, lat: place.lat, lon: place.lon, mapX, mapY,
+     nearestLocationId: settlement.gameId ?? nearest.id,
+   });
+ }
+ return result;
 }
 
 const WEATHER_LABELS: Record<WeatherType, string> = {
@@ -193,336 +115,741 @@ const WEATHER_LABELS: Record<WeatherType, string> = {
   anomaly_surge: 'Аномальний викид',
 };
 
+const MIN_ZOOM = 0.85;
+const MAX_ZOOM = 3.5;
+
 export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
-  currentLocationId, day, timeOfDay, weather, credits, level, radSuitLevel,
-  sanity, keepnetCount, keepnetWeightKg, keepnetCapacityKg, lootCount,
-  readyQuestsCount, visitedLocationIds, activeGroundbaitLocs, muted,
-  musicEnabled, onSelectDestination, onOpenInventory, onOpenQuests,
-  onOpenBestiary, onOpenJournal, onToggleMute, onToggleMusic,
+  currentLocationId,
+  day,
+  timeOfDay,
+  weather,
+  credits,
+  level,
+  radSuitLevel,
+  sanity,
+  keepnetCount,
+  keepnetWeightKg,
+  keepnetCapacityKg,
+  lootCount,
+  readyQuestsCount,
+  visitedLocationIds,
+  activeGroundbaitLocs,
+  muted,
+  musicEnabled,
+  onSelectDestination,
+  onOpenInventory,
+  onOpenQuests,
+  onOpenBestiary,
+  onOpenJournal,
+  onToggleMute,
+  onToggleMusic,
 }) => {
-  const mapElementRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const markerLayerRef = useRef<L.LayerGroup | null>(null);
-  const [settlements, setSettlements] = useState<SettlementOnMap[]>(
-    OFFICIAL_SETTLEMENTS.map((item) => ({ ...item, lat: null, lon: null }))
+  const [selectedId, setSelectedId] = useState<LocationId>(
+    currentLocationId === 'rokitne_bunker' ? 'tomashgorod' : currentLocationId
   );
-  const [selectedSettlementId, setSelectedSettlementId] = useState<string | null>(null);
-  const [showDirectory, setShowDirectory] = useState(false);
-  const [search, setSearch] = useState('');
-  const [mapError, setMapError] = useState<string | null>(null);
-  const [loadingMap, setLoadingMap] = useState(true);
+  const [mapImgErr, setMapImgErr] = useState(false);
+  const [communityPoints, setCommunityPoints] = useState<SettlementPoint[]>([]);
+  const [selectedCommunityPoint, setSelectedCommunityPoint] = useState<SettlementPoint | null>(null);
+  const [communityMapError, setCommunityMapError] = useState<string | null>(null);
 
-  const { clock, phaseLabel } = formatClock(timeOfDay);
-  const selectedSettlement = settlements.find((item) => item.id === selectedSettlementId) ?? null;
-  const selectedLocation = selectedSettlement?.gameLocationId
-    ? LOCATIONS[selectedSettlement.gameLocationId]
-    : null;
-  const currentName = LOCATIONS[currentLocationId]?.name ?? 'Полісся';
+  // Zoom & Pan Engine State
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isInteracting, setIsInteracting] = useState(false);
 
-  const openSettlement = useCallback((settlement: SettlementOnMap) => {
-    setSelectedSettlementId(settlement.id);
-    setShowDirectory(false);
-    if (settlement.lat !== null && settlement.lon !== null) {
-      const map = mapRef.current;
-      if (map) map.flyTo([settlement.lat, settlement.lon], Math.max(map.getZoom(), 12), { duration: 0.55 });
-    }
-  }, []);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const panRef = useRef(pan);
+  panRef.current = pan;
 
-  const nearestGameLocation = useMemo(() => {
-    if (!selectedSettlement) return null;
-    if (selectedLocation) return selectedLocation;
-    if (selectedSettlement.lat === null || selectedSettlement.lon === null) return null;
+  const dragStateRef = useRef<{
+    active: boolean;
+    moved: boolean;
+    startX: number;
+    startY: number;
+    origPanX: number;
+    origPanY: number;
+  }>({
+    active: false,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    origPanX: 0,
+    origPanY: 0,
+  });
 
-    const withCoords = settlements.filter(
-      (item) => item.gameLocationId && item.lat !== null && item.lon !== null
-    );
-    if (!withCoords.length) return null;
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef<{
+    startDist: number;
+    startZoom: number;
+    startPanX: number;
+    startPanY: number;
+    startMidX: number;
+    startMidY: number;
+  } | null>(null);
 
-    const distance = (aLat: number, aLon: number, bLat: number, bLon: number) => {
-      const rad = Math.PI / 180;
-      const dLat = (bLat - aLat) * rad;
-      const dLon = (bLon - aLon) * rad;
-      const h =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(aLat * rad) * Math.cos(bLat * rad) * Math.sin(dLon / 2) ** 2;
-      return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-    };
-    const closest = withCoords.reduce((best, item) => {
-      const d = distance(
-        selectedSettlement.lat!, selectedSettlement.lon!, item.lat!, item.lon!
-      );
-      return !best || d < best.distance ? { item, distance: d } : best;
-    }, null as { item: SettlementOnMap; distance: number } | null);
-
-    return closest?.item.gameLocationId ? LOCATIONS[closest.item.gameLocationId] ?? null : null;
-  }, [selectedLocation, selectedSettlement, settlements]);
-
-  const radWarning = Boolean(nearestGameLocation && nearestGameLocation.radiationLevel > radSuitLevel);
-  const hasVisitedTarget = Boolean(nearestGameLocation && visitedLocationIds.includes(nearestGameLocation.id));
-  const isGroundbaited = Boolean(selectedSettlement?.gameLocationId && activeGroundbaitLocs.includes(selectedSettlement.gameLocationId));
-
-  useEffect(() => {
-    if (!mapElementRef.current || mapRef.current) return;
-    const map = L.map(mapElementRef.current, {
-      zoomControl: false,
-      attributionControl: true,
-      minZoom: 8,
-      maxZoom: 18,
-      maxBounds: REGION_BOUNDS,
-      maxBoundsViscosity: 0.72,
-      preferCanvas: true,
-    }).setView(REGION_CENTER, 10);
-    map.fitBounds(REGION_BOUNDS, { padding: [36, 36], animate: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      minZoom: 8,
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
-    }).addTo(map);
-    markerLayerRef.current = L.layerGroup().addTo(map);
-    mapRef.current = map;
-    const resize = () => map.invalidateSize({ pan: false });
-    window.setTimeout(resize, 80);
-    window.addEventListener('resize', resize);
-    return () => {
-      window.removeEventListener('resize', resize);
-      map.remove();
-      mapRef.current = null;
-      markerLayerRef.current = null;
+  const clampPan = useCallback((nextX: number, nextY: number, z: number) => {
+    const rect = stageRef.current?.getBoundingClientRect();
+    const maxW = rect ? rect.width * 0.48 * Math.max(0.28, z - 0.35) : 520;
+    const maxH = rect ? rect.height * 0.48 * Math.max(0.28, z - 0.35) : 340;
+    return {
+      x: Math.max(-maxW, Math.min(maxW, nextX)),
+      y: Math.max(-maxH, Math.min(maxH, nextY)),
     };
   }, []);
+
+  const applyZoomAtPoint = useCallback(
+    (nextZoom: number, clientX?: number, clientY?: number) => {
+      const z = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(nextZoom.toFixed(3))));
+      const prevZ = zoomRef.current;
+      const curPan = panRef.current;
+      const rect = stageRef.current?.getBoundingClientRect();
+
+      if (rect && clientX !== undefined && clientY !== undefined && prevZ > 0) {
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const relX = clientX - cx;
+        const relY = clientY - cy;
+        const ratio = z / prevZ;
+        const nextX = curPan.x * ratio + relX * (1 - ratio);
+        const nextY = curPan.y * ratio + relY * (1 - ratio);
+        setZoom(z);
+        setPan(clampPan(nextX, nextY, z));
+      } else {
+        setZoom(z);
+        setPan(clampPan(curPan.x, curPan.y, z));
+      }
+    },
+    [clampPan]
+  );
 
   useEffect(() => {
     let cancelled = false;
-    setLoadingMap(true);
-    loadOpenStreetMapSettlements()
-      .then((items) => {
-        if (cancelled) return;
-        setSettlements(items);
-        const mappedPoints = items
-          .filter((item) => item.lat !== null && item.lon !== null)
-          .map((item) => [item.lat!, item.lon!] as [number, number]);
-        if (mappedPoints.length > 0) {
-          const map = mapRef.current;
-          if (map) map.fitBounds(L.latLngBounds(mappedPoints).pad(0.14), { maxZoom: 10 });
-        }
-        const missing = items.filter((item) => item.lat === null || item.lon === null);
-        setMapError(
-          missing.length
-            ? `OpenStreetMap не повернув координати для: ${missing.map((item) => item.name + (item.kind === 'село' ? ' (село)' : ' (селище)')).join(', ')}. Назви залишено у довіднику.`
-            : null
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setMapError('Не вдалося завантажити точки населених пунктів. Перевірте інтернет і перезавантажте карту.');
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingMap(false);
-      });
+    loadCommunityMapPoints().then((points) => {
+      if (cancelled) return;
+      setCommunityPoints(points);
+      setCommunityMapError(points.length < COMMUNITY_SETTLEMENTS.length
+        ? `На карту нанесено ${points.length} із ${COMMUNITY_SETTLEMENTS.length} населених пунктів: для решти не знайдено точних координат.`
+        : null);
+    }).catch(() => {
+      if (!cancelled) setCommunityMapError('Не вдалося завантажити географічні координати населених пунктів.');
+    });
     return () => { cancelled = true; };
   }, []);
 
+  // Prevent browser native page pinch-zoom / scroll inside map viewport
   useEffect(() => {
-    const map = mapRef.current;
-    const layer = markerLayerRef.current;
-    if (!map || !layer) return;
-    layer.clearLayers();
-    settlements.forEach((settlement) => {
-      if (settlement.lat === null || settlement.lon === null) return;
-      const hasFishingSpot = Boolean(settlement.gameLocationId);
-      const kindLabel = settlement.kind === 'селище' ? 'селище' : 'село';
-      const markerHtml = `<div class="region-place-marker ${hasFishingSpot ? 'has-fishing' : ''}">
-        <span class="region-place-dot">${hasFishingSpot ? '🎣' : ''}</span>
-        <span class="region-place-label">${escapeHtml(settlement.name)}</span>
-        <span class="region-place-kind">${kindLabel}</span>
-      </div>`;
-      const marker = L.marker([settlement.lat, settlement.lon], {
-        icon: L.divIcon({
-          className: 'region-place-icon',
-          html: markerHtml,
-          iconSize: [150, 42],
-          iconAnchor: [75, 14],
-        }),
-        keyboard: true,
-        title: `${kindLabel} ${settlement.name}`,
-        alt: settlement.name,
-      });
-      marker.on('click', () => openSettlement(settlement));
-      marker.addTo(layer);
-    });
-  }, [openSettlement, settlements]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setSelectedSettlementId(null);
-        setShowDirectory(false);
+    const el = stageRef.current;
+    if (!el) return;
+    const preventMultiTouch = (e: TouchEvent) => {
+      if (e.touches.length >= 2) {
+        e.preventDefault();
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    const preventGesture = (e: Event) => e.preventDefault();
+    el.addEventListener('touchstart', preventMultiTouch, { passive: false });
+    el.addEventListener('touchmove', preventMultiTouch, { passive: false });
+    el.addEventListener('gesturestart', preventGesture, { passive: false });
+    el.addEventListener('gesturechange', preventGesture, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', preventMultiTouch);
+      el.removeEventListener('touchmove', preventMultiTouch);
+      el.removeEventListener('gesturestart', preventGesture);
+      el.removeEventListener('gesturechange', preventGesture);
+    };
   }, []);
 
-  const filteredSettlements = useMemo(() => {
-    const q = normalizeName(search);
-    return settlements.filter((item) => !q || normalizeName(item.name).includes(q));
-  }, [search, settlements]);
+  const focusLocationOnMap = useCallback(
+    (loc: LocationDef, allowSecondTapEnter = false) => {
+      if (dragStateRef.current.moved) return;
+      if (allowSecondTapEnter && selectedId === loc.id) {
+        onSelectDestination(loc.id);
+        return;
+      }
+      setSelectedId(loc.id);
+      const rect = stageRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const targetZ = zoomRef.current < 1.35 ? 1.45 : zoomRef.current;
+      const offsetX = ((50 - loc.mapX) / 100) * rect.width * 0.65 * targetZ;
+      const offsetY = ((50 - loc.mapY) / 100) * rect.height * 0.65 * targetZ;
+      setZoom(targetZ);
+      setPan(clampPan(offsetX, offsetY, targetZ));
+    },
+    [clampPan, onSelectDestination, selectedId]
+  );
 
-  const goToGameLocation = () => {
-    if (nearestGameLocation) onSelectDestination(nearestGameLocation.id);
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointersRef.current.size === 2) {
+      const pts = Array.from(pointersRef.current.values());
+      const dist = Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      pinchRef.current = {
+        startDist: dist,
+        startZoom: zoomRef.current,
+        startPanX: panRef.current.x,
+        startPanY: panRef.current.y,
+        startMidX: midX,
+        startMidY: midY,
+      };
+      dragStateRef.current.active = false;
+      setIsInteracting(true);
+      return;
+    }
+
+    if (pointersRef.current.size === 1) {
+      dragStateRef.current = {
+        active: true,
+        moved: false,
+        startX: e.clientX,
+        startY: e.clientY,
+        origPanX: panRef.current.x,
+        origPanY: panRef.current.y,
+      };
+    }
   };
 
-  return (
-    <div className="fixed inset-0 z-0 h-[100dvh] w-screen overflow-hidden bg-[#0b1714] text-slate-100">
-      <div ref={mapElementRef} className="absolute inset-0 z-0 h-full w-full" />
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (pointersRef.current.has(e.pointerId)) {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
 
-      <header className="region-map-topbar absolute left-0 right-0 top-0 z-[500] flex flex-wrap items-center justify-between gap-2 border-b border-emerald-300/20 bg-[#07120eea] px-3 py-2 shadow-lg backdrop-blur-md sm:px-4">
-        <div className="flex min-w-0 items-center gap-2">
-          <MapPin className="h-5 w-5 shrink-0 text-emerald-300" />
-          <div className="min-w-0">
-            <div className="truncate text-sm font-bold sm:text-base">Полісся · Рокитнівська громада</div>
-            <div className="hidden text-[10px] text-slate-300 sm:block">
-              День {day} · {clock} · {WEATHER_LABELS[weather]} · Рівень {level} · {currentName.split('·')[0].trim()} · Розсудок {Math.round(sanity)}%
-            </div>
+    // Two-finger pinch-to-zoom + midpoint panning
+    if (pointersRef.current.size === 2 && pinchRef.current) {
+      const pts = Array.from(pointersRef.current.values());
+      const dist = Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      const p = pinchRef.current;
+
+      const nextZoom = Math.max(
+        MIN_ZOOM,
+        Math.min(MAX_ZOOM, p.startZoom * (dist / p.startDist))
+      );
+      const ratio = nextZoom / p.startZoom;
+
+      const rect = stageRef.current?.getBoundingClientRect();
+      const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+      const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+      const relMidX = p.startMidX - cx;
+      const relMidY = p.startMidY - cy;
+
+      const nextPanX = p.startPanX * ratio + relMidX * (1 - ratio) + (midX - p.startMidX);
+      const nextPanY = p.startPanY * ratio + relMidY * (1 - ratio) + (midY - p.startMidY);
+
+      setZoom(Number(nextZoom.toFixed(3)));
+      setPan(clampPan(nextPanX, nextPanY, nextZoom));
+      return;
+    }
+
+    if (!dragStateRef.current.active) return;
+    const dx = e.clientX - dragStateRef.current.startX;
+    const dy = e.clientY - dragStateRef.current.startY;
+    if (Math.hypot(dx, dy) > 6) {
+      dragStateRef.current.moved = true;
+      setIsInteracting(true);
+    }
+    if (dragStateRef.current.moved) {
+      setPan(
+        clampPan(
+          dragStateRef.current.origPanX + dx,
+          dragStateRef.current.origPanY + dy,
+          zoomRef.current
+        )
+      );
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) {
+      pinchRef.current = null;
+    }
+    if (pointersRef.current.size === 0) {
+      dragStateRef.current.active = false;
+      setIsInteracting(false);
+      window.setTimeout(() => {
+        dragStateRef.current.moved = false;
+      }, 30);
+    } else if (pointersRef.current.size === 1) {
+      // Seamlessly transition remaining finger to pan
+      const [rem] = Array.from(pointersRef.current.values());
+      dragStateRef.current = {
+        active: true,
+        moved: true,
+        startX: rem.x,
+        startY: rem.y,
+        origPanX: panRef.current.x,
+        origPanY: panRef.current.y,
+      };
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const delta = e.deltaY < 0 ? 0.22 : -0.22;
+    applyZoomAtPoint(zoomRef.current + delta, e.clientX, e.clientY);
+  };
+
+  const selectedLoc: LocationDef = LOCATIONS[selectedId];
+  const allLocations = Object.values(LOCATIONS);
+  const fishingLocations = allLocations.filter((l) => !l.isBunker);
+  const { clock, phaseLabel } = formatClock(timeOfDay);
+  const radWarning = selectedLoc.radiationLevel > radSuitLevel;
+
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-[#060a09] flex flex-col select-none">
+      {/* Top Game Menu Bar */}
+      <header className="relative z-20 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d] border-b border-emerald-500/20">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-lg sm:text-xl font-bold text-slate-100 whitespace-nowrap">
+            Полісся: Карта регіону
+          </h1>
+          <div className="hidden xl:flex items-center gap-2.5 text-xs text-slate-300">
+            <span className="font-mono-num text-amber-300 font-semibold">
+              День {day} · {clock} ({phaseLabel})
+            </span>
+            <span className="text-slate-600" aria-hidden="true">·</span>
+            <span>{WEATHER_LABELS[weather]}</span>
+            <span className="text-slate-600" aria-hidden="true">·</span>
+            <span>Рівень {level}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="hidden rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 font-mono-num text-amber-200 md:inline">
-            ₴ {credits}
-          </span>
-          <span className="hidden rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 font-mono-num text-emerald-200 lg:inline">
-            Садок {keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг ({keepnetCount})
-          </span>
-          <button type="button" onClick={onOpenInventory} className="map-toolbar-button" title="Рюкзак">
-            <Package className="h-4 w-4" /><span className="hidden sm:inline">Рюкзак{lootCount ? ` (${lootCount})` : ''}</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-2.5 bg-[#0d1813] border border-white/10 rounded px-3 py-1.5">
+            <span className="font-mono-num font-semibold text-amber-300">₴ {credits}</span>
+            <span className="text-slate-600" aria-hidden="true">·</span>
+            <span className="font-mono-num text-slate-200 hidden sm:inline">
+              Садок: {keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг ({keepnetCount})
+            </span>
+            <span className="text-slate-600 hidden sm:inline" aria-hidden="true">·</span>
+            <span className="font-mono-num text-emerald-300">Захист {radSuitLevel}</span>
+            <span className="text-slate-600" aria-hidden="true">·</span>
+            <span
+              className={`font-mono-num ${
+                sanity <= 30
+                  ? 'text-rose-400 font-semibold'
+                  : sanity <= 60
+                    ? 'text-amber-300'
+                    : 'text-indigo-300'
+              }`}
+            >
+              Розсудл. {Math.round(sanity)}%
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onOpenInventory}
+            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
+          >
+            <Package className="w-4 h-4 text-amber-300" />
+            Рюкзак{lootCount > 0 ? ` (${lootCount})` : ''}
           </button>
-          <button type="button" onClick={onOpenQuests} className="map-toolbar-button" title="Завдання">
-            <ScrollText className="h-4 w-4" /><span className="hidden sm:inline">Завдання{readyQuestsCount ? ` (!${readyQuestsCount})` : ''}</span>
+
+          <button
+            type="button"
+            onClick={onOpenQuests}
+            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
+          >
+            <ScrollText className="w-4 h-4 text-emerald-300" />
+            Завдання{readyQuestsCount > 0 ? ` (!${readyQuestsCount})` : ''}
           </button>
-          <button type="button" onClick={onOpenBestiary} className="map-toolbar-button" title="Бестіарій">
-            <BookOpen className="h-4 w-4" /><span className="hidden sm:inline">Бестіарій</span>
+
+          <button
+            type="button"
+            onClick={onOpenBestiary}
+            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
+          >
+            <BookOpen className="w-4 h-4 text-teal-400" />
+            Бестіарій
           </button>
-          <button type="button" onClick={onOpenJournal} className="map-toolbar-button" title="Журнал">
-            <BookMarked className="h-4 w-4" /><span className="hidden sm:inline">Журнал</span>
+
+          <button
+            type="button"
+            onClick={onOpenJournal}
+            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
+          >
+            <BookMarked className="w-4 h-4 text-amber-300" />
+            Журнал
           </button>
-          <button type="button" onClick={() => onSelectDestination('rokitne_bunker')} className="map-toolbar-button map-toolbar-primary" title="Бункер">
-            <Warehouse className="h-4 w-4" /><span className="hidden sm:inline">Бункер</span>
+
+          <button
+            type="button"
+            onClick={() => onSelectDestination('rokitne_bunker')}
+            className="btn-tactile btn-primary-emerald min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 font-bold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <Warehouse className="w-4 h-4" />
+            Бункер
           </button>
-          <button type="button" onClick={onToggleMusic} className="map-toolbar-icon" aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}>
-            <Music className="h-4 w-4" />
+
+          <button
+            type="button"
+            onClick={onToggleMusic}
+            className={`btn-tactile min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg cursor-pointer border ${
+              musicEnabled && !muted
+                ? 'bg-emerald-950/75 border-emerald-400/50 text-emerald-300'
+                : 'btn-field text-slate-400'
+            }`}
+            aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
+            title={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
+          >
+            <Music className="w-4 h-4" />
           </button>
-          <button type="button" onClick={onToggleMute} className="map-toolbar-icon" aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}>
-            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+
+          <button
+            type="button"
+            onClick={onToggleMute}
+            className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+            aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
         </div>
       </header>
 
-      <div className="region-map-bottom-controls absolute bottom-4 left-3 z-[500] flex items-center gap-1.5 rounded-xl border border-emerald-300/25 bg-[#07120ee8] p-1.5 shadow-xl backdrop-blur-md">
-        <button type="button" onClick={() => mapRef.current?.zoomOut()} className="map-toolbar-icon" aria-label="Віддалити карту"><ZoomOut className="h-4 w-4" /></button>
-        <button type="button" onClick={() => mapRef.current?.zoomIn()} className="map-toolbar-icon" aria-label="Наблизити карту"><ZoomIn className="h-4 w-4" /></button>
-        <button type="button" onClick={() => mapRef.current?.fitBounds(REGION_BOUNDS, { padding: [24, 24] })} className="map-toolbar-icon" aria-label="Показати всю громаду"><Maximize2 className="h-4 w-4" /></button>
-        <span className="px-2 text-[10px] font-semibold text-slate-300">{loadingMap ? 'Завантаження карти…' : `${settlements.filter((item) => item.lat !== null).length}/25 точок`}</span>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setShowDirectory(true)}
-        className="region-map-bottom-controls absolute bottom-4 right-3 z-[500] inline-flex min-h-[48px] items-center gap-2 rounded-xl border border-emerald-300/30 bg-[#07120eea] px-4 py-3 text-xs font-bold text-emerald-100 shadow-xl backdrop-blur-md"
-      >
-        <List className="h-4 w-4" /> Населені пункти (25)
-      </button>
-
-      {mapError && (
-        <div className="absolute left-3 right-3 top-[72px] z-[510] mx-auto max-w-2xl rounded-xl border border-amber-300/30 bg-[#251b0b]/95 p-3 text-xs text-amber-100 shadow-xl">
-          {mapError}
-        </div>
-      )}
-
-      {selectedSettlement && (
+      {/* Main Interactive Zoomable Map + Tactical Inspector */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_380px] bg-[#060a09]">
+        {/* Zoomable & Pannable Map Viewport (2-finger pinch + drag) */}
         <div
-          className="absolute inset-0 z-[1000] flex items-center justify-center bg-black/55 p-3 backdrop-blur-[2px]"
-          onClick={() => setSelectedSettlementId(null)}
+          ref={stageRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onWheel={handleWheel}
+          style={{ touchAction: 'none' }}
+          className="relative flex items-center justify-center overflow-hidden bg-[#040706] touch-none cursor-grab active:cursor-grabbing"
         >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="settlement-dialog-title"
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-emerald-300/30 bg-[#09150f] shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
+          <div
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: 'center center',
+            }}
+            className={`relative w-full max-w-[1220px] aspect-video rounded-md overflow-hidden border border-emerald-500/25 shadow-2xl bg-[#0a130f] ${
+              isInteracting ? '' : 'transition-transform duration-200 ease-out'
+            }`}
           >
-            <div className="flex items-start justify-between gap-3 border-b border-white/10 p-4">
-              <div>
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
-                  {selectedSettlement.kind} · Рокитнівська громада
-                </div>
-                <h2 id="settlement-dialog-title" className="text-xl font-bold text-white">{selectedSettlement.name}</h2>
-                <p className="mt-1 text-[11px] text-slate-400">Рівненська область · Сарненський район · Україна</p>
+            {!mapImgErr ? (
+              <img
+                src={MAP_IMAGE_URL}
+                alt="Інтерактивна карта Полісся: Рокитне, Томашгород, Блажове, Біловіж, Сновидовичі, Масевичі, Кисоричі, Карпилівка, Борове"
+                referrerPolicy="no-referrer"
+                onError={() => setMapImgErr(true)}
+                className="w-full h-full object-cover select-none pointer-events-none"
+                draggable={false}
+              />
+            ) : (
+              <div className="w-full h-full bg-[#0e1c16] flex items-center justify-center text-sm text-slate-400">
+                Карта Полісся (інтерактивні маркери)
               </div>
-              <button type="button" onClick={() => setSelectedSettlementId(null)} className="map-toolbar-icon" aria-label="Закрити вікно"><X className="h-5 w-5" /></button>
+            )}
+
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/15" />
+
+            {/* Cartographic Settlement Markers (no boxed windows — authentic map points + direct settlement text) */}
+            {allLocations.map((loc) => {
+              const isSelected = loc.id === selectedId;
+              const isBunker = Boolean(loc.isBunker);
+              const isBaited = activeGroundbaitLocs.includes(loc.id);
+              const isRadWarn = loc.radiationLevel > radSuitLevel;
+
+              const dotColor = isBunker
+                ? 'bg-emerald-400 border-emerald-100'
+                : loc.pinTheme === 'anomaly'
+                  ? 'bg-cyan-400 border-cyan-100'
+                  : loc.pinTheme === 'swamp'
+                    ? 'bg-lime-400 border-lime-100'
+                    : 'bg-amber-400 border-amber-100';
+
+              const textColor = isSelected
+                ? isBunker
+                  ? 'text-emerald-300'
+                  : 'text-amber-300'
+                : 'text-slate-100 group-hover:text-amber-200';
+
+              const invScale = 1 / Math.max(1, Math.pow(zoom, 0.52));
+
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => focusLocationOnMap(loc, true)}
+                  onDoubleClick={() => onSelectDestination(loc.id)}
+                  style={{
+                    left: `${loc.mapX}%`,
+                    top: `${loc.mapY}%`,
+                    transform: `translate(-50%, -50%) scale(${invScale})`,
+                    touchAction: 'none',
+                  }}
+                  className={`absolute min-w-[48px] min-h-[48px] flex flex-col items-center justify-center gap-0.5 bg-transparent cursor-pointer group ${
+                    isSelected ? 'z-30' : 'hover:z-20 z-10'
+                  }`}
+                  title={loc.name}
+                >
+                  {/* Cartographic Settlement Dot / Target Ring */}
+                  <span className="relative flex items-center justify-center">
+                    {isSelected && (
+                      <span
+                        className={`absolute w-7 h-7 rounded-full border-2 ${
+                          isBunker ? 'border-emerald-300' : 'border-amber-300'
+                        }`}
+                      />
+                    )}
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full border-2 shadow-[0_0_8px_rgba(0,0,0,0.95)] transition-transform ${dotColor} ${
+                        isSelected ? 'scale-125' : 'group-hover:scale-115'
+                      }`}
+                    />
+                  </span>
+
+                  {/* Direct Map Settlement Name (no window box) */}
+                  <span
+                    className={`text-[11px] sm:text-xs font-bold tracking-wide whitespace-nowrap leading-none pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] [text-shadow:0_1px_4px_#000,0_0_8px_#000] ${textColor}`}
+                  >
+                    {loc.name.split('·')[0].trim()}
+                    {isRadWarn ? ' ☢' : ''}
+                    {isBaited ? ' ★' : ''}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {            {/* Населені пункти громади — позначки поверх тієї самої аномальної карти */}
+            {communityPoints.map((point) => {
+              const invScale = 1 / Math.max(1, Math.pow(zoom, 0.52));
+              return (
+                <button key={point.id} type="button"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => { event.stopPropagation(); setSelectedCommunityPoint(point); }}
+                  style={{ left: `${point.mapX}%`, top: `${point.mapY}%`, transform: `translate(-50%, -50%) scale(${invScale})`, touchAction: 'none' }}
+                  className="absolute z-20 group flex min-h-[38px] flex-col items-center justify-center gap-0.5 cursor-pointer"
+                  title={`${point.name} — ${point.kind}`}>
+                  <span className="relative flex items-center justify-center">
+                    <span className="absolute h-6 w-6 rounded-full border border-cyan-200/80 bg-cyan-400/15 shadow-[0_0_12px_rgba(34,211,238,0.75)] group-hover:scale-125 transition-transform" />
+                    <span className="relative h-2.5 w-2.5 rounded-full border-2 border-cyan-100 bg-fuchsia-500 shadow-[0_0_8px_rgba(0,0,0,1)]" />
+                  </span>
+                  <span className="whitespace-nowrap rounded-sm bg-[#06110f]/85 px-1 py-0.5 text-[10px] font-bold leading-none text-cyan-100 drop-shadow-[0_1px_3px_#000] [text-shadow:0_1px_4px_#000]">{point.name}</span>
+                </button>
+              );
+            })}
+/* Touch Zoom Controls Overlay */}
+          <div className="absolute bottom-4 left-4 z-30 flex items-center gap-1.5 panel-field rounded-xl p-1.5">
+            <button
+              type="button"
+              onClick={() => applyZoomAtPoint(zoom - 0.35)}
+              className="btn-tactile btn-field min-w-[46px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+              aria-label="Віддалити карту"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <span className="font-mono-num text-xs text-slate-200 px-2 min-w-[48px] text-center font-semibold">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => applyZoomAtPoint(zoom + 0.35)}
+              className="btn-tactile btn-field min-w-[46px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+              aria-label="Наблизити карту"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={resetView}
+              className="btn-tactile btn-field min-w-[46px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+              aria-label="Скинути масштаб карти"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Floating Quick Enter Action on Mobile/Touch */}
+          <div className="absolute bottom-4 right-4 z-30 lg:hidden">
+            <button
+              type="button"
+              onClick={() => onSelectDestination(selectedLoc.id)}
+              className={`btn-tactile min-h-[48px] inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs cursor-pointer ${
+                selectedLoc.isBunker ? 'btn-primary-emerald' : 'btn-primary-amber'
+              }`}
+            >
+              {selectedLoc.isBunker ? <Warehouse className="w-4 h-4" /> : <Navigation className="w-4 h-4" />}
+              {selectedLoc.name.split('·')[0].trim()} · Відкрити
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side Tactical Inspector + Location Directory */}
+        <aside className="bg-[#09110d] border-t lg:border-t-0 lg:border-l border-emerald-500/20 flex flex-col min-h-0 max-h-[42vh] lg:max-h-none">
+          <div className="p-4 sm:p-5 border-b border-white/10 space-y-3 overflow-y-auto custom-scroll">
+            {selectedLoc.backdropPhotoUrl && (
+              <div className="relative w-full h-36 rounded-md overflow-hidden border border-white/15 bg-[#060a08]">
+                <img
+                  src={selectedLoc.backdropPhotoUrl}
+                  alt={selectedLoc.name}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-slate-200">
+                  <span>Живий вигляд з пірсу</span>
+                  <span className="font-mono-num text-amber-300">
+                    Глиб. {selectedLoc.depthRangeM[0]}–{selectedLoc.depthRangeM[1]} м
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="text-[11px] font-medium text-emerald-400">
+                  {selectedLoc.waterLabel}
+                </div>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-slate-100 leading-snug">
+                  {selectedLoc.name}
+                </h2>
+              </div>
+              {visitedLocationIds.includes(selectedLoc.id) && (
+                <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">
+                  Відвідано
+                </span>
+              )}
             </div>
-            <div className="space-y-3 p-4">
-              {selectedLocation ? (
+
+            <p className="text-xs text-slate-300 leading-relaxed">{selectedLoc.description}</p>
+
+            <div className="grid grid-cols-2 gap-2 text-xs bg-[#060c09] border border-white/10 rounded p-3">
+              <div>
+                <span className="text-slate-400 block">Аномальність</span>
+                <span className="font-mono-num font-semibold text-cyan-300">
+                  {selectedLoc.anomalyActivity}%
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block">Небезпека</span>
+                <span
+                  className={`font-semibold ${radWarning ? 'text-rose-400' : 'text-emerald-300'}`}
+                >
+                  {selectedLoc.dangerRating}
+                </span>
+              </div>
+              <div className="col-span-2 pt-1 border-t border-white/10">
+                <span className="text-slate-400 block">Порада єгеря</span>
+                <span className="text-amber-200">{selectedLoc.bestTimeHint}</span>
+              </div>
+            </div>
+
+            {radWarning && (
+              <div className="flex items-start gap-2 text-xs text-rose-200 bg-rose-950/60 border border-rose-500/35 rounded p-2.5">
+                <Shield className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>
+                  Потрібен захисний костюм рівня {selectedLoc.radiationLevel} (у майстра Олега в Бункері), інакше накопичуватиметься радіація!
+                </span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => onSelectDestination(selectedLoc.id)}
+              className={`btn-tactile w-full min-h-[48px] inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold cursor-pointer ${
+                selectedLoc.isBunker ? 'btn-primary-emerald' : 'btn-primary-amber'
+              }`}
+            >
+              {selectedLoc.isBunker ? (
                 <>
-                  <div className="rounded-xl border border-emerald-300/20 bg-emerald-950/35 p-3">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">Ігрова водойма поруч</div>
-                    <div className="mt-1 font-semibold text-white">{selectedLocation.name}</div>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-300">{selectedLocation.description}</p>
-                  </div>
-                  {hasVisitedTarget && <div className="text-[11px] text-emerald-300">Цю водойму вже відвідано</div>}
-                  {isGroundbaited && <div className="text-[11px] text-amber-200">★ На цій водоймі активний закорм</div>}
+                  <Warehouse className="w-4 h-4" />
+                  Увійти в Бункер «Щит-04»
                 </>
               ) : (
-                <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs leading-relaxed text-slate-300">
-                  Для цього населеного пункту немає окремої рибальської сцени.
-                  {nearestGameLocation
-                    ? <div className="mt-2">Найближча доступна водойма: <span className="font-semibold text-amber-200">{nearestGameLocation.name}</span></div>
-                    : <div className="mt-2 text-amber-200">Координати населеного пункту не знайдені, тому неможливо точно визначити найближчу водойму.</div>}
+                <>
+                  <Navigation className="w-4 h-4" />
+                  Вийти на локацію (Риболовля)
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Directory List */}
+          <div className="flex-1 overflow-y-auto custom-scroll p-3.5 space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+              <span className="font-semibold text-slate-200">Швидкий вибір на карті</span>
+              <span className="font-mono-num">{fishingLocations.length} водойм</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => focusLocationOnMap(LOCATIONS.rokitne_bunker)}
+              className={`w-full min-h-[44px] text-left px-3 py-2 rounded border text-xs transition-colors flex items-center justify-between gap-2 cursor-pointer ${
+                selectedId === 'rokitne_bunker'
+                  ? 'bg-emerald-950/60 border-emerald-400/50 text-emerald-100'
+                  : 'bg-[#060c09] border-white/10 text-slate-300 hover:border-emerald-400/35'
+              }`}
+            >
+              <div className="min-w-0">
+                <div className="font-semibold text-emerald-300 truncate">
+                  {LOCATIONS.rokitne_bunker.name}
                 </div>
-              )}
-              {radWarning && (
-                <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-950/40 p-3 text-xs text-rose-100">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" />
-                  <span>Небезпечно: для цієї водойми потрібен захисний костюм рівня {nearestGameLocation?.radiationLevel ?? 0}. Твій рівень захисту: {radSuitLevel}.</span>
+                <div className="text-[11px] text-slate-400 truncate">
+                  Продаж улову, снасті, витратники й квести
                 </div>
-              )}
-              {selectedSettlement.lat === null && (
-                <p className="text-xs text-amber-200">Координати цієї точки ще не отримані з OpenStreetMap. Вона залишилась у повному офіційному списку.</p>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setSelectedSettlementId(null)} className="map-dialog-secondary">Закрити</button>
-                <button type="button" disabled={!nearestGameLocation} onClick={goToGameLocation} className="map-dialog-primary disabled:cursor-not-allowed disabled:opacity-40">
-                  <Navigation className="h-4 w-4" /> Перейти
+              </div>
+              <Warehouse className="w-4 h-4 text-emerald-400 shrink-0" />
+            </button>
+
+            {fishingLocations.map((loc) => {
+              const active = selectedId === loc.id;
+              const isRad = loc.radiationLevel > radSuitLevel;
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => focusLocationOnMap(loc)}
+                  className={`w-full min-h-[44px] text-left px-3 py-2 rounded border text-xs transition-colors flex items-center justify-between gap-2 cursor-pointer ${
+                    active
+                      ? 'bg-[#111e18] border-amber-400/50 text-slate-100'
+                      : 'bg-[#060c09] border-white/10 text-slate-300 hover:border-white/25'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate">{loc.name}</div>
+                    <div className="text-[11px] text-slate-400 truncate">
+                      {loc.waterLabel} · Глиб. {loc.depthRangeM[0]}–{loc.depthRangeM[1]} м
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isRad && <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />}
+                    <Compass className="w-3.5 h-3.5 text-slate-400" />
+                  </div>
                 </button>
+              );
+            })}
+          </div>
+        </aside>
+      </div>
+        {selectedCommunityPoint && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedCommunityPoint(null)}>
+            <div className="w-full max-w-sm rounded-2xl border border-cyan-400/35 bg-[#091510] p-5 shadow-[0_0_45px_rgba(8,145,178,0.2)]" onClick={(event) => event.stopPropagation()}>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">Населений пункт · Рокитнівська громада</div>
+              <h2 className="font-display text-2xl font-bold text-white">{selectedCommunityPoint.name}</h2>
+              <p className="mt-1 text-sm text-slate-400">{selectedCommunityPoint.kind} · Рівненська область</p>
+              <p className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3 text-xs leading-relaxed text-slate-300">Найближча доступна ігрова водойма: <span className="font-semibold text-cyan-200">{LOCATIONS[selectedCommunityPoint.nearestLocationId]?.name}</span>.</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setSelectedCommunityPoint(null)} className="min-h-[46px] rounded-xl border border-white/15 bg-white/5 px-3 text-sm font-semibold text-slate-200 hover:bg-white/10">Закрити</button>
+                <button type="button" onClick={() => { const destination = selectedCommunityPoint.nearestLocationId; setSelectedCommunityPoint(null); onSelectDestination(destination); }} className="btn-tactile btn-primary-amber min-h-[46px] rounded-xl px-3 text-sm font-bold">Перейти</button>
               </div>
             </div>
-          </section>
-        </div>
-      )}
-
-      {showDirectory && (
-        <div className="absolute inset-0 z-[1000] flex items-end justify-center bg-black/55 p-2 backdrop-blur-[2px] sm:items-center sm:p-4" onClick={() => setShowDirectory(false)}>
-          <section className="flex max-h-[82dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-emerald-300/30 bg-[#09150f] shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-white/10 p-4">
-              <div><h2 className="font-bold text-white">Населені пункти громади</h2><p className="text-[11px] text-slate-400">Офіційний перелік · 25 одиниць</p></div>
-              <button type="button" onClick={() => setShowDirectory(false)} className="map-toolbar-icon" aria-label="Закрити список"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="border-b border-white/10 p-3">
-              <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
-                <Search className="h-4 w-4 text-slate-400" />
-                <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Знайти село або селище…" className="min-h-[42px] w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500" />
-              </label>
-            </div>
-            <div className="custom-scroll flex-1 overflow-y-auto p-2">
-              {filteredSettlements.map((settlement) => (
-                <button key={settlement.id} type="button" onClick={() => openSettlement(settlement)} className="flex min-h-[48px] w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left hover:bg-emerald-950/40">
-                  <span><span className="block text-sm font-semibold text-slate-100">{settlement.name}</span><span className="text-[10px] text-slate-400">{settlement.kind} · {settlement.lat === null ? 'геодані не завантажені' : 'точка на карті'}</span></span>
-                  <MapPin className="h-4 w-4 shrink-0 text-emerald-300" />
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+          </div>
+        )}
+        {communityMapError && <div className="pointer-events-none fixed bottom-3 left-1/2 z-40 -translate-x-1/2 rounded-lg border border-amber-400/30 bg-black/80 px-3 py-2 text-center text-[10px] text-amber-200">{communityMapError}</div>}
     </div>
   );
 };
