@@ -210,6 +210,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 }) => {
   const [activeNpc, setActiveNpc] = useState<CharacterId | null>(null);
   const [hoveredNpc, setHoveredNpc] = useState<CharacterId | null>(null);
+  const [photoAspectRatio, setPhotoAspectRatio] = useState(9 / 16);
   const [tarasTab, setTarasTab] = useState<'catch' | 'rest' | 'quests'>('catch');
   const [shopCat, setShopCat] = useState<ShopCategory>('rods');
   const [velychkoTab, setVelychkoTab] = useState<'quests' | 'bestiary'>('quests');
@@ -360,14 +361,27 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       </header>
 
       {/* Main Interactive Bunker Scene */}
-      <div className="absolute inset-0 min-h-0 flex flex-col items-center justify-center overflow-hidden bg-[#040705] p-0">
-        {/* Locked 16:9 Photo Stage so clickable hotspots stay pixel-locked to the 4 people */}
-        <div className="absolute inset-0 w-full h-full max-w-none aspect-auto max-h-none rounded-none overflow-hidden border-0 shadow-2xl bg-[#070b09] shrink-0">
+      <div className="absolute inset-0 min-h-0 flex items-center justify-center overflow-hidden bg-[#040705] p-0">
+        {/* Photo stage follows the source image's natural aspect ratio (portrait 9:16); all hotspots stay attached to the photo */}
+        <div
+          className="relative overflow-hidden rounded-none border-0 shadow-2xl bg-[#070b09] shrink-0"
+          style={{
+            aspectRatio: photoAspectRatio,
+            width: `min(100vw, calc(100dvh * ${photoAspectRatio}))`,
+            height: `min(100dvh, calc(100vw / ${photoAspectRatio}))`,
+          }}
+        >
           <img
             src={BUNKER_PHOTO_URL}
             alt="Бункер Щит-04 у Рокитному: Тарас Гнатович, Віктор Величко, Олег Кравчук та Єльцин"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
+            onLoad={(event) => {
+              const image = event.currentTarget;
+              if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+                setPhotoAspectRatio(image.naturalWidth / image.naturalHeight);
+              }
+            }}
+            className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
             draggable={false}
           />
 
