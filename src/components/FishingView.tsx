@@ -1645,39 +1645,43 @@ export const FishingView: React.FC<FishingViewProps> = ({
         )}
 
         {phase === 'FIGHTING' && (
-          <div className="w-80 max-w-[92vw] panel-field rounded-xl p-3.5 space-y-2 pointer-events-auto">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-300">Навантаження на снасть</span>
-              <span
-                className={`font-mono-num font-semibold ${
-                  tensionRatio > 0.85
-                    ? 'text-rose-400'
-                    : tensionRatio > 0.55
-                      ? 'text-amber-300'
-                      : 'text-emerald-300'
-                }`}
-              >
-                {Math.round(tensionRatio * 100)}%
-              </span>
+          <div className="w-72 max-w-[92vw] panel-field rounded-xl p-3 pointer-events-auto flex items-stretch gap-3">
+            <div className="flex flex-col items-center justify-between gap-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 [writing-mode:vertical-rl] rotate-180">Навантаження</span>
+              <div className="relative h-36 w-4 rounded-full bg-slate-950/90 border border-white/15 overflow-hidden flex items-end">
+                <div
+                  className={`w-full rounded-b-full transition-all duration-75 ${
+                    tensionRatio > 0.85
+                      ? 'bg-rose-500'
+                      : tensionRatio > 0.55
+                        ? 'bg-amber-400'
+                        : 'bg-emerald-400'
+                  }`}
+                  style={{ height: `${Math.min(100, tensionRatio * 100)}%` }}
+                />
+                <div className="absolute inset-x-0 top-[15%] border-t border-white/40" />
+                <div className="absolute inset-x-0 top-[45%] border-t border-white/30" />
+                <div className="absolute inset-x-0 top-[70%] border-t border-white/30" />
+              </div>
+              <span className={`font-mono-num text-xs font-bold ${
+                tensionRatio > 0.85
+                  ? 'text-rose-400'
+                  : tensionRatio > 0.55
+                    ? 'text-amber-300'
+                    : 'text-emerald-300'
+              }`}>{Math.round(tensionRatio * 100)}%</span>
             </div>
-            <div className="h-3 bg-slate-900 rounded-full overflow-hidden border border-white/10">
-              <div
-                className={`h-full transition-all duration-75 ${
-                  tensionRatio > 0.85
-                    ? 'bg-rose-500'
-                    : tensionRatio > 0.55
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                }`}
-                style={{ width: `${Math.min(100, tensionRatio * 100)}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono-num">
-              <span>Фрикціон: {dragLevel}/10</span>
-              <span>До берега: {fishDistM.toFixed(1)} м</span>
-            </div>
+            <div className="min-w-0 flex-1 flex flex-col justify-between gap-2">
+              <div>
+                <div className="text-xs font-semibold text-slate-100">Навантаження на снасть</div>
+                <div className="text-[10px] text-slate-400">Стеж за шкалою: червона зона — ризик обриву</div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono-num">
+                <span>Фрикціон: {dragLevel}/10</span>
+                <span>До берега: {fishDistM.toFixed(1)} м</span>
+              </div>
 
-            {canShowLandingPrompt && (
+              {canShowLandingPrompt && (
               <button
                 type="button"
                 onClick={handleLandingNetGrab}
@@ -1688,7 +1692,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
                   ? 'ПІДХОПИТИ ПІДСАКОМ! [E]'
                   : 'ВИТЯГТИ НА БЕРЕГ! [E]'}
               </button>
-            )}
+              )}
+            </div>
           </div>
         )}
 
