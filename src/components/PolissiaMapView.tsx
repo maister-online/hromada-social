@@ -554,8 +554,10 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'center center',
+              perspective: 'none',
+              transformStyle: 'flat',
             }}
-            className={`relative w-full h-full max-w-none aspect-auto rounded-none overflow-hidden border-0 shadow-2xl bg-[#0a130f] ${
+            className={`relative w-full h-full max-w-none aspect-auto rounded-none overflow-hidden border-0 shadow-none bg-[#050806] [perspective:none] [transform-style:flat] ${
               isInteracting ? '' : 'transition-transform duration-200 ease-out'
             }`}
           >
@@ -565,7 +567,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 alt="Інтерактивна карта Полісся: Рокитне, Томашгород, Блажове, Біловіж, Сновидовичі, Масевичі, Кисоричі, Карпилівка, Борове"
                 referrerPolicy="no-referrer"
                 onError={() => setMapImgErr(true)}
-                className="w-full h-full object-fill select-none pointer-events-none"
+                className="absolute inset-0 w-full h-full object-contain object-center select-none pointer-events-none"
                 draggable={false}
               />
             ) : (
