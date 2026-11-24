@@ -1130,7 +1130,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       audioEngine.init();
       if (isRodBroken) {
         setStatusMsg(
-          'Вудлище зламане (0%)! Полагодьте у майстра Олега або виберіть інше в «Монтажі».'
+          'Вудлище зламане (0%)! Полагодьте у майстра Олега або виберіть інше в «Екіпіровці».'
         );
         return;
       }
@@ -1415,6 +1415,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     showBaitDrawer,
     showKeepnet,
     showRigDrawer,
+    showSonar,
   ]);
 
   const { clock } = formatClock(gameState.timeOfDay);
@@ -2136,7 +2137,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div>
                 <h3 className="font-display text-lg sm:text-xl font-bold text-slate-100">
-                  Монтаж снасті та спорядження
+                  Екіпіровка рибалки та монтаж снасті
                 </h3>
                 <p className="text-xs text-slate-400">
                   Макс. закид {maxCastM.toFixed(0)} м · Ліміт навантаження{' '}
@@ -2155,7 +2156,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-nowrap gap-1.5 overflow-x-auto custom-scroll pb-1">
               {(
                 [
                   { id: 'rod', label: 'Вудка' },
@@ -2186,47 +2187,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scroll space-y-2.5 pr-1">
-              {rigTab === 'bait' && (
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {(
-                      [
-                        { id: 'all', label: 'Усі' },
-                        { id: 'natural', label: 'Живі' },
-                        { id: 'plant', label: 'Рослинні' },
-                        { id: 'lure', label: 'Штучні' },
-                        { id: 'anomaly', label: 'Аномальні' },
-                      ] as { id: BaitFilterTab; label: string }[]
-                    ).map((tab) => (
-                      <button key={tab.id} type="button" onClick={() => setBaitFilter(tab.id)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${baitFilter === tab.id ? 'border-amber-400/60 bg-amber-500/20 text-amber-200' : 'border-white/10 bg-[#08100c] text-slate-400'}`}>
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-400">Обрана наживка встановлюється на гачок. Витрата відбувається під час закиду; штучні приманки багаторазові.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {filteredBaits.map((item) => {
-                      const qty = gameState.baitInventory[item.id] ?? 0;
-                      const active = bait.id === item.id;
-                      return (
-                        <button key={item.id} type="button" disabled={phase !== 'IDLE' || qty <= 0}
-                          onClick={() => onSelectBait(item.id)}
-                          className={`rounded-xl border p-3 text-left disabled:opacity-40 ${active ? 'border-amber-400/70 bg-amber-950/50' : 'border-white/10 bg-[#09120e]'}`}>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-semibold text-slate-100">{item.name}</span>
-                            <span className="text-xs font-mono-num text-amber-300">{item.category === 'lure' ? (qty > 0 ? `${qty} · багаторазова` : '0') : `${qty} шт.`}</span>
-                          </div>
-                          <div className="mt-1 text-[11px] text-slate-400">{item.description}</div>
-                          <div className="mt-1 text-[11px] text-emerald-300">Кльов ×{item.biteSpeedBonus} · бонус мутантів +{Math.round(item.mutantBonus * 100)}%</div>
-                          {active && <div className="mt-2 text-[10px] font-bold uppercase tracking-wide text-amber-300">Встановлено на снасть</div>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
               {rigTab === 'bait' && (
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-1.5">
