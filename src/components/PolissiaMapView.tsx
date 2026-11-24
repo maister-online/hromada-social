@@ -542,14 +542,22 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                     />
                   </span>
 
-                  {/* Direct Map Settlement Name (no window box) */}
-                  <span
-                    className={`text-[11px] sm:text-xs font-bold tracking-wide whitespace-nowrap leading-none pt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] [text-shadow:0_1px_4px_#000,0_0_8px_#000] ${textColor}`}
-                  >
-                    {loc.name.split('·').slice(1).join('·').trim() || loc.name}
-                    {isRadWarn ? ' ☢' : ''}
-                    {isBaited ? ' ★' : ''}
-                  </span>
+                  {/* Show a readable callout only for the active pin.
+                      The other pins stay as dots so their names never cover
+                      settlement labels printed on the map artwork. */}
+                  {isSelected && (
+                    <span
+                      className={`absolute bottom-[calc(100%+7px)] left-1/2 z-40 -translate-x-1/2 rounded-md border px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide leading-tight whitespace-nowrap shadow-xl backdrop-blur-sm ${
+                        isBunker
+                          ? 'border-emerald-300/60 bg-[#061b12]/95 text-emerald-200'
+                          : 'border-amber-300/60 bg-[#211607]/95 text-amber-100'
+                      }`}
+                    >
+                      {loc.name.split('·').slice(1).join('·').trim() || loc.name}
+                      {isRadWarn ? ' ☢' : ''}
+                      {isBaited ? ' ★' : ''}
+                    </span>
+                  )}
                 </button>
               );
             })}
