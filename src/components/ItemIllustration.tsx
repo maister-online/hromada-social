@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCommonsPhoto } from './useCommonsPhoto';
 import { LootItemDef } from '../game/types';
 
 interface ItemIllustrationProps {
@@ -11,6 +12,25 @@ export const ItemIllustration: React.FC<ItemIllustrationProps> = ({
   className = 'w-16 h-12',
 }) => {
   const c = item.accentColor;
+  const remotePhoto = useCommonsPhoto(item.name, [
+    item.iconKey.replace(/_/g, ' '),
+    'antique object relic',
+    'fishing equipment',
+  ]);
+
+  if (remotePhoto.src) {
+    return (
+      <div ref={remotePhoto.ref} className={`relative overflow-hidden rounded ${className}`}>
+        <img
+          src={remotePhoto.src}
+          alt={item.name}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
 
   if (item.iconKey === 'coin') {
     return (

@@ -14,7 +14,6 @@ import {
   Droplets,
   Music,
   Package,
-  Radio,
   RotateCcw,
   Scissors,
   ScrollText,
@@ -77,10 +76,10 @@ import {
   SaveState,
   WeatherType,
 } from '../game/types';
-import { EchosounderPanel } from './EchosounderPanel';
 import { Fauna3DPreview } from './Fauna3DPreview';
 import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
+import { CatalogPhoto } from './CatalogPhoto';
 import { WeatherEffectsOverlay } from './WeatherEffectsOverlay';
 
 const WEATHER_INFO: Record<
@@ -434,7 +433,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [baitFilter, setBaitFilter] = useState<BaitFilterTab>('all');
   const [showRigDrawer, setShowRigDrawer] = useState(false);
   const [rigTab, setRigTab] = useState<RigTab>('rod');
-  const [showSonar, setShowSonar] = useState(false);
   const [reticlePos, setReticlePos] = useState<{
     xPct: number;
     yPct: number;
@@ -1294,12 +1292,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     setStatusMsg('Снасть вимотано. Торкніться будь-де на водоймі для нового закиду.');
   }, []);
 
-  const handleToggleSonar = useCallback(() => {
-    audioEngine.init();
-    audioEngine.playBiteBell();
-    setShowSonar((prev) => !prev);
-  }, []);
-
   const handleSelectWaterSpot = useCallback(
     (yaw: number, distM: number, immediateCast = false) => {
       const bounded = clampCastToWaterBounds(location, yaw, distM, maxCastM);
@@ -1803,30 +1795,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
         </div>
       </div>
 
-      {/* VISUAL ECHOSOUNDER & FULL-WATER CASTING MAP PANEL */}
-      {showSonar && (
-        <div className="fixed top-44 sm:top-48 left-2.5 sm:left-4 z-20 max-h-[calc(100vh-14rem)] overflow-y-auto custom-scroll">
-          <EchosounderPanel
-            location={location}
-            aimYaw={aimYaw}
-            targetDistM={castDistM}
-            activeCastYaw={activeCastSpot.yaw}
-            activeCastDistM={phase === 'FIGHTING' ? fishDistM : activeCastSpot.distM}
-            fishingDepthM={effectiveFishingDepthM}
-            bottomLock={bottomLock || rigStats.hasBottomRig}
-            maxCastM={maxCastM}
-            isLineInWater={phase !== 'IDLE' && phase !== 'CHARGING' && phase !== 'CAUGHT'}
-            canCastNow={phase === 'IDLE' || phase === 'WAITING'}
-            timeOfDay={gameState.timeOfDay}
-            weather={gameState.weather}
-            hasGroundbait={Boolean(activeGbDef)}
-            onSelectWaterSpot={handleSelectWaterSpot}
-            onChangeFishingDepth={handleChangeFishingDepth}
-            onClose={() => setShowSonar(false)}
-          />
-        </div>
-      )}
-
       {/* CENTER STATUS, FIGHTING, SNAGGED & LANDING NET GAUGES */}
       <div className="pointer-events-none fixed inset-x-0 bottom-38 sm:bottom-32 z-20 flex flex-col items-center gap-2.5 px-4">
         {phase === 'CHARGING' && (
@@ -2025,19 +1993,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             })()
           )}
 
-          {/* Echosounder Toggle Touch Button */}
-          <button
-            type="button"
-            onClick={handleToggleSonar}
-            className={`btn-tactile min-h-[46px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap border ${
-              showSonar
-                ? 'bg-emerald-950/85 border-emerald-400/60 text-emerald-200'
-                : 'btn-field text-emerald-300'
-            }`}
-          >
-            <Radio className="w-4 h-4" />
-            Ехолот
-          </button>
+
 
           {/* Quick Touch Fishing Depth Control */}
           <div className="flex items-center gap-1 pl-1.5 border-l border-white/10">
@@ -2275,6 +2231,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                           : 'bg-[#050806] border-white/5 opacity-45 cursor-not-allowed'
                     }`}
                   >
+                    <CatalogPhoto query={`fishing bait ${b.name}`} fallbackQueries={['fishing bait', 'fishing lure']} alt={b.name} className="w-full h-20 rounded-lg" />
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs sm:text-sm font-semibold truncate">{b.name}</span>
                       <span className="font-mono-num text-xs font-bold text-amber-300 shrink-0">
@@ -2641,6 +2598,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                                 : 'bg-[#09120e] border-white/10 hover:border-white/25'
                             }`}
                           >
+                            <CatalogPhoto query={`fishing bait flavor ${fl.name}`} fallbackQueries={['fishing bait flavor', 'fishing additive']} alt={fl.name} className="w-full h-14 rounded-lg mb-2" />
                             <div className="flex justify-between text-xs font-bold text-slate-100">
                               <span>{fl.name}</span>
                               {fl.id !== 'flav_none' && (

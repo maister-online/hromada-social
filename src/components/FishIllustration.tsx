@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCommonsPhoto } from './useCommonsPhoto';
 import { FishSpeciesDef } from '../game/types';
 
 interface FishIllustrationProps {
@@ -60,6 +61,38 @@ export const FishIllustration: React.FC<FishIllustrationProps> = ({
   const [imgFailed, setImgFailed] = useState(false);
 
   const hasPhoto = PHOTO_SPECIES_IDS.has(species.id) && !imgFailed;
+  const mutantBasePhotos: Record<string, string> = {
+    crucian_glow: 'Carassius carassius',
+    tench_moss: 'Tinca tinca',
+    pike_ghost: 'Esox lucius',
+    zander_crystal: 'Sander lucioperca',
+    swamp_eel: 'Anguilla anguilla',
+    carp_mutant: 'Cyprinus carpio',
+    catfish_glow: 'Silurus glanis',
+    leviathan_polissia: 'Acipenser ruthenus',
+    mutant_three_eyed_pike: 'Esox lucius',
+    mutant_black_catfish: 'Silurus glanis',
+    mutant_giant_carp: 'Cyprinus carpio',
+    mutant_twoheaded_crucian: 'Carassius carassius',
+    mutant_electric_zander: 'Sander lucioperca',
+    mutant_blind_bream: 'Abramis brama',
+    mutant_armored_crayfish: 'Astacus astacus',
+    mutant_giant_leech: 'Hirudo medicinalis',
+    mutant_swamp_frog: 'Pelophylax ridibundus',
+    mutant_giant_beetle: 'Hydrophilus piceus',
+  };
+  const fallbackPhotoQueries =
+    species.faunaKind === 'crayfish'
+      ? ['European crayfish Astacus astacus', 'crayfish']
+      : species.faunaKind === 'insect' || species.faunaKind === 'beetle'
+        ? ['freshwater insect', 'water beetle']
+        : species.faunaKind === 'wildlife'
+          ? ['freshwater wildlife']
+          : ['freshwater fish'];
+  const remotePhoto = useCommonsPhoto(
+    hasPhoto ? '' : (mutantBasePhotos[species.id] ?? species.latinName),
+    fallbackPhotoQueries
+  );
   const c = species.accentColor || '#38bdf8';
   const secondary = species.model3d?.secondaryHex || '#0f172a';
   const finColor = species.model3d?.finHex || c;
@@ -136,8 +169,23 @@ export const FishIllustration: React.FC<FishIllustrationProps> = ({
 
   const bgDimCls = dimmed ? 'grayscale brightness-[0.38] opacity-55' : '';
 
+  if (!hasPhoto && remotePhoto.src) {
+    return (
+      <div ref={remotePhoto.ref} className={`relative overflow-hidden bg-[#060c09] ${className}`}>
+        <img
+          src={remotePhoto.src}
+          alt={species.name}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          className={`w-full h-full object-cover object-center ${dimmed ? 'grayscale brightness-[0.42]' : species.isMutant ? 'hue-rotate-[125deg] saturate-150 contrast-115' : ''}`}
+        />
+        {species.isMutant && !dimmed && <div className="pointer-events-none absolute inset-0 bg-cyan-400/15 mix-blend-screen" />}
+      </div>
+    );
+  }
+
   return (
-    <div className={`relative overflow-hidden bg-[#060c09] flex items-center justify-center ${className}`}>
+    <div ref={remotePhoto.ref} className={`relative overflow-hidden bg-[#060c09] flex items-center justify-center ${className}`}>
       <div
         className="pointer-events-none absolute inset-0 opacity-25"
         style={{

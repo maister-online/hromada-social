@@ -60,6 +60,7 @@ import { CharacterPortrait } from './CharacterPortrait';
 import { Fauna3DPreview } from './Fauna3DPreview';
 import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
+import { CatalogPhoto } from './CatalogPhoto';
 
 interface BunkerViewProps {
   gameState: SaveState;
@@ -1240,6 +1241,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             key={r.id}
                             className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                           >
+                            <CatalogPhoto query={`fishing rod ${r.name}`} fallbackQueries={['fishing rod']} alt={r.name} className="w-full h-28 rounded-lg mb-3" />
                             <div>
                               <div className="flex justify-between gap-2 text-xs">
                                 <span className="text-sky-300 font-medium">
@@ -1305,6 +1307,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             key={r.id}
                             className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                           >
+                            <CatalogPhoto query={`fishing reel ${r.name}`} fallbackQueries={['fishing reel']} alt={r.name} className="w-full h-28 rounded-lg mb-3" />
                             <div>
                               <div className="flex justify-between gap-2 text-xs">
                                 <span className="text-sky-300 font-medium">
@@ -1361,6 +1364,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             key={l.id}
                             className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                           >
+                            <CatalogPhoto query={`fishing line spool ${l.name}`} fallbackQueries={['fishing line spool']} alt={l.name} className="w-full h-28 rounded-lg mb-3" />
                             <div>
                               <div className="flex justify-between gap-2 text-xs">
                                 <span className="text-sky-300 font-medium">
@@ -1410,6 +1414,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             key={f.id}
                             className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                           >
+                            <CatalogPhoto query={`fishing float ${f.name}`} fallbackQueries={['fishing float']} alt={f.name} className="w-full h-28 rounded-lg mb-3" />
                             <div>
                               <div className="flex justify-between gap-2 text-xs">
                                 <span className="inline-flex items-center gap-1.5 text-sky-300 font-medium">
@@ -1468,6 +1473,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={h.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                            <CatalogPhoto query={`fishing hook ${h.name}`} fallbackQueries={['fishing hook']} alt={h.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between text-xs text-sky-300">
                                     <span>Кльов ×{h.biteRateBonus}</span>
@@ -1512,6 +1518,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={s.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                            <CatalogPhoto query={`fishing sinker ${s.name}`} fallbackQueries={['fishing sinker']} alt={s.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between text-xs text-sky-300">
                                     <span>Вага {s.weightG} г</span>
@@ -1560,6 +1567,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={r.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                            <CatalogPhoto query={`fishing rig ${r.name}`} fallbackQueries={['fishing rig']} alt={r.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between text-xs">
                                     <span className="text-sky-300">Кльов ×{r.biteRateBonus}</span>
@@ -1604,6 +1612,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={f.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                            <CatalogPhoto query={`fishing feeder ${f.name}`} fallbackQueries={['fishing feeder']} alt={f.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between text-xs text-teal-300">
                                     <span>+{Math.round(f.biteRateBoost * 100)}% кльову</span>
@@ -1650,6 +1659,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={a.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                            <CatalogPhoto query={`fishing tackle accessory ${a.name}`} fallbackQueries={['fishing tackle accessory']} alt={a.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="flex justify-between text-xs text-sky-300">
                                     <span>Кльов ×{a.biteSpeedBonus}</span>
@@ -1833,6 +1843,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             key={g.id}
                             className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                           >
+                            <CatalogPhoto query={`fishing groundbait ${g.name}`} fallbackQueries={['fishing groundbait']} alt={g.name} className="w-full h-28 rounded-lg mb-3" />
                             <div>
                               <div className="flex justify-between gap-2 text-xs">
                                 <span className="text-teal-300 font-medium">
@@ -1948,6 +1959,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                                 key={g.id}
                                 className="bg-[#0b130f] border border-white/10 rounded-xl p-4 flex flex-col justify-between space-y-3"
                               >
+                            <CatalogPhoto query={`fishing equipment ${g.name}`} fallbackQueries={['fishing equipment']} alt={g.name} className="w-full h-28 rounded-lg mb-3" />
                                 <div>
                                   <div className="text-[11px] font-semibold text-emerald-300">
                                     {g.effectLabel}
