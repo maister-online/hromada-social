@@ -49,88 +49,6 @@ interface PolissiaMapViewProps {
 }
 
 
-type SettlementKind = 'селище' | 'село';
-interface SettlementPoint { id: string; name: string; kind: SettlementKind; lat: number; lon: number; mapX: number; mapY: number; nearestLocationId: LocationId; }
-interface OSMPlace { name: string; lat: number; lon: number; place: string; }
-const COMMUNITY_SETTLEMENTS: Array<{ id: string; name: string; kind: SettlementKind; gameId?: LocationId }> = [
- {id:'rokytne-town',name:'Рокитне',kind:'селище',gameId:'rokitne'},{id:'tomashhorod-town',name:'Томашгород',kind:'селище',gameId:'tomashgorod'},
- {id:'yelne',name:'Єльне',kind:'село'},{id:'blazhove',name:'Блажове',kind:'село',gameId:'blazhove'},{id:'borove',name:'Борове',kind:'село',gameId:'borove'},
- {id:'buda',name:'Буда',kind:'село'},{id:'budky-snovydovytski',name:'Будки-Сновидовицькі',kind:'село'},{id:'bilovizh',name:'Біловіж',kind:'село',gameId:'bilovizh'},
- {id:'bilsk',name:'Більськ',kind:'село'},{id:'dert',name:'Дерть',kind:'село'},{id:'zalavya',name:"Залав'я",kind:'село'},
- {id:'karpylivka',name:'Карпилівка',kind:'село',gameId:'karpylivka'},{id:'kysorychi',name:'Кисоричі',kind:'село',gameId:'kysorychi'},
- {id:'kupel',name:'Купель',kind:'село'},{id:'lisove',name:'Лісове',kind:'село'},{id:'masevychi',name:'Масевичі',kind:'село',gameId:'masevychi'},
- {id:'mushni',name:'Мушні',kind:'село'},{id:'netreba',name:'Нетреба',kind:'село'},{id:'oleksandrivka',name:'Олександрівка',kind:'село'},
- {id:'osnytsk',name:'Осницьк',kind:'село'},{id:'ostky',name:'Остки',kind:'село'},{id:'rokytne-village',name:'Рокитне',kind:'село'},
- {id:'snovydovychi',name:'Сновидовичі',kind:'село',gameId:'snovydovychi'},{id:'staryky',name:'Старики',kind:'село'},
- {id:'tomashhorod-village',name:'Томашгород',kind:'село'}
-];
-const MAP_ANCHORS: Array<{gameId:LocationId;name:string;kind:SettlementKind}> = [
- {gameId:'rokitne',name:'Рокитне',kind:'селище'},{gameId:'tomashgorod',name:'Томашгород',kind:'селище'},
- {gameId:'masevychi',name:'Масевичі',kind:'село'},{gameId:'karpylivka',name:'Карпилівка',kind:'село'},
- {gameId:'snovydovychi',name:'Сновидовичі',kind:'село'},{gameId:'kysorychi',name:'Кисоричі',kind:'село'},
- {gameId:'bilovizh',name:'Біловіж',kind:'село'},{gameId:'borove',name:'Борове',kind:'село'},{gameId:'blazhove',name:'Блажове',kind:'село'}
-];
-
-// Always-visible settlement positions on the original anomaly-map artwork.
-// Coordinates are percentages of the existing map image, not a replacement map.
-const COMMUNITY_MAP_POSITIONS: Record<string, { x: number; y: number }> = {
- 'rokytne-town':{x:41.7,y:45.5}, 'tomashhorod-town':{x:37.5,y:31.2},
- 'yelne':{x:30,y:58}, 'blazhove':{x:56.1,y:22.8}, 'borove':{x:48.2,y:76.8},
- 'buda':{x:62,y:66}, 'budky-snovydovytski':{x:61,y:38}, 'bilovizh':{x:64.6,y:28.5},
- 'bilsk':{x:25,y:32}, 'dert':{x:38,y:78}, 'zalavya':{x:46,y:39},
- 'karpylivka':{x:46.1,y:66.2}, 'kysorychi':{x:50.1,y:59.6}, 'kupel':{x:72,y:68},
- 'lisove':{x:28,y:70}, 'masevychi':{x:47.6,y:52.8}, 'mushni':{x:67,y:53},
- 'netreba':{x:39,y:18}, 'oleksandrivka':{x:22,y:75}, 'osnytsk':{x:59,y:82},
- 'ostky':{x:69,y:45}, 'rokytne-village':{x:44,y:48}, 'snovydovychi':{x:59.1,y:41.6},
- 'staryky':{x:76,y:34}, 'tomashhorod-village':{x:35,y:34}
-};
-function makeFallbackCommunityPoints(): SettlementPoint[] {
- return COMMUNITY_SETTLEMENTS.map((s) => {
-   const p = COMMUNITY_MAP_POSITIONS[s.id];
-   const nearest = s.gameId ?? 'rokitne';
-   return { ...s, lat: 0, lon: 0, mapX: p.x, mapY: p.y, nearestLocationId: nearest };
- });
-}
-
-const OSM_SETTLEMENT_QUERY = `[out:json][timeout:35];(node["place"](50.90,26.65,51.75,28.00);way["place"](50.90,26.65,51.75,28.00);relation["place"](50.90,26.65,51.75,28.00););out center tags;`;
-const OSM_ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
-const normalizeSettlementName=(n:string)=>n.toLocaleLowerCase('uk-UA').replace(/[’'\u0060]/g,'').replace(/[‐‑–—]/g,'-').trim();
-function solveMapProjection(points:Array<{lat:number;lon:number;x:number;y:number}>) {
- const s=points.reduce((a,p)=>({n:a.n+1,lat:a.lat+p.lat,lon:a.lon+p.lon,lat2:a.lat2+p.lat*p.lat,lon2:a.lon2+p.lon*p.lon,ll:a.ll+p.lat*p.lon,x:a.x+p.x,y:a.y+p.y,lx:a.lx+p.lat*p.x,ox:a.ox+p.lon*p.x,ly:a.ly+p.lat*p.y,oy:a.oy+p.lon*p.y}),{n:0,lat:0,lon:0,lat2:0,lon2:0,ll:0,x:0,y:0,lx:0,ox:0,ly:0,oy:0});
- const m=[[s.lat2,s.ll,s.lat],[s.ll,s.lon2,s.lon],[s.lat,s.lon,s.n]];
- const solve=(v:number[])=>{const a=m.map((r,i)=>[...r,v[i]]);for(let k=0;k<3;k++){let p=k;for(let i=k+1;i<3;i++)if(Math.abs(a[i][k])>Math.abs(a[p][k]))p=i;if(Math.abs(a[p][k])<1e-12)throw new Error('Недостатньо опорних точок');[a[k],a[p]]=[a[p],a[k]];const d=a[k][k];for(let j=k;j<4;j++)a[k][j]/=d;for(let i=0;i<3;i++)if(i!==k){const f=a[i][k];for(let j=k;j<4;j++)a[i][j]-=f*a[k][j];}}return [a[0][3],a[1][3],a[2][3]];};
- return {x:solve([s.lx,s.ox,s.x]),y:solve([s.ly,s.oy,s.y])};
-}
-async function loadCommunityMapPoints():Promise<SettlementPoint[]> {
- let elements:any[]=[];let lastError:unknown=null;
- for(const endpoint of OSM_ENDPOINTS){try{const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:new URLSearchParams({data:OSM_SETTLEMENT_QUERY}).toString()});if(!r.ok)throw new Error(`OpenStreetMap: ${r.status}`);const j=await r.json();elements=Array.isArray(j?.elements)?j.elements:[];if(elements.length)break;}catch(e){lastError=e;}}
- if(!elements.length)throw lastError??new Error('Немає геоданих');
- const places:OSMPlace[]=elements.map((e:any)=>({name:String(e.tags?.['name:uk']||e.tags?.['official_name:uk']||e.tags?.name||e.tags?.official_name||''),lat:Number(e.lat??e.center?.lat),lon:Number(e.lon??e.center?.lon),place:String(e.tags?.place||'')})).filter(p=>p.name&&Number.isFinite(p.lat)&&Number.isFinite(p.lon));
- const find=(name:string,kind:SettlementKind)=>{const a=places.filter(p=>normalizeSettlementName(p.name)===normalizeSettlementName(name));const types=kind==='селище'?['town','city']:['village','hamlet'];return types.map(t=>a.find(p=>p.place===t)).find(Boolean)??(a.length===1?a[0]:undefined);};
- const anchors=MAP_ANCHORS.map(a=>{const p=find(a.name,a.kind),l=LOCATIONS[a.gameId];return p&&l?{lat:p.lat,lon:p.lon,x:l.mapX,y:l.mapY}:null;}).filter(Boolean) as Array<{lat:number;lon:number;x:number;y:number}>;
- if(anchors.length<3)throw new Error('Не вдалося прив’язати географію до ігрової карти');
- const projection=solveMapProjection(anchors);
- const anchorPlaces = MAP_ANCHORS.map(a => ({ id: a.gameId, place: find(a.name, a.kind) }))
-   .filter((a): a is { id: LocationId; place: OSMPlace } => Boolean(a.place));
- const result: SettlementPoint[] = [];
- for (const settlement of COMMUNITY_SETTLEMENTS) {
-   const place = find(settlement.name, settlement.kind);
-   if (!place) continue;
-   const mapX = projection.x[0] * place.lat + projection.x[1] * place.lon + projection.x[2];
-   const mapY = projection.y[0] * place.lat + projection.y[1] * place.lon + projection.y[2];
-   if (mapX < 0 || mapX > 100 || mapY < 0 || mapY > 100) continue;
-   const nearest = anchorPlaces.reduce((best, anchor) => {
-     const distance = Math.hypot((place.lat - anchor.place.lat) * 111, (place.lon - anchor.place.lon) * 70);
-     return !best || distance < best.distance ? { id: anchor.id, distance } : best;
-   }, null as { id: LocationId; distance: number } | null);
-   if (nearest) result.push({
-     ...settlement, lat: place.lat, lon: place.lon, mapX, mapY,
-     nearestLocationId: settlement.gameId ?? nearest.id,
-   });
- }
- return result;
-}
-
 const WEATHER_LABELS: Record<WeatherType, string> = {
   clear: 'Ясно',
   fog: 'Густий туман',
@@ -173,9 +91,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     currentLocationId === 'rokitne_bunker' ? 'tomashgorod' : currentLocationId
   );
   const [mapImgErr, setMapImgErr] = useState(false);
-  const [communityPoints, setCommunityPoints] = useState<SettlementPoint[]>(makeFallbackCommunityPoints);
-  const [selectedCommunityPoint, setSelectedCommunityPoint] = useState<SettlementPoint | null>(null);
-  const [communityMapError, setCommunityMapError] = useState<string | null>(null);
 
   // Zoom & Pan Engine State
   const [zoom, setZoom] = useState(1);
@@ -249,19 +164,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     [clampPan]
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    loadCommunityMapPoints().then((points) => {
-      if (cancelled) return;
-      // Keep every settlement visible even if Overpass omits a name or is unavailable.\n      const fallback = makeFallbackCommunityPoints();\n      const found = new Map(points.map((point) => [point.id, point]));\n      setCommunityPoints(fallback.map((point) => found.get(point.id) ?? point));
-      setCommunityMapError(points.length < COMMUNITY_SETTLEMENTS.length
-        ? `На карту нанесено ${points.length} із ${COMMUNITY_SETTLEMENTS.length} населених пунктів: для решти не знайдено точних координат.`
-        : null);
-    }).catch(() => {
-      if (!cancelled) setCommunityMapError('Не вдалося завантажити географічні координати населених пунктів.');
-    });
-    return () => { cancelled = true; };
-  }, []);
+
 
   // Prevent browser native page pinch-zoom / scroll inside map viewport
   useEffect(() => {
@@ -611,8 +514,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 <button
                   key={loc.id}
                   type="button"
-                  onClick={() => compact ? onSelectDestination(loc.id) : focusLocationOnMap(loc, true)}
-                  onDoubleClick={() => onSelectDestination(loc.id)}
+                  onClick={() => { if (!dragStateRef.current.moved) onSelectDestination(loc.id); }}
                   style={{
                     left: `${loc.mapX}%`,
                     top: `${loc.mapY}%`,
@@ -651,24 +553,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 </button>
               );
             })}
-            {/* Населені пункти громади — позначки поверх тієї самої аномальної карти */}
-            {communityPoints.map((point) => {
-              const invScale = 1 / Math.max(1, Math.pow(zoom, 0.52));
-              return (
-                <button key={point.id} type="button"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => { event.stopPropagation(); if (compact) onSelectDestination(point.nearestLocationId); else setSelectedCommunityPoint(point); }}
-                  style={{ left: `${point.mapX}%`, top: `${point.mapY}%`, transform: `translate(-50%, -50%) scale(${invScale})`, touchAction: 'none' }}
-                  className="absolute z-20 group flex min-h-[38px] flex-col items-center justify-center gap-0.5 cursor-pointer"
-                  title={`${point.name} — ${point.kind}`}>
-                  <span className="relative flex items-center justify-center">
-                    <span className="absolute h-6 w-6 rounded-full border border-cyan-200/80 bg-cyan-400/15 shadow-[0_0_12px_rgba(34,211,238,0.75)] group-hover:scale-125 transition-transform" />
-                    <span className="relative h-2.5 w-2.5 rounded-full border-2 border-cyan-100 bg-fuchsia-500 shadow-[0_0_8px_rgba(0,0,0,1)]" />
-                  </span>
-                  <span className="whitespace-nowrap rounded-sm bg-[#06110f]/85 px-1 py-0.5 text-[10px] font-bold leading-none text-cyan-100 drop-shadow-[0_1px_3px_#000] [text-shadow:0_1px_4px_#000]">{point.name}</span>
-                </button>
-              );
-            })}
+
           </div>
 
           {/* Touch Zoom Controls Overlay */}
@@ -864,21 +749,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
           </div>
         </aside>
       </div>
-        {selectedCommunityPoint && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedCommunityPoint(null)}>
-            <div className="w-full max-w-sm rounded-2xl border border-cyan-400/35 bg-[#091510] p-5 shadow-[0_0_45px_rgba(8,145,178,0.2)]" onClick={(event) => event.stopPropagation()}>
-              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">Населений пункт · Рокитнівська громада</div>
-              <h2 className="font-display text-2xl font-bold text-white">{selectedCommunityPoint.name}</h2>
-              <p className="mt-1 text-sm text-slate-400">{selectedCommunityPoint.kind} · Рівненська область</p>
-              <p className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3 text-xs leading-relaxed text-slate-300">Найближча доступна ігрова водойма: <span className="font-semibold text-cyan-200">{LOCATIONS[selectedCommunityPoint.nearestLocationId]?.name}</span>.</p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setSelectedCommunityPoint(null)} className="min-h-[46px] rounded-xl border border-white/15 bg-white/5 px-3 text-sm font-semibold text-slate-200 hover:bg-white/10">Закрити</button>
-                <button type="button" onClick={() => { const destination = selectedCommunityPoint.nearestLocationId; setSelectedCommunityPoint(null); onSelectDestination(destination); }} className="btn-tactile btn-primary-amber min-h-[46px] rounded-xl px-3 text-sm font-bold">Перейти</button>
-              </div>
-            </div>
-          </div>
-        )}
-        {communityMapError && <div className="pointer-events-none fixed bottom-3 left-1/2 z-40 -translate-x-1/2 rounded-lg border border-amber-400/30 bg-black/80 px-3 py-2 text-center text-[10px] text-amber-200">{communityMapError}</div>}
+
       </div>
     </div>
   );
