@@ -138,7 +138,7 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 60,
     labelLeftPct: 22.5,
     labelTopPct: 21,
-    shortAction: 'Улов · Провізія · Відпочинок',
+    shortAction: 'Комірник · Улов і провізія',
   },
   {
     id: 'velychko',
@@ -148,7 +148,7 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 47,
     labelLeftPct: 42,
     labelTopPct: 21,
-    shortAction: 'Наука · Бестіарій',
+    shortAction: 'Науковець · Дослідження',
   },
   {
     id: 'oleg',
@@ -158,7 +158,7 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 45,
     labelLeftPct: 61,
     labelTopPct: 18,
-    shortAction: 'Снасті · Спорядження',
+    shortAction: 'Майстер · Снасті й ремонт',
   },
   {
     id: 'baryga',
@@ -168,7 +168,7 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 51,
     labelLeftPct: 82.5,
     labelTopPct: 20,
-    shortAction: 'Скупка · Підпільний ринок',
+    shortAction: 'Єльцин · Торговець',
   },
 ];
 
