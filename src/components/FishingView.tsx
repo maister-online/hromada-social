@@ -12,7 +12,6 @@ import {
   CloudRain,
   Compass,
   Droplets,
-  Music,
   Package,
   RotateCcw,
   Scissors,
@@ -20,8 +19,6 @@ import {
   Shield,
   Sparkles,
   Sun,
-  Volume2,
-  VolumeX,
   Warehouse,
   Wrench,
   X,
@@ -1387,9 +1384,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     showRigDrawer,
   ]);
 
-  const { clock, phaseLabel } = formatClock(gameState.timeOfDay);
-  const radTooHigh =
-    location.radiationLevel > gameState.radSuitLevel + rigStats.gearRadResistBonus;
+  const { clock } = formatClock(gameState.timeOfDay);
   const caughtSpecies = caughtResult ? FISH_MAP[caughtResult.speciesId] : null;
   const canFitInKeepnet = caughtResult
     ? keepnetWeight + caughtResult.weightKg <= keepnetCap
@@ -1421,7 +1416,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     h >= 21 || h < 5 ? 0.52 : h >= 18 || h < 7 ? 0.85 : 1.04;
 
   const weatherMeta = WEATHER_INFO[gameState.weather];
-  const WeatherIcon = weatherMeta.Icon;
 
   const landingReachM = rigStats.hasLandingNet ? 2.6 : 2.1;
   const canShowLandingPrompt = phase === 'FIGHTING' && fishDistM <= landingReachM;
