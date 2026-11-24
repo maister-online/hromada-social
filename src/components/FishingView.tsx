@@ -5,7 +5,6 @@ import {
   BookMarked,
   Box,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CloudFog,
@@ -17,7 +16,6 @@ import {
   Scissors,
   ScrollText,
   Shield,
-  Sparkles,
   Sun,
   Warehouse,
   Wrench,
@@ -1838,6 +1836,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               +
             </button>
           </div>
+        </div>
 
         {/* Right Thumb Cluster: Drag Brake & Big Primary Cast/Strike/Reel Touch Button */}
         <div className="pointer-events-auto panel-field rounded-xl p-2 flex items-center gap-2 ml-auto">
