@@ -2,6 +2,7 @@ import React from 'react';
 import { BookOpen, Music, Volume2, VolumeX } from 'lucide-react';
 
 interface TitleScreenProps {
+  menuVisible: boolean;
   hasSave: boolean;
   discoveredCount: number;
   totalSpeciesCount: number;
@@ -15,6 +16,7 @@ interface TitleScreenProps {
 }
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({
+  menuVisible,
   hasSave,
   discoveredCount,
   totalSpeciesCount,
@@ -30,7 +32,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     <div className="relative w-full h-full min-h-0 flex flex-col overflow-hidden bg-gradient-to-b from-[#101b18] via-[#080e0c] to-black">
 
       <style>{`@keyframes menuReveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-      <main className="relative z-10 flex-1 flex items-end justify-center px-4 pb-3 sm:pb-5">
+      <main className={`relative z-10 flex-1 flex items-end justify-center px-4 pb-3 sm:pb-5 transition-all duration-700 ease-out ${menuVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
         <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl bg-black/55 border border-white/15 p-3 backdrop-blur-sm animate-[menuReveal_900ms_ease-out_both]">
           {hasSave && (
             <button
@@ -51,7 +53,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
       </main>
 
-      <div className="relative z-10 flex items-center justify-center gap-2 px-3 pb-3 sm:pb-5">
+      <div className={`relative z-10 flex items-center justify-center gap-2 px-3 pb-3 sm:pb-5 transition-opacity duration-700 ${menuVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         <button
           type="button"
           onClick={onOpenBestiary}
