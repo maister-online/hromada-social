@@ -250,10 +250,10 @@ export default function App() {
     if (screen !== 'TITLE') return;
     const video = introVideoRef.current;
     if (!video) return;
-    video.muted = false;
+    // На мобільних браузерах автоматичний запуск зі звуком заборонений.
+    // Тому відео стартує автоматично, а перший дотик вмикає звук.
+    video.muted = true;
     void video.play().catch(() => {
-      // Якщо браузер блокує autoplay зі звуком, одразу показуємо меню,
-      // щоб гравець не залишався на нерухомому кадрі без можливості зайти в гру.
       setIntroEnded(true);
     });
   }, [screen]);
@@ -1509,14 +1509,23 @@ export default function App() {
   ).length;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#060a08]">
+    <div
+      className="relative w-screen h-screen overflow-hidden bg-[#060a08]"
+      onClick={() => {
+        if (screen !== 'TITLE' || introEnded) return;
+        const video = introVideoRef.current;
+        if (!video) return;
+        video.muted = false;
+        void video.play().catch(() => {});
+      }}
+    >
       {screen === 'TITLE' && (
         <>
           <div className="fixed inset-0 z-0 bg-black overflow-hidden">
             <video
               ref={introVideoRef}
               className="absolute inset-0 h-full w-full object-cover"
-              muted={false}
+              muted={true}
               onEnded={() => setIntroEnded(true)}
               onError={() => setIntroEnded(true)}
               src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
