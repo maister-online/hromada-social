@@ -597,3 +597,67 @@
   .bunker-character-dock { max-height: 27dvh; }
   .bunker-dock-person { min-height: 48px; }
 }
+
+/* Bunker bottom character selector: compact, anchored to the visible phone screen */
+.bunker-character-dock {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+  top: auto !important;
+  transform: translateX(-50%) !important;
+  width: min(920px, calc(100vw - 16px)) !important;
+  max-height: 25dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 7px !important;
+  box-sizing: border-box !important;
+  z-index: 50 !important;
+}
+.bunker-character-dock .bunker-dock-heading {
+  padding-bottom: 5px !important;
+}
+.bunker-character-dock .grid {
+  gap: 6px !important;
+}
+.bunker-character-dock .bunker-dock-person {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 7px 6px !important;
+  border-radius: 9px !important;
+}
+@media (max-width: 640px) {
+  .bunker-character-dock {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
+    width: calc(100vw - 12px) !important;
+    max-height: 22dvh !important;
+    padding: 5px !important;
+    border-radius: 11px !important;
+  }
+  .bunker-character-dock .bunker-dock-heading {
+    padding: 0 2px 4px !important;
+  }
+  .bunker-character-dock .bunker-dock-heading > div:first-child > div:first-child,
+  .bunker-character-dock .bunker-dock-heading > div.text-right {
+    display: none !important;
+  }
+  .bunker-character-dock .bunker-dock-heading > div:first-child > div:last-child {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+  }
+  .bunker-character-dock .grid {
+    gap: 4px !important;
+  }
+  .bunker-character-dock .bunker-dock-person {
+    padding: 5px 4px !important;
+  }
+  .bunker-character-dock .bunker-dock-person > span:last-child {
+    display: none !important;
+  }
+  .bunker-character-dock .bunker-dock-person > span:nth-child(2) {
+    margin-top: 3px !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+  }
+}
