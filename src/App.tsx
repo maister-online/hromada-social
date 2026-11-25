@@ -244,19 +244,46 @@ export default function App() {
   useEffect(() => {
     if (screen !== 'TITLE') return;
     const video = introVideoRef.current;
-    if (!video) return;
-    // На мобільних браузерах автоматичний запуск зі звуком заборонений.
-    // Тому відео стартує автоматично, а перший дотик вмикає звук.
     const introAudio = introAudioRef.current;
-    if (introAudio) {
-      introAudio.pause();
-      introAudio.currentTime = 0;
-    }
+    if (!video || !introAudio) return;
+
+    // Підготовлюємо MP3 заздалегідь. Мобільний браузер дозволяє
+    // запустити його лише безпосередньо з реальної дії користувача.
+    introAudio.pause();
+    introAudio.currentTime = 0;
+    introAudio.muted = false;
+    introAudio.volume = 1;
+    introAudio.load();
     video.muted = true;
-    void video.play().catch(() => {
-      introAudio?.pause();
-      setIntroEnded(true);
-    });
+    void video.play().catch(() => setIntroEnded(true));
+
+    let soundStarted = false;
+    const startIntroSound = () => {
+      if (soundStarted || video.ended) return;
+      introAudio.muted = false;
+      introAudio.volume = 1;
+      const playback = introAudio.play();
+      if (playback) {
+        void playback.then(() => {
+          soundStarted = true;
+          document.removeEventListener('pointerdown', startIntroSound, true);
+          document.removeEventListener('touchstart', startIntroSound, true);
+          document.removeEventListener('click', startIntroSound, true);
+        }).catch(() => {
+          // Якщо браузер ще не дозволив звук, наступний дотик повторить запуск.
+        });
+      }
+    };
+
+    document.addEventListener('pointerdown', startIntroSound, true);
+    document.addEventListener('touchstart', startIntroSound, true);
+    document.addEventListener('click', startIntroSound, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', startIntroSound, true);
+      document.removeEventListener('touchstart', startIntroSound, true);
+      document.removeEventListener('click', startIntroSound, true);
+    };
   }, [screen]);
 
   const handleToggleMusic = useCallback(() => {
@@ -1513,22 +1540,6 @@ export default function App() {
   return (
     <div
       className="relative w-screen h-screen overflow-hidden bg-[#060a08]"
-      onPointerDownCapture={() => {
-        if (screen !== 'TITLE' || introEnded) return;
-        const video = introVideoRef.current;
-        const introAudio = introAudioRef.current;
-        if (introAudio && introAudio.paused) {
-          introAudio.volume = 1;
-          introAudio.currentTime = 0;
-          void introAudio.play().catch((error) => {
-            console.error('Не вдалося запустити музику вступу:', error);
-          });
-        }
-        if (video && video.paused) {
-          video.muted = true;
-          void video.play().catch(() => {});
-        }
-      }}
     >
       {screen === 'TITLE' && (
         <>
