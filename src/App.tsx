@@ -1513,16 +1513,21 @@ export default function App() {
   return (
     <div
       className="relative w-screen h-screen overflow-hidden bg-[#060a08]"
-      onClick={() => {
+      onPointerDownCapture={() => {
         if (screen !== 'TITLE' || introEnded) return;
         const video = introVideoRef.current;
-        if (!video) return;
-        video.muted = true;
         const introAudio = introAudioRef.current;
-        if (introAudio) {
-          void introAudio.play().catch(() => {});
+        if (introAudio && introAudio.paused) {
+          introAudio.volume = 1;
+          introAudio.currentTime = 0;
+          void introAudio.play().catch((error) => {
+            console.error('Не вдалося запустити музику вступу:', error);
+          });
         }
-        void video.play().catch(() => {});
+        if (video && video.paused) {
+          video.muted = true;
+          void video.play().catch(() => {});
+        }
       }}
     >
       {screen === 'TITLE' && (
