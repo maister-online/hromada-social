@@ -90,6 +90,8 @@ export interface FishSpeciesDef {
   preferredTime: 'day' | 'night' | 'dusk' | 'any';
   minWeightKg: number;
   maxWeightKg: number;
+  minLengthCm?: number;
+  maxLengthCm?: number;
   basePricePerKg: number;
   fightPower: number; // 1..10 affects line tension and stamina
   stamina: number; // 1..10
