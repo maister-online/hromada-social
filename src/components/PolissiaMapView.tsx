@@ -25,6 +25,8 @@ interface PolissiaMapViewProps {
   timeOfDay: number;
   weather: WeatherType;
   credits: number;
+  goldCoins: number;
+  amberShards: number;
   level: number;
   radSuitLevel: number;
   sanity: number;
@@ -65,6 +67,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   timeOfDay,
   weather,
   credits,
+  goldCoins,
+  amberShards,
   level,
   radSuitLevel,
   sanity,
@@ -355,6 +359,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <div className="flex items-center gap-2.5 bg-[#0d1813] border border-white/10 rounded px-3 py-1.5">
             <span className="font-mono-num font-semibold text-amber-300">₴ {credits}</span>
+            <span className="font-mono-num font-semibold text-yellow-300">◈ {goldCoins}</span>
+            <span className="font-mono-num font-semibold text-orange-300">◆ {amberShards}</span>
             <span className="text-slate-600" aria-hidden="true">·</span>
             <span className="font-mono-num text-slate-200 hidden sm:inline">
               Садок: {keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг ({keepnetCount})
