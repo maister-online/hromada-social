@@ -94,7 +94,7 @@ export const QuestsModal: React.FC<QuestsModalProps> = ({ gameState, onClose }) 
                 )}
 
                 <div className="text-[11px] font-mono-num text-amber-300/90">
-                  Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
+                  Нагорода: ₴ {q.rewardCredits}{q.rewardGoldCoins ? ` · ◈ ${q.rewardGoldCoins}` : ''}{q.rewardAmberShards ? ` · ◆ ${q.rewardAmberShards}` : ''} · +{q.rewardXp} XP
                   {q.rewardBaitQty ? ` · Додаткова наживка (${q.rewardBaitQty} шт.)` : ''}
                 </div>
               </div>
