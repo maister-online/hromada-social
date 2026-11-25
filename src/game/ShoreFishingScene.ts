@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { FishSpeciesDef, FloatDef, LocationDef, RodType, WeatherType } from './types';
-import { Fauna3DRig, animateFauna3DMesh, buildFauna3DMesh } from './fish3d';
 import {
   BobberRig,
   FishingRodRig,
@@ -102,8 +101,6 @@ export class ShoreFishingScene {
   private currentLocId: string;
   private currentRodKey: string;
   private currentFloatId: string;
-  private hookedFaunaRig: Fauna3DRig | null = null;
-  private hookedSpeciesId: string | null = null;
 
   // Dynamic bobber / cast state
   private bobberWorldPos = new THREE.Vector3(0, 0.05, -14);
@@ -241,21 +238,6 @@ export class ShoreFishingScene {
     if (nextFloatId !== this.currentFloatId) {
       this.currentFloatId = nextFloatId;
       this.rebuildBobber(next.location, next.floatDef);
-    }
-
-    const nextHookedId =
-      next.phase === 'FIGHTING' && next.hookedSpecies ? next.hookedSpecies.id : null;
-    if (nextHookedId !== this.hookedSpeciesId) {
-      this.hookedSpeciesId = nextHookedId;
-      if (this.hookedFaunaRig) {
-        this.scene.remove(this.hookedFaunaRig.group);
-        this.hookedFaunaRig = null;
-      }
-      if (next.hookedSpecies && next.phase === 'FIGHTING') {
-        this.hookedFaunaRig = buildFauna3DMesh(next.hookedSpecies);
-        this.hookedFaunaRig.group.scale.multiplyScalar(0.58);
-        this.scene.add(this.hookedFaunaRig.group);
-      }
     }
 
     // Trigger cast ballistic flight when transitioning into CASTING
@@ -1095,17 +1077,6 @@ export class ShoreFishingScene {
       this.waterMat.uniforms.uRippleStrength.value =
         phase === 'FIGHTING' ? Math.max(this.rippleStrength, 0.75) : this.rippleStrength;
 
-      // Live 3D hooked creature splashing just beneath bobber while fighting near shore
-      if (this.hookedFaunaRig) {
-        this.hookedFaunaRig.group.visible = phase === 'FIGHTING';
-        if (phase === 'FIGHTING') {
-          this.hookedFaunaRig.group.position.set(bx, 0.01 + Math.sin(elapsed * 7) * 0.06, bz - 0.12);
-          this.hookedFaunaRig.group.rotation.y = Math.PI * 0.5 - this.smoothFishX * 0.9;
-          animateFauna3DMesh(this.hookedFaunaRig, elapsed, 1.3);
-        }
-      }
-    } else if (this.hookedFaunaRig) {
-      this.hookedFaunaRig.group.visible = false;
     }
 
     // Update 3D catenary line from rod tip to bobber
