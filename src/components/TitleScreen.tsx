@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Music, Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, Music } from 'lucide-react';
 
 interface TitleScreenProps {
   menuVisible: boolean;
@@ -7,9 +7,7 @@ interface TitleScreenProps {
   discoveredCount: number;
   totalSpeciesCount: number;
   musicEnabled: boolean;
-  muted: boolean;
   onToggleMusic: () => void;
-  onToggleMute: () => void;
   onNewGame: () => void;
   onContinue: () => void;
   onOpenBestiary: () => void;
@@ -21,9 +19,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   discoveredCount,
   totalSpeciesCount,
   musicEnabled,
-  muted,
   onToggleMusic,
-  onToggleMute,
   onNewGame,
   onContinue,
   onOpenBestiary,
@@ -70,14 +66,6 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         >
           <Music className="w-4 h-4" />
           <span className="hidden sm:inline">{musicEnabled ? 'Музика' : 'Без музики'}</span>
-        </button>
-        <button
-          type="button"
-          onClick={onToggleMute}
-          className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl cursor-pointer bg-black/70 border border-white/20 text-white"
-          aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
-        >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
       </div>
     </div>
