@@ -736,6 +736,8 @@ export const QUESTS: QuestDef[] = [
     targetCount: 4,
     rewardCredits: 950,
     rewardXp: 360,
+    rewardGoldCoins: 2,
+    rewardAmberShards: 1,
     rewardBaitId: 'anomaly_paste',
     rewardBaitQty: 10,
   },
@@ -768,6 +770,8 @@ export const QUESTS: QuestDef[] = [
     targetCount: 1,
     rewardCredits: 3200,
     rewardXp: 1200,
+    rewardGoldCoins: 8,
+    rewardAmberShards: 6,
   },
   {
     id: 'q_baryga_scrap',
@@ -798,6 +802,8 @@ export const QUESTS: QuestDef[] = [
     targetCount: 8,
     rewardCredits: 1250,
     rewardXp: 480,
+    rewardGoldCoins: 1,
+    rewardAmberShards: 2,
     rewardBaitId: 'anomaly_paste',
     rewardBaitQty: 6,
   },
@@ -813,7 +819,7 @@ export const MARKET_BUNDLES: MarketBundleDef[] = [
   {
     id: 'bundle_poacher',
     name: 'Набір «Мішечок рибака»',
-    price: 130,
+    price: 260,
     tag: 'Вигідна закупівля (-20%)',
     description: '12 шт. Живця + 15 шт. Гнойового черв’яка + 10 шт. Мотиля.',
     baits: { minnow: 12, worm: 15, bloodworm: 10 },
@@ -821,7 +827,7 @@ export const MARKET_BUNDLES: MarketBundleDef[] = [
   {
     id: 'bundle_carp_pro',
     name: 'Короповий набір «Солодке дно»',
-    price: 165,
+    price: 330,
     tag: 'Для великої мирної риби',
     description: '12 шт. Бойлів + 12 шт. Пелетсу + 15 шт. Вареного гороху + 2 пачки «Короп-Ваніль».',
     baits: { boilies: 12, pellets: 12, boiled_peas: 15 },
@@ -830,7 +836,7 @@ export const MARKET_BUNDLES: MarketBundleDef[] = [
   {
     id: 'bundle_groundbait',
     name: 'Прикормковий мікс «Три стихії»',
-    price: 125,
+    price: 250,
     tag: 'Підкормка для точок',
     description: '2 пачки «Поліського міксу» + 2 пачки «Короп-Ваніль».',
     groundbaits: { gb_universal: 2, gb_carp: 2 },
@@ -838,7 +844,7 @@ export const MARKET_BUNDLES: MarketBundleDef[] = [
   {
     id: 'bundle_anomaly',
     name: 'Контрабанда «Зона-Профі»',
-    price: 215,
+    price: 480,
     tag: 'Рідкісний товар',
     description: '6 шт. Аномального біо-реагенту + 1 пачка ізотопної прикормки «Маяк-9».',
     baits: { anomaly_paste: 6 },
@@ -847,7 +853,7 @@ export const MARKET_BUNDLES: MarketBundleDef[] = [
   {
     id: 'bundle_survival',
     name: 'Польовий пайок сталкера',
-    price: 135,
+    price: 290,
     tag: 'Здоров’я та розсудливість',
     description: '1 Аптечка АІ-2 «Антирад» + 1 Енергетик «Сталкер» + 1 Термос чаю «Полісся» зі знижкою.',
     consumables: { antirad_ai2: 1, energy_stalker: 1, herbal_tea: 1 },
