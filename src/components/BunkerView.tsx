@@ -454,14 +454,14 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       {/* CHARACTER ACTION MENU OVERLAY (opened when clicking a character on the bunker photo) */}
       {activeNpc && npc && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center p-2.5 sm:p-5 bg-[#030605]/82 backdrop-blur-xs"
+          className="bunker-dialog-backdrop fixed inset-0 z-40 flex items-center justify-center p-2.5 sm:p-5 bg-[#020604]/88 backdrop-blur-md"
           onClick={() => setActiveNpc(null)}
         >
           <div
-            className="w-full max-w-5xl max-h-[92vh] panel-window rounded-2xl overflow-hidden flex flex-col"
+            className="bunker-dialog w-full max-w-5xl max-h-[92dvh] rounded-2xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-5 py-3 bg-[#060b09] border-b border-white/10 flex justify-end">
+            <div className="bunker-dialog-topbar px-4 sm:px-5 py-3 flex items-center justify-between gap-3">\n              <div className="min-w-0"><div className="text-[9px] uppercase tracking-[0.24em] text-emerald-300/75">Зв’язок · Щит-04</div><div className="text-xs font-semibold text-slate-200">Інтерактивне меню персонажа</div></div>
               <button
                 type="button"
                 onClick={() => setActiveNpc(null)}
@@ -474,9 +474,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             </div>
 
             {/* Scrollable Character Action Menu Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto custom-scroll p-4 sm:p-6 space-y-5 bg-[#070c0a]">
+            <div className="bunker-dialog-content flex-1 min-h-0 overflow-y-auto custom-scroll p-3 sm:p-5 space-y-4">
               {/* Character Dialogue Header */}
-              <div className="bg-[#0b1410] border border-white/12 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="bunker-character-card rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <CharacterPortrait
                   characterId={npc.id}
                   className="w-20 h-20 rounded-lg border border-white/15 shrink-0"
@@ -488,8 +488,8 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                   <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-100">
                     {BUNKER_HOTSPOTS.find((spot) => spot.id === npc.id)?.displayName ?? npc.callsign}
                   </h2>
-                  <p className="text-xs text-slate-300 italic leading-relaxed">«{npc.greeting}»</p>
-                  <p className="text-[11px] text-slate-400">{npc.bio}</p>
+                  <div className="bunker-dialogue-bubble"><span className="block text-[9px] uppercase tracking-[0.18em] text-emerald-300/70 mb-1">Каже</span><p className="text-xs sm:text-sm text-slate-100 italic leading-relaxed">«{npc.greeting}»</p></div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">{npc.bio}</p>
                 </div>
               </div>
 
