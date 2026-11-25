@@ -310,7 +310,7 @@ export default function App() {
 
       if (target.isBunker) {
         setScreen('BUNKER');
-        showToast('Ласкаво просимо до Бункера «Щит-04» у Рокитному.');
+        showToast('Ласкаво просимо до Бункер Рокитне.');
       } else {
         setScreen('FISHING');
         if (isNew) {
@@ -724,7 +724,7 @@ export default function App() {
       if (nextRadProjected >= 100 && cur.currentLocationId !== 'rokitne_bunker') {
         const evacCost = Math.min(30, cur.credits);
         showToast(
-          'Критична доза радіації! Екстрена евакуація до Бункера «Щит-04» у Рокитному.'
+          'Критична доза радіації! Екстрена евакуація до Бункер Рокитне.'
         );
         setGameState((prev) => ({
           ...prev,
@@ -765,7 +765,7 @@ export default function App() {
       if (nextSanityProjected <= 0 && cur.currentLocationId !== 'rokitne_bunker') {
         const evacCost = Math.min(25, cur.credits);
         showToast(
-          'Критична втрата розсудливості під час аномалії! Провідники евакуювали вас до Бункера «Щит-04».'
+          'Критична втрата розсудливості під час аномалії! Провідники евакуювали вас до Бункер Рокитне.'
         );
         setGameState((prev) => ({
           ...prev,
@@ -1455,7 +1455,7 @@ export default function App() {
       nextDay += 1;
     }
     audioEngine.playCatch(false);
-    showToast('Повноцінний сон у бункері «Щит-04»: розсудливість відновлено до 100%!');
+    showToast('Повноцінний сон у Бункері Рокитне: розсудливість відновлено до 100%!');
     setGameState((prev) => ({
       ...prev,
       day: nextDay,
