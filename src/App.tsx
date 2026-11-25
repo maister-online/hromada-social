@@ -1562,8 +1562,6 @@ export default function App() {
               hasSave={existingSave !== null}
               discoveredCount={Object.keys(gameState.discovered).length}
               totalSpeciesCount={FISH_SPECIES.length}
-              musicEnabled={musicEnabled}
-              onToggleMusic={handleToggleMusic}
               onNewGame={handleNewGame}
               onContinue={handleContinue}
               onOpenBestiary={() => setShowBestiary(true)}
