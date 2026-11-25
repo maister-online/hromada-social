@@ -481,7 +481,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
           onClick={() => setActiveNpc(null)}
         >
           <div
-            className="bunker-dialog w-full max-w-5xl max-h-[92dvh] rounded-2xl overflow-hidden flex flex-col"
+            className="bunker-dialog w-full max-w-5xl rounded-2xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bunker-dialog-topbar px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
@@ -498,7 +498,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             </div>
 
             {/* Scrollable Character Action Menu Content */}
-            <div className="bunker-dialog-content flex-1 min-h-0 overflow-y-auto custom-scroll p-3 sm:p-5 space-y-4">
+            <div className="bunker-dialog-content flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scroll p-3 sm:p-5 space-y-4">
               {/* Character Dialogue Header */}
               <div className="bunker-character-card rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <CharacterPortrait
