@@ -380,9 +380,12 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const reelDurability = gameState.itemDurability[reel.id] ?? 100;
   const lineDurability = gameState.itemDurability[line.id] ?? 100;
   const isRodBroken = rodDurability <= 0;
+  const isReelBroken = reelDurability <= 0;
+  const isLineBroken = lineDurability <= 0;
+  const isTackleBroken = isRodBroken || isReelBroken || isLineBroken;
 
   const rodIdx = RODS.findIndex((r) => r.id === rod.id);
-  const maxCastM = location.maxCastDistanceM + rigStats.totalCastBonusM;
+  const maxCastM = Math.min(location.maxCastDistanceM + rigStats.totalCastBonusM, reel.lineCapacityM, line.lengthM);
   const keepnetCap =
     (KEEPNET_UPGRADES[gameState.keepnetLevel - 1]?.capacityKg ?? 15) +
     rigStats.keepnetBonusKg;
@@ -467,6 +470,10 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const fishLateralRef = useRef(0);
   const rodDurabilityRef = useRef(rodDurability);
   rodDurabilityRef.current = rodDurability;
+  const reelDurabilityRef = useRef(reelDurability);
+  reelDurabilityRef.current = reelDurability;
+  const lineDurabilityRef = useRef(lineDurability);
+  lineDurabilityRef.current = lineDurability;
   const hookedTargetRef = useRef<{
     kind: 'fish' | 'loot';
     species?: FishSpeciesDef;
@@ -570,7 +577,17 @@ export const FishingView: React.FC<FishingViewProps> = ({
       (item) => item.minAnomalyReq <= location.anomalyActivity + 12
     );
     if (lootPool.length > 0 && Math.random() < lootChance) {
-      const chosenLoot = lootPool[Math.floor(Math.random() * lootPool.length)];
+      const rarityWeight = { common: 10, uncommon: 5, rare: 2, legendary: 0.55 } as const;
+      const totalLootWeight = lootPool.reduce((sum, item) => sum + rarityWeight[item.rarity], 0);
+      let lootRoll = Math.random() * totalLootWeight;
+      let chosenLoot = lootPool[lootPool.length - 1];
+      for (const item of lootPool) {
+        lootRoll -= rarityWeight[item.rarity];
+        if (lootRoll <= 0) {
+          chosenLoot = item;
+          break;
+        }
+      }
       return {
         kind: 'loot' as const,
         lootItem: chosenLoot,
@@ -691,6 +708,11 @@ export const FishingView: React.FC<FishingViewProps> = ({
           locationId: location.id,
           foundDay: gameState.day,
           value: fin.lootItem.sellValue,
+          depthLayer: (() => {
+            const spot = getWaterSpotInfo(location, aimYawRef.current, castDistRef.current, maxCastM);
+            const ratio = fishingDepthRef.current / Math.max(0.8, spot.depthM);
+            return rigStats.hasBottomRig || ratio >= 0.68 ? 'bottom' : ratio <= 0.32 ? 'surface' : 'mid';
+          })(),
         };
         audioEngine.playCoin();
         setCaughtLoot({ def: fin.lootItem, entry });
@@ -726,7 +748,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         setStatusMsg(`Впіймано: ${sp.name} (${fin.weightKg} кг)!`);
       }
     },
-    [bottomRigDef.id, gameState.day, line.id, location.id, reel.id, rigStats.hasBottomRig, rod.id, rod.maxLoadKg]
+    [bottomRigDef.id, gameState.day, line.id, location, maxCastM, reel.id, rigStats.hasBottomRig, rod.id, rod.maxLoadKg]
   );
 
   // Mount Three.js ShoreFishingScene once per mounted FishingView
@@ -978,7 +1000,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
           aimYawRef.current,
           maxCastM
         ).maxDistM;
-        const fightMaxDist = Math.min(5.0, waterMax);
+        const fightMaxDist = Math.max(1.2, Math.min(waterMax, maxCastM));
 
         // Occasional bottom/weed snag roll while reeling deep in water
         if (reelingRef.current && fishDistRef.current > 2.5 && fishDistRef.current < 4.7) {
@@ -1038,7 +1060,14 @@ export const FishingView: React.FC<FishingViewProps> = ({
           if (wearTimerRef.current >= 0.7) {
             wearTimerRef.current = 0;
             onDamageTackleRef.current({ [rod.id]: -1.5, [reel.id]: -1.0, [line.id]: -1.8 });
-            if (rodDurabilityRef.current <= 1.5) {
+            const brokenPart = rodDurabilityRef.current <= 1.5
+              ? 'Вудлище'
+              : reelDurabilityRef.current <= 1
+                ? 'Котушка'
+                : lineDurabilityRef.current <= 1.8
+                  ? 'Волосінь'
+                  : null;
+            if (brokenPart) {
               audioEngine.playSnap();
               hookedTargetRef.current = null;
               setHookedSpecies(null);
@@ -1047,7 +1076,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
               setIsReeling(false);
               setTensionRatio(0);
               setPhase('IDLE');
-              setStatusMsg('ПОЛОМКА ВУДКИ! Вудлище не витримало. Полагодьте у Олега в Бункері.');
+              if (brokenPart === 'Волосінь') onLineSnapRef.current?.(bait.id);
+              setStatusMsg(`${brokenPart.toUpperCase()} ЗЛАМАНА! Виважування припинено. Полагодьте снасть у Бункері.`);
               rafId = requestAnimationFrame(step);
               return;
             }
@@ -1179,10 +1209,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
 
   const startCharge = useCallback(() => {
     audioEngine.init();
-    if (isRodBroken) {
-      setStatusMsg(
-        'Вудлище зламане (0%)! Полагодьте у майстра Олега або виберіть інше в «Монтажі».'
-      );
+    if (isTackleBroken) {
+      const brokenName = isRodBroken ? 'Вудлище' : isReelBroken ? 'Котушка' : 'Волосінь';
+      setStatusMsg(`${brokenName} зламана (0%)! Відремонтуйте її у майстра Олега в Бункері.`);
       return;
     }
     const qty = gameState.baitInventory[bait.id] ?? 0;
@@ -1195,7 +1224,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     setChargeRatio(0.24);
     setPhase('CHARGING');
     setStatusMsg('Набір сили закидання... Відпустіть для кидка!');
-  }, [bait.id, gameState.baitInventory, isRodBroken]);
+  }, [bait.id, gameState.baitInventory, isLineBroken, isReelBroken, isRodBroken, isTackleBroken]);
 
   const releaseCast = useCallback(() => {
     if (phaseRef.current !== 'CHARGING') return;
@@ -1218,7 +1247,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     const target = pickHookTarget();
     hookedTargetRef.current = target;
     setHookedSpecies(target.kind === 'fish' && target.species ? target.species : null);
-    const startFightDist = Number(Math.min(5.0, Math.max(3.0, castDistRef.current)).toFixed(1));
+    const startFightDist = Number(Math.max(1.2, Math.min(castDistRef.current, maxCastM)).toFixed(1));
     fishDistRef.current = startFightDist;
     setFishDistM(startFightDist);
     tensionRef.current = target.kind === 'loot' ? 0.25 : 0.35;
@@ -1233,7 +1262,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         ? `На гачку донна знахідка (${startFightDist} м) — тягніть обережно!`
         : `Є! ${target.species?.name ?? 'Риба'} на гачку (${startFightDist} м) — тягніть обережно!`
     );
-  }, [pickHookTarget]);
+  }, [maxCastM, pickHookTarget]);
 
   const handleSnagJerk = useCallback(() => {
     if (phaseRef.current !== 'SNAGGED') return;
