@@ -159,6 +159,72 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
 
   root.add(reelGroup);
 
+  // First-person hand grip: natural skin, fabric sleeve and wrapped fingers.
+  // The hand is attached to the rod, so it follows casting and reeling motion.
+  const skinMat = new THREE.MeshStandardMaterial({
+    color: 0xb98260,
+    roughness: 0.92,
+    metalness: 0,
+  });
+  const sleeveMat = new THREE.MeshStandardMaterial({
+    color: 0x303a2d,
+    roughness: 0.96,
+    metalness: 0,
+  });
+  const cuffMat = new THREE.MeshStandardMaterial({
+    color: 0x202820,
+    roughness: 0.9,
+    metalness: 0.02,
+  });
+  const handGroup = new THREE.Group();
+  handGroup.position.set(0, -0.015, 0.055);
+
+  const forearm = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.075, 0.09, 0.34, 12),
+    sleeveMat
+  );
+  forearm.rotation.x = Math.PI / 2;
+  forearm.position.set(0, -0.005, 0.24);
+  handGroup.add(forearm);
+
+  const cuff = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.078, 0.078, 0.055, 12),
+    cuffMat
+  );
+  cuff.rotation.x = Math.PI / 2;
+  cuff.position.set(0, -0.005, 0.075);
+  handGroup.add(cuff);
+
+  const palm = new THREE.Mesh(
+    new THREE.SphereGeometry(0.105, 16, 12),
+    skinMat
+  );
+  palm.scale.set(0.82, 0.72, 1.18);
+  palm.position.set(0.006, -0.005, -0.055);
+  handGroup.add(palm);
+
+  // Four fingers curl around the cork grip; the thumb crosses its near side.
+  for (let finger = 0; finger < 4; finger++) {
+    const x = -0.057 + finger * 0.037;
+    const length = finger === 0 ? 0.105 : finger === 3 ? 0.085 : 0.098;
+    const segment = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.018, length, 4, 8),
+      skinMat
+    );
+    segment.rotation.x = Math.PI / 2;
+    segment.rotation.z = -0.12 + finger * 0.06;
+    segment.position.set(x, -0.035, -0.105);
+    handGroup.add(segment);
+  }
+  const thumb = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.019, 0.09, 4, 8),
+    skinMat
+  );
+  thumb.rotation.set(Math.PI / 2, 0, -0.82);
+  thumb.position.set(0.085, 0.035, -0.045);
+  handGroup.add(thumb);
+  root.add(handGroup);
+
   // 5 flexible rod segments chained forward along -Z
   const segments: THREE.Group[] = [];
   let parent: THREE.Object3D = root;
