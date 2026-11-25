@@ -489,8 +489,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => getWaterSpotInfo(location, aimYaw, castDistM, maxCastM),
     [aimYaw, castDistM, location, maxCastM]
   );
-  const hasSonar = gameState.ownedGearIds.includes('gear_sonar_module');
-  const sonarEquipped = gameState.equippedGearIds.includes('gear_sonar_module');
+  // The demo starts with a built-in fish finder so players can learn the water immediately.
+  const hasSonar = true;
+  const sonarEquipped = true;
   const sonarMaxDepth = Math.max(sonarRange, currentWaterSpot.depthM + 1);
   const sonarBottomY = 26 + (currentWaterSpot.depthM / sonarMaxDepth) * 150;
   const sonarEchoes = useMemo(() => {
@@ -1724,14 +1725,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <div className="space-y-3 p-5">
                 <div className="text-center">
                   <Radar className="mx-auto h-12 w-12 text-cyan-300" />
-                  <h3 className="mt-3 text-lg font-bold text-white">{hasSonar ? 'Ехолот лежить у рюкзаку' : 'Ехолот не придбано'}</h3>
-                  <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">{hasSonar ? 'Встанови портативний Pro у вкладці «Одяг і спорядження», щоб увімкнути сканування.' : 'Портативний ехолот Pro доступний у майстерні Олега Кравчука в бункері за ₴420.'}</p>
+                  <h3 className="mt-3 text-lg font-bold text-white">Ехолот готовий до роботи</h3>
+                  <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">Вбудований ехолот доступний безкоштовно з першого виходу на водойму. Обирай сектор, переглядай глибину, рельєф дна та умовні сигнали риби.</p>
                 </div>
-                {hasSonar ? (
-                  <button type="button" onClick={() => { setShowSonar(false); setRigTab('gear'); setShowRigDrawer(true); }} className="w-full rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-3 text-sm font-bold text-emerald-200">ВСТАНОВИТИ В ЕКІПІРОВЦІ</button>
-                ) : (
-                  <button type="button" onClick={() => { setShowSonar(false); onGoToBunker(); }} className="w-full rounded-xl border border-cyan-300/40 bg-cyan-500/15 px-4 py-3 text-sm font-bold text-cyan-100">ДО МАЙСТЕРНІ ОЛЕГА</button>
-                )}
               </div>
             )}
           </section>
@@ -2597,7 +2593,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div className="col-span-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
                     Одяг, захист, інструменти, техніка та транспорт. Натисни на предмет, щоб одягнути або зняти його. Активні речі впливають на характеристики рибалки.
-                    <div className="mt-1 text-[11px] text-slate-500">Захист костюма: рівень {gameState.radSuitLevel} · Ехолот: {sonarEquipped ? 'підключено' : hasSonar ? 'є в рюкзаку, але не встановлено' : 'не придбано'}</div>
+                    <div className="mt-1 text-[11px] text-slate-500">Захист костюма: рівень {gameState.radSuitLevel} · Ехолот: вбудований, доступний із початку гри</div>
                   </div>
                   {GEAR_ITEMS.filter((g) => gameState.ownedGearIds.includes(g.id)).map((item) => {
                     const active = gameState.equippedGearIds.includes(item.id);
