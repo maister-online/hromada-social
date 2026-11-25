@@ -277,95 +277,51 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
-      {/* Назва локації: Бункер Рокитне */}
-      <header className="bunker-main-header absolute top-0 left-0 right-0 z-20 px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-lg sm:text-2xl font-bold text-slate-100">
-            Бункер Рокитне
-          </h1>
-          <p className="text-xs text-slate-400">
-            День {gameState.day} · {clock} ({phaseLabel}) · Рівень {gameState.level} ({gameState.xp} XP)
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 text-xs">
-          <div className="flex items-center gap-2.5 bg-[#060b09] border border-white/10 rounded-xl px-3.5 py-2">
-            <span className="font-mono-num font-semibold text-amber-300" title="Гривні">
-              ₴ {gameState.credits}
-            </span>
-            <span className="font-mono-num font-semibold text-yellow-300" title="Золоті монети">
-              ◈ {gameState.goldCoins ?? 0}
-            </span>
-            <span className="font-mono-num font-semibold text-orange-300" title="Шматочки бурштину">
-              ◆ {gameState.amberShards ?? 0}
-            </span>
-            <span className="text-slate-600 hidden sm:inline" aria-hidden="true">
-              ·
-            </span>
-            <span className="font-mono-num text-slate-200 hidden sm:inline">
-              Садок: {keepnetWeight.toFixed(1)}/{keepnetCap} кг
-            </span>
-            <span className="text-slate-600" aria-hidden="true">
-              ·
-            </span>
-            <span
-              className={`font-mono-num ${
-                gameState.radiation > 30 ? 'text-rose-400' : 'text-emerald-300'
-              }`}
-            >
-              Радіація: {Math.round(gameState.radiation)} мЗв
-            </span>
-            <span className="text-slate-600" aria-hidden="true">
-              ·
-            </span>
-            <span
-              className={`font-mono-num ${
-                gameState.sanity <= 30
-                  ? 'text-rose-400 font-semibold'
-                  : gameState.sanity <= 60
-                    ? 'text-amber-300'
-                    : 'text-indigo-300'
-              }`}
-            >
-              Розсудливість: {Math.round(gameState.sanity)}%
-            </span>
+      {/* Компактний сталкерський HUD без суцільної верхньої панелі */}
+      <header className="absolute top-0 left-0 right-0 z-20 p-2 sm:p-3 pointer-events-none">
+        <div className="flex items-start justify-between gap-2">
+          <div className="pointer-events-auto rounded-md border border-emerald-500/25 bg-[#080d0b]/75 backdrop-blur-md px-3 py-2 shadow-lg shadow-black/30">
+            <h1 className="font-display text-sm sm:text-base font-bold tracking-wider text-emerald-100 uppercase">
+              Бункер Рокитне
+            </h1>
+            <p className="text-[10px] sm:text-xs text-emerald-200/65">
+              ДЕНЬ {gameState.day} · {clock} · {phaseLabel} · РІВ. {gameState.level}
+            </p>
           </div>
 
-          <button type="button" onClick={onOpenMap} className="btn-tactile btn-primary-emerald min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 font-bold text-xs rounded-xl cursor-pointer whitespace-nowrap">
-            <Compass className="w-4 h-4" />Карта
-          </button>
-          <button
-            type="button"
-            onClick={onOpenJournal}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 font-semibold text-xs rounded-xl cursor-pointer whitespace-nowrap"
-          >
-            <BookMarked className="w-4 h-4 text-amber-300" />
-            Журнал
-          </button>
+          <div className="pointer-events-auto flex items-center gap-1.5">
+            <button type="button" onClick={onOpenMap} aria-label="Карта" title="Карта" className="btn-tactile btn-field min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-emerald-500/25 bg-[#080d0b]/80 text-emerald-200 backdrop-blur-md">
+              <Compass className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={onOpenJournal} aria-label="Журнал" title="Журнал" className="btn-tactile btn-field min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-amber-500/25 bg-[#080d0b]/80 text-amber-200 backdrop-blur-md">
+              <BookMarked className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={onToggleMusic} aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'} title={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'} className={`btn-tactile min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border backdrop-blur-md ${musicEnabled && !muted ? 'bg-emerald-950/85 border-emerald-400/50 text-emerald-300' : 'bg-[#080d0b]/80 border-white/15 text-slate-400'}`}>
+              <Music className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={onToggleMute} aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'} title={muted ? 'Увімкнути звук' : 'Вимкнути звук'} className="btn-tactile min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-white/15 bg-[#080d0b]/80 text-slate-300 backdrop-blur-md">
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={onToggleMusic}
-            className={`btn-tactile min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl cursor-pointer border ${
-              musicEnabled && !muted
-                ? 'bg-emerald-950/75 border-emerald-400/50 text-emerald-300'
-                : 'btn-field text-slate-400'
-            }`}
-            aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-            title={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-          >
-            <Music className="w-4 h-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleMute}
-            className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl cursor-pointer"
-            aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
-          >
-            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-
+        <div className="pointer-events-auto mt-2 flex flex-wrap items-start gap-1.5">
+          <div className="flex items-center gap-2 rounded-md border border-amber-500/25 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
+            <span className="font-mono-num font-bold text-amber-300">₴ {gameState.credits}</span>
+            <span className="font-mono-num font-bold text-yellow-300">◈ {gameState.goldCoins ?? 0}</span>
+            <span className="font-mono-num font-bold text-orange-300">◆ {gameState.amberShards ?? 0}</span>
+          </div>
+          <div className="rounded-md border border-sky-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs text-slate-200 backdrop-blur-md">
+            САДОК <span className="font-mono-num font-semibold text-sky-200">{keepnetWeight.toFixed(1)}/{keepnetCap} кг</span>
+          </div>
+          <div className="rounded-md border border-emerald-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
+            <span className="text-slate-400">РАДІАЦІЯ </span>
+            <span className={`font-mono-num font-semibold ${gameState.radiation > 30 ? 'text-rose-400' : 'text-emerald-300'}`}>{Math.round(gameState.radiation)} мЗв</span>
+          </div>
+          <div className="rounded-md border border-violet-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
+            <span className="text-slate-400">ПСИХІКА </span>
+            <span className={`font-mono-num font-semibold ${gameState.sanity <= 30 ? 'text-rose-400' : gameState.sanity <= 60 ? 'text-amber-300' : 'text-violet-300'}`}>{Math.round(gameState.sanity)}%</span>
+          </div>
         </div>
       </header>
 
