@@ -337,8 +337,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   const radWarning = selectedLoc.radiationLevel > radSuitLevel;
 
   return (
-    <div className={compact ? 'fixed inset-0 z-[90] bg-[#060a09] overflow-hidden' : 'relative w-screen h-screen overflow-hidden bg-[#060a09] flex flex-col select-none'}>
-      <div className="relative w-full h-full overflow-hidden bg-[#060a09]">
+    <div className={compact ? 'fixed inset-0 z-[90] w-screen h-[100dvh] bg-[#060a09] overflow-hidden' : 'fixed inset-0 z-[90] w-screen h-[100dvh] overflow-hidden bg-[#060a09] select-none'}>
+      <div className="absolute inset-0 w-screen h-[100dvh] overflow-hidden bg-[#060a09]">
       {/* Top Game Menu Bar */}
       <header className="absolute top-0 left-0 right-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d]/90 backdrop-blur-sm border-b border-emerald-500/20">
         <div className="flex items-center gap-3">
@@ -482,7 +482,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 alt="Інтерактивна карта Полісся: Рокитне, Томашгород, Блажове, Біловіж, Сновидовичі, Масевичі, Кисоричі, Карпилівка, Борове"
                 referrerPolicy="no-referrer"
                 onError={() => setMapImgErr(true)}
-                className="absolute inset-0 w-full h-full object-fill object-center select-none pointer-events-none"
+                className="absolute inset-0 block w-screen h-[100dvh] max-w-none object-fill object-center select-none pointer-events-none"
+                style={{ width: "100vw", height: "100dvh", objectFit: "fill", objectPosition: "center" }}
                 draggable={false}
               />
             ) : (
