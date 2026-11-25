@@ -279,7 +279,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
       {/* Bunker Header */}
-      <header className="absolute top-0 left-0 right-0 z-20 px-4 sm:px-6 py-2.5 bg-[#09100c]/80 backdrop-blur-sm border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-3">
+      <header className="bunker-main-header absolute top-0 left-0 right-0 z-20 px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-lg sm:text-2xl font-bold text-slate-100">
             Бункер «Щит-04» · Рокитне
@@ -435,16 +435,39 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
               </React.Fragment>
             );
           })}
-          <div className="bunker-scene-footer absolute bottom-3 sm:bottom-5 left-1/2 z-20 -translate-x-1/2 pointer-events-none w-[min(92%,620px)]">
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200/15 bg-[#06100c]/75 px-3.5 py-2.5 shadow-2xl backdrop-blur-md">
-              <div className="min-w-0">
-                <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-emerald-300/80">Щит-04 · Безпечна зона</div>
-                <div className="truncate text-xs sm:text-sm font-semibold text-slate-100">Оберіть сталкера для взаємодії</div>
+          <div className="bunker-character-dock absolute bottom-2.5 sm:bottom-5 left-1/2 z-20 -translate-x-1/2 w-[min(96%,920px)]">
+            <div className="bunker-dock-heading flex items-center justify-between gap-2 px-1 pb-2">
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-[0.24em] text-emerald-300">Щит-04 · Безпечна зона</div>
+                <div className="text-xs sm:text-sm font-bold text-white">До кого звернутися?</div>
               </div>
-              <div className="shrink-0 text-right">
-                <div className="text-[10px] text-slate-400">Садок</div>
+              <div className="text-right">
+                <div className="text-[9px] uppercase tracking-wider text-slate-400">Садок</div>
                 <div className="font-mono-num text-xs font-bold text-amber-300">{keepnetWeight.toFixed(1)} / {keepnetCap} кг</div>
               </div>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+              {BUNKER_HOTSPOTS.map((spot) => {
+                const ready = getReadyQuestsCount(spot.id);
+                const person = CHARACTERS[spot.id];
+                return (
+                  <button
+                    key={spot.id}
+                    type="button"
+                    onClick={() => setActiveNpc(spot.id)}
+                    className="bunker-dock-person min-w-0 rounded-xl px-2 py-2.5 sm:px-3 sm:py-3 text-left"
+                    style={{ '--npc-accent': person.accentHex } as React.CSSProperties}
+                  >
+                    <span className="flex items-center justify-between gap-1">
+                      <span className="block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.8)]" />
+                      {ready > 0 && <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-black text-black">{ready}!</span>}
+                    </span>
+                    <span className="mt-1.5 block truncate text-[10px] sm:text-xs font-black text-white">{spot.displayName}</span>
+                    <span className="mt-0.5 hidden sm:block truncate text-[10px] text-slate-400">{spot.shortAction}</span>
+                    <span className="mt-1 block text-[9px] font-bold uppercase tracking-wider text-emerald-300/80">Взаємодія →</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
