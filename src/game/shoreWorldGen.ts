@@ -89,9 +89,14 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const blankColor = blankColors[Math.min(rodLevelIndex, blankColors.length - 1)];
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0xc89d6c,
-    roughness: 0.88,
-    metalness: 0.02,
+    color: 0xb98b5b,
+    roughness: 0.96,
+    metalness: 0,
+  });
+  const corkSeamMat = new THREE.MeshStandardMaterial({
+    color: 0x765338,
+    roughness: 1,
+    metalness: 0,
   });
   const evaMat = new THREE.MeshStandardMaterial({
     color: 0x181c22,
@@ -124,6 +129,13 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   grip.rotation.x = Math.PI / 2;
   grip.position.set(0, 0, -0.06);
   root.add(grip);
+  // Fine cork grip rings and a worn, matte end collar.
+  for (let i = 0; i < 7; i++) {
+    const seam = new THREE.Mesh(new THREE.TorusGeometry(0.0205, 0.0014, 5, 16), corkSeamMat);
+    seam.rotation.x = Math.PI / 2;
+    seam.position.set(0, 0, -0.205 + i * 0.043);
+    root.add(seam);
+  }
 
   const reelSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.11, 12), evaMat);
   reelSeat.rotation.x = Math.PI / 2;
@@ -138,14 +150,33 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   reelStem.position.set(0, 0.022, 0);
   reelGroup.add(reelStem);
 
-  const reelBody = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.052, 0.065), evaMat);
+  const reelBody = new THREE.Mesh(new THREE.SphereGeometry(0.043, 16, 12), evaMat);
+  reelBody.scale.set(0.9, 0.72, 1.12);
   reelBody.position.set(0, -0.018, 0.01);
   reelGroup.add(reelBody);
 
-  const spoolMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.028, 0.042, 14), accentMat);
+  const spoolCore = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.019, 0.048, 18), metalMat);
+  spoolCore.rotation.x = Math.PI / 2;
+  spoolCore.position.set(0, -0.012, -0.036);
+  reelGroup.add(spoolCore);
+  const spoolMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.029, 0.052, 20), accentMat);
   spoolMesh.rotation.x = Math.PI / 2;
   spoolMesh.position.set(0, -0.012, -0.036);
   reelGroup.add(spoolMesh);
+  // Spool lips and a thin fishing-line coil make the reel read as real tackle.
+  for (const z of [-0.063, -0.009]) {
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(0.027, 0.0024, 6, 20), metalMat);
+    lip.rotation.x = Math.PI / 2;
+    lip.position.set(0, -0.012, z);
+    reelGroup.add(lip);
+  }
+  const lineCoilMat = new THREE.MeshStandardMaterial({ color: 0x8a9a8b, roughness: 0.55, metalness: 0.12 });
+  for (let i = 0; i < 5; i++) {
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.022 + i * 0.0004, 0.0009, 4, 24), lineCoilMat);
+    coil.rotation.x = Math.PI / 2;
+    coil.position.set(0, -0.012, -0.04 + i * 0.003);
+    reelGroup.add(coil);
+  }
 
   const reelHandle = new THREE.Group();
   reelHandle.position.set(0.026, -0.018, 0.012);
@@ -162,8 +193,18 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // First-person hand grip: natural skin, fabric sleeve and wrapped fingers.
   // The hand is attached to the rod, so it follows casting and reeling motion.
   const skinMat = new THREE.MeshStandardMaterial({
-    color: 0xb98260,
-    roughness: 0.92,
+    color: 0xb77d5c,
+    roughness: 0.98,
+    metalness: 0,
+  });
+  const skinLightMat = new THREE.MeshStandardMaterial({
+    color: 0xc88f70,
+    roughness: 0.96,
+    metalness: 0,
+  });
+  const nailMat = new THREE.MeshStandardMaterial({
+    color: 0xd1a18a,
+    roughness: 0.9,
     metalness: 0,
   });
   const sleeveMat = new THREE.MeshStandardMaterial({
@@ -188,12 +229,19 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   handGroup.add(forearm);
 
   const cuff = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.078, 0.078, 0.055, 12),
+    new THREE.CylinderGeometry(0.078, 0.078, 0.07, 16),
     cuffMat
   );
   cuff.rotation.x = Math.PI / 2;
   cuff.position.set(0, -0.005, 0.075);
   handGroup.add(cuff);
+  const cuffStitch = new THREE.Mesh(
+    new THREE.TorusGeometry(0.078, 0.002, 5, 20),
+    new THREE.MeshStandardMaterial({ color: 0x59624d, roughness: 1 })
+  );
+  cuffStitch.rotation.x = Math.PI / 2;
+  cuffStitch.position.set(0, -0.005, 0.04);
+  handGroup.add(cuffStitch);
 
   const palm = new THREE.Mesh(
     new THREE.SphereGeometry(0.105, 16, 12),
@@ -203,27 +251,64 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   palm.position.set(0.006, -0.005, -0.055);
   handGroup.add(palm);
 
-  // Four fingers curl around the cork grip; the thumb crosses its near side.
+  // Four naturally curled fingers, with knuckles and small nail plates visible.
   for (let finger = 0; finger < 4; finger++) {
     const x = -0.057 + finger * 0.037;
     const length = finger === 0 ? 0.105 : finger === 3 ? 0.085 : 0.098;
     const segment = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.018, length, 4, 8),
+      new THREE.CapsuleGeometry(0.018, length, 5, 10),
       skinMat
     );
     segment.rotation.x = Math.PI / 2;
     segment.rotation.z = -0.12 + finger * 0.06;
     segment.position.set(x, -0.035, -0.105);
     handGroup.add(segment);
+
+    const knuckle = new THREE.Mesh(new THREE.SphereGeometry(0.019, 10, 8), skinLightMat);
+    knuckle.scale.set(1, 0.78, 0.72);
+    knuckle.position.set(x, -0.028, -0.145);
+    handGroup.add(knuckle);
+
+    const nail = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), nailMat);
+    nail.scale.set(1.25, 0.42, 1.55);
+    nail.position.set(x, -0.017, -0.17);
+    handGroup.add(nail);
   }
   const thumb = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.019, 0.09, 4, 8),
+    new THREE.CapsuleGeometry(0.019, 0.09, 5, 10),
     skinMat
   );
   thumb.rotation.set(Math.PI / 2, 0, -0.82);
   thumb.position.set(0.085, 0.035, -0.045);
   handGroup.add(thumb);
+  const thumbKnuckle = new THREE.Mesh(new THREE.SphereGeometry(0.02, 10, 8), skinLightMat);
+  thumbKnuckle.position.set(0.072, 0.041, -0.085);
+  handGroup.add(thumbKnuckle);
+  const thumbNail = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 6), nailMat);
+  thumbNail.scale.set(1.3, 0.45, 1.5);
+  thumbNail.position.set(0.091, 0.052, -0.105);
+  handGroup.add(thumbNail);
   root.add(handGroup);
+
+  // The second hand steadies the reel seat, like a real two-handed cast.
+  const supportHand = new THREE.Group();
+  supportHand.position.set(0.055, -0.115, -0.285);
+  const supportPalm = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), skinMat);
+  supportPalm.scale.set(0.78, 0.7, 1.25);
+  supportPalm.position.set(0.005, -0.005, 0.015);
+  supportHand.add(supportPalm);
+  for (let finger = 0; finger < 4; finger++) {
+    const fingerMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.014, 0.07, 4, 8), skinMat);
+    fingerMesh.rotation.x = Math.PI / 2;
+    fingerMesh.rotation.z = -0.1 + finger * 0.06;
+    fingerMesh.position.set(-0.043 + finger * 0.027, -0.035, -0.035);
+    supportHand.add(fingerMesh);
+  }
+  const supportThumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.016, 0.065, 4, 8), skinMat);
+  supportThumb.rotation.set(Math.PI / 2, 0, -0.75);
+  supportThumb.position.set(0.06, 0.025, 0.035);
+  supportHand.add(supportThumb);
+  root.add(supportHand);
 
   // 5 flexible rod segments chained forward along -Z
   const segments: THREE.Group[] = [];
