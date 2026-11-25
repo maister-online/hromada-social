@@ -61,6 +61,8 @@ function createFreshSave(): SaveState {
     timeOfDay: 6.5,
     weather: 'clear',
     credits: 180,
+    goldCoins: 0,
+    amberShards: 0,
     xp: 0,
     level: 1,
     radiation: 0,
@@ -456,6 +458,8 @@ export default function App() {
         18 + fish.weightKg * 12 + (fish.isMutant ? 45 : 0) + (fish.isTrophy ? 30 : 0)
       );
       const earnedXp = released ? Math.round(baseXp * 1.45) : baseXp;
+      const goldCoinDrop = fish.isMutant && Math.random() < (sp?.rarity === 'legendary' ? 0.28 : 0.12) ? 1 : 0;
+      const amberShardDrop = fish.isMutant && Math.random() < (sp?.rarity === 'legendary' ? 0.12 : 0.035) ? 1 : 0;
 
       const cur = stateRef.current;
       const nextProgressMap: Record<string, number> = { ...cur.questProgress };
@@ -493,7 +497,9 @@ export default function App() {
       const prevRecord = cur.personalRecords[fish.speciesId];
       const isRecord = !prevRecord || fish.weightKg > prevRecord.maxWeightKg;
 
-      if (newlyReadyTitles.length > 0) {
+      if (goldCoinDrop || amberShardDrop) {
+        showToast(`Рідкісна здобич мутанта: ${goldCoinDrop ? '+1 золота монета ' : ''}${amberShardDrop ? '+1 шматочок бурштину' : ''}!`);
+      } else if (newlyReadyTitles.length > 0) {
         showToast(`Завдання «${newlyReadyTitles[0]}» готове до здачі в Бункері!`);
       } else if (!cur.discovered[fish.speciesId] && sp) {
         showToast(`Новий вид у бестіарії: ${sp.name}!`);
@@ -538,6 +544,8 @@ export default function App() {
           xp: nextXp,
           level: calcLevel(nextXp),
           totalCaughtCount: prev.totalCaughtCount + 1,
+          goldCoins: (prev.goldCoins ?? 0) + goldCoinDrop,
+          amberShards: (prev.amberShards ?? 0) + amberShardDrop,
           keepnet: released ? prev.keepnet : [...prev.keepnet, fish],
           discovered: {
             ...prev.discovered,
@@ -581,7 +589,22 @@ export default function App() {
         }
       }
 
-      if (newlyReadyTitles.length > 0) {
+      const amberShardDrop = item.id === 'loot_amber'
+        ? 1 + (Math.random() < 0.2 ? 1 : 0)
+        : item.rarity === 'legendary' && Math.random() < 0.3
+          ? 1
+          : item.category === 'artifact' && item.rarity === 'rare' && Math.random() < 0.08
+            ? 1
+            : 0;
+      const goldCoinDrop = (item.id === 'loot_coin' || item.id === 'loot_gold_chain') && Math.random() < 0.18
+        ? 1
+        : item.rarity === 'legendary' && Math.random() < 0.12
+          ? 1
+          : 0;
+
+      if (goldCoinDrop || amberShardDrop) {
+        showToast(`Рідкісна знахідка: ${goldCoinDrop ? '+1 золота монета ' : ''}${amberShardDrop ? `+${amberShardDrop} шмат. бурштину` : ''}!`);
+      } else if (newlyReadyTitles.length > 0) {
         showToast(`Завдання «${newlyReadyTitles[0]}» готове до здачі Єльцину!`);
       } else {
         showToast(`Знахідка «${item.name}» покладена до рюкзака (+35 XP)!`);
@@ -604,6 +627,8 @@ export default function App() {
           ...prev,
           xp: nextXp,
           level: calcLevel(nextXp),
+          goldCoins: (prev.goldCoins ?? 0) + goldCoinDrop,
+          amberShards: (prev.amberShards ?? 0) + amberShardDrop,
           foundLoot: [...prev.foundLoot, entry],
           questProgress: nextProgressMap,
         };
@@ -1147,6 +1172,7 @@ export default function App() {
     (gearId: string) => {
       const item = GEAR_ITEMS.find((g) => g.id === gearId);
       if (!item) return;
+      if ((item.goldPrice || item.amberPrice) && !stateRef.current.ownedGearIds.includes(gearId)) return;
       const cur = stateRef.current;
       const owned = cur.ownedGearIds.includes(gearId);
       if (!owned && cur.credits < item.price) return;
@@ -1176,6 +1202,31 @@ export default function App() {
           itemDurability: has
             ? prev.itemDurability
             : { ...prev.itemDurability, [gearId]: 100 },
+        };
+      });
+    },
+    [showToast]
+  );
+
+  const handleBuyPremiumGear = useCallback(
+    (gearId: string) => {
+      const item = GEAR_ITEMS.find((g) => g.id === gearId);
+      if (!item || (!item.goldPrice && !item.amberPrice)) return;
+      const goldCost = item.goldPrice ?? 0;
+      const amberCost = item.amberPrice ?? 0;
+      const cur = stateRef.current;
+      if (cur.ownedGearIds.includes(gearId) || (cur.goldCoins ?? 0) < goldCost || (cur.amberShards ?? 0) < amberCost) return;
+      audioEngine.playCoin();
+      showToast(`Придбано рідкісне спорядження: ${item.name}`);
+      setGameState((prev) => {
+        if (prev.ownedGearIds.includes(gearId) || (prev.goldCoins ?? 0) < goldCost || (prev.amberShards ?? 0) < amberCost) return prev;
+        return {
+          ...prev,
+          goldCoins: (prev.goldCoins ?? 0) - goldCost,
+          amberShards: (prev.amberShards ?? 0) - amberCost,
+          ownedGearIds: [...prev.ownedGearIds, gearId],
+          equippedGearIds: [...prev.equippedGearIds, gearId],
+          itemDurability: { ...prev.itemDurability, [gearId]: 100 },
         };
       });
     },
@@ -1326,7 +1377,7 @@ export default function App() {
       if ((cur.questProgress[questId] ?? 0) < q.targetCount) return;
 
       audioEngine.playCatch(false);
-      showToast(`Завдання «${q.title}» здано! +₴ ${q.rewardCredits} · +${q.rewardXp} XP`);
+      showToast(`Завдання «${q.title}» здано! +₴ ${q.rewardCredits} · +${q.rewardGoldCoins ?? 0} зол. · +${q.rewardAmberShards ?? 0} бурштину · +${q.rewardXp} XP`);
 
       setGameState((prev) => {
         if (prev.completedQuestIds.includes(questId)) return prev;
@@ -1339,6 +1390,8 @@ export default function App() {
           ...prev,
           credits: prev.credits + q.rewardCredits,
           totalEarnedCredits: prev.totalEarnedCredits + q.rewardCredits,
+          goldCoins: (prev.goldCoins ?? 0) + (q.rewardGoldCoins ?? 0),
+          amberShards: (prev.amberShards ?? 0) + (q.rewardAmberShards ?? 0),
           xp: nextXp,
           level: calcLevel(nextXp),
           baitInventory: nextBaits,
@@ -1548,6 +1601,7 @@ export default function App() {
           onBuyOrEquipBottomRig={handleBuyOrEquipBottomRig}
           onBuyOrToggleAccessory={handleBuyOrToggleAccessory}
           onBuyOrToggleGearItem={handleBuyOrToggleGearItem}
+          onBuyPremiumGear={handleBuyPremiumGear}
           onBuyBaitPack={handleBuyBaitPack}
           onBuyFlavoringPack={handleBuyFlavoringPack}
           onBuyGroundbaitPack={handleBuyGroundbaitPack}
