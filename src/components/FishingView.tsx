@@ -703,7 +703,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         const lengthCm = Math.max(6, Math.round(14 + Math.pow(fin.weightKg, 0.42) * 26));
         const value = Math.max(
           8,
-          Math.round(fin.weightKg * sp.basePricePerKg * (isTrophy ? 1.35 : 1.0))
+          Math.round(fin.weightKg * sp.basePricePerKg * (sp.isMutant ? 0.6 : 0.75) * (isTrophy ? 1.25 : 1.0))
         );
 
         const fishRecord: CaughtFish = {
