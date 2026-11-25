@@ -490,7 +490,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     [aimYaw, castDistM, location, maxCastM]
   );
   // The demo starts with a built-in fish finder so players can learn the water immediately.
-  const hasSonar = true;
   const sonarEquipped = true;
   const sonarMaxDepth = Math.max(sonarRange, currentWaterSpot.depthM + 1);
   const sonarBottomY = 26 + (currentWaterSpot.depthM / sonarMaxDepth) * 150;
