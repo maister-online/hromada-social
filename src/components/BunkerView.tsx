@@ -140,7 +140,7 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 60,
     labelLeftPct: 22.5,
     labelTopPct: 21,
-    displayName: 'Комірник',
+    displayName: 'Торговець',
     shortAction: 'Улов · Провізія · Відпочинок',
   },
   {
