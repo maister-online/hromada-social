@@ -421,11 +421,32 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                   className="absolute rounded-2xl border-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                   aria-label={`Відкрити: ${spot.displayName}`}
                 />
-
+                <div
+                  className="bunker-npc-tag absolute z-10 pointer-events-none"
+                  style={{ left: `${spot.labelLeftPct}%`, top: `${spot.labelTopPct}%`, transform: 'translateX(-50%)' }}
+                >
+                  <span className="block text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-emerald-200/75">
+                    {readyCount > 0 ? 'Є завдання' : 'Персонаж'}
+                  </span>
+                  <span className="block whitespace-nowrap text-[11px] sm:text-xs font-extrabold text-white drop-shadow-lg">
+                    {spot.displayName}
+                  </span>
+                </div>
               </React.Fragment>
             );
           })}
-
+          <div className="bunker-scene-footer absolute bottom-3 sm:bottom-5 left-1/2 z-20 -translate-x-1/2 pointer-events-none w-[min(92%,620px)]">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200/15 bg-[#06100c]/75 px-3.5 py-2.5 shadow-2xl backdrop-blur-md">
+              <div className="min-w-0">
+                <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-emerald-300/80">Щит-04 · Безпечна зона</div>
+                <div className="truncate text-xs sm:text-sm font-semibold text-slate-100">Оберіть сталкера для взаємодії</div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="text-[10px] text-slate-400">Садок</div>
+                <div className="font-mono-num text-xs font-bold text-amber-300">{keepnetWeight.toFixed(1)} / {keepnetCap} кг</div>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
