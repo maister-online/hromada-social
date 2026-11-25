@@ -85,6 +85,7 @@ interface BunkerViewProps {
   onBuyOrEquipBottomRig: (rigId: string) => void;
   onBuyOrToggleAccessory: (accId: string) => void;
   onBuyOrToggleGearItem: (gearId: string) => void;
+  onBuyPremiumGear: (gearId: string) => void;
   onBuyBaitPack: (baitId: string) => void;
   onBuyFlavoringPack: (flavId: string) => void;
   onBuyGroundbaitPack: (gbId: string) => void;
@@ -200,6 +201,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   onBuyOrEquipBottomRig,
   onBuyOrToggleAccessory,
   onBuyOrToggleGearItem,
+  onBuyPremiumGear,
   onBuyBaitPack,
   onBuyFlavoringPack,
   onBuyGroundbaitPack,
@@ -223,7 +225,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   const [velychkoTab, setVelychkoTab] = useState<'quests' | 'bestiary'>('quests');
   const [velychkoFilter, setVelychkoFilter] = useState<'all' | 'fish' | 'crayfish' | 'wildlife' | 'mutant'>('all');
   const [inspectSpecies, setInspectSpecies] = useState<FishSpeciesDef | null>(null);
-  const [barygaTab, setBarygaTab] = useState<'buyback' | 'market' | 'quests'>('buyback');
+  const [barygaTab, setBarygaTab] = useState<'buyback' | 'market' | 'quests' | 'blackmarket'>('buyback');
 
   useEffect(() => {
     if (!activeNpc) return;
@@ -289,8 +291,14 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5 text-xs">
           <div className="flex items-center gap-2.5 bg-[#060b09] border border-white/10 rounded-xl px-3.5 py-2">
-            <span className="font-mono-num font-semibold text-amber-300">
+            <span className="font-mono-num font-semibold text-amber-300" title="Гривні">
               ₴ {gameState.credits}
+            </span>
+            <span className="font-mono-num font-semibold text-yellow-300" title="Золоті монети">
+              ◈ {gameState.goldCoins ?? 0}
+            </span>
+            <span className="font-mono-num font-semibold text-orange-300" title="Шматочки бурштину">
+              ◆ {gameState.amberShards ?? 0}
             </span>
             <span className="text-slate-600 hidden sm:inline" aria-hidden="true">
               ·
@@ -895,6 +903,16 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                     </button>
                     <button
                       type="button"
+                      onClick={() => setBarygaTab('blackmarket')}
+                      className={`btn-tactile min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
+                        barygaTab === 'blackmarket' ? 'border border-amber-300/50 bg-amber-400/15 text-amber-200' : 'btn-field'
+                      }`}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Елітний арсенал
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setBarygaTab('quests')}
                       className={`btn-tactile min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
                         barygaTab === 'quests' ? 'bg-amber-400 text-slate-950' : 'btn-field'
@@ -1053,6 +1071,46 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                     </div>
                   )}
 
+                  {barygaTab === 'blackmarket' && (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border border-amber-400/25 bg-amber-950/15 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-black text-amber-200">Закритий склад рідкісного спорядження</h3>
+                            <p className="mt-1 text-xs text-slate-400">Тут приймають тільки рідкісні трофеї Зони. Гривнями ці речі не купити.</p>
+                          </div>
+                          <div className="flex gap-3 text-xs font-mono-num">
+                            <span className="text-yellow-300">◈ {gameState.goldCoins ?? 0}</span>
+                            <span className="text-orange-300">◆ {gameState.amberShards ?? 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {GEAR_ITEMS.filter((g) => g.goldPrice || g.amberPrice).map((item) => {
+                          const owned = gameState.ownedGearIds.includes(item.id);
+                          const canBuy = (gameState.goldCoins ?? 0) >= (item.goldPrice ?? 0) && (gameState.amberShards ?? 0) >= (item.amberPrice ?? 0);
+                          return (
+                            <div key={item.id} className="rounded-xl border border-amber-300/20 bg-[#0b130f] p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="text-sm font-bold text-slate-100">{item.name}</h4>
+                                <span className="shrink-0 rounded-md border border-amber-300/30 px-2 py-1 text-[10px] font-bold text-amber-200">ЕКСКЛЮЗИВ</span>
+                              </div>
+                              <p className="text-xs leading-relaxed text-slate-400">{item.description}</p>
+                              <p className="text-xs font-semibold text-emerald-300">{item.effectLabel}</p>
+                              <div className="flex flex-wrap gap-3 text-xs font-mono-num">
+                                {(item.goldPrice ?? 0) > 0 && <span className="text-yellow-300">◈ {item.goldPrice} золотих</span>}
+                                {(item.amberPrice ?? 0) > 0 && <span className="text-orange-300">◆ {item.amberPrice} бурштину</span>}
+                              </div>
+                              <button type="button" disabled={owned || !canBuy} onClick={() => onBuyPremiumGear(item.id)} className={`w-full min-h-[42px] rounded-lg px-3 py-2 text-xs font-bold ${owned ? 'border border-emerald-400/30 bg-emerald-500/10 text-emerald-300' : canBuy ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-500'}`}>
+                                {owned ? 'Вже придбано' : canBuy ? 'Обміняти рідкісні ресурси' : 'Недостатньо рідкісних ресурсів'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {barygaTab === 'quests' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {QUESTS.filter((q) => q.giver === 'baryga').map((q) => {
@@ -1080,7 +1138,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             <p className="text-xs text-slate-400 italic">«{q.dialoguePrompt}»</p>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                               <span className="font-mono-num text-amber-300">
-                                Нагорода: ₴ {q.rewardCredits} · +{q.rewardXp} XP
+                                Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
                               </span>
                               {!done && (
                                 <button
@@ -1864,7 +1922,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           Польове спорядження рибалки (30 позицій)
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                          {GEAR_ITEMS.map((g) => {
+                          {GEAR_ITEMS.filter((g) => !g.goldPrice && !g.amberPrice).map((g) => {
                             const owned = gameState.ownedGearIds.includes(g.id);
                             const active = gameState.equippedGearIds.includes(g.id);
                             const canBuy = gameState.credits >= g.price;
@@ -2070,7 +2128,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             <p className="text-xs text-slate-400 italic">«{q.dialoguePrompt}»</p>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                               <span className="font-mono-num text-amber-300">
-                                Нагорода: ₴ {q.rewardCredits} · +{q.rewardXp} XP
+                                Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
                               </span>
                               {!done && (
                                 <button
@@ -2180,7 +2238,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             <p className="text-xs text-slate-400 italic">«{q.dialoguePrompt}»</p>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                               <span className="font-mono-num text-amber-300">
-                                Нагорода: ₴ {q.rewardCredits} · +{q.rewardXp} XP
+                                Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
                               </span>
                               {!done && (
                                 <button
