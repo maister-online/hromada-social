@@ -277,9 +277,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
     ).length;
 
   return (
-    <div className="w-screen h-screen bg-[#050806] text-slate-100 flex flex-col overflow-hidden select-none">
+    <div className="relative w-screen h-screen bg-[#050806] text-slate-100 overflow-hidden select-none">
       {/* Bunker Header */}
-      <header className="relative z-20 px-4 sm:px-6 py-2.5 bg-[#09100c]/95 border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <header className="absolute top-0 left-0 right-0 z-20 px-4 sm:px-6 py-2.5 bg-[#09100c]/80 backdrop-blur-sm border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-lg sm:text-2xl font-bold text-slate-100">
             Бункер «Щит-04» · Рокитне
@@ -371,21 +371,13 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       </header>
 
       {/* Main Interactive Bunker Scene */}
-      <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden bg-[#040705] p-0">
+      <div className="absolute inset-0 overflow-hidden bg-[#040705] p-0">
         {/* Responsive portrait stage: fills all available screen height and scales down to fit narrow screens */}
-        <div
-          className="relative h-full max-h-full max-w-full aspect-[9/16] overflow-hidden bg-[#070b09] shrink-0"
-          style={{
-            height: '100%',
-            width: 'auto',
-            maxWidth: '100%',
-            aspectRatio: '9 / 16',
-          }}
-        >
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#070b09]">
           <img
             src={BUNKER_PHOTO_URL}
             alt="Інтер’єр бункера Щит-04 з чотирма сталкерами"
-            className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
+            className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
             draggable={false}
           />
 
