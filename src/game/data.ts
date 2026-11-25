@@ -60,7 +60,7 @@ export const BUNKER_PHOTO_URL = bunkerPhoto;
 const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
   rokitne_bunker: {
     id: 'rokitne_bunker',
-    name: 'Бункер «Щит-04» · Рокитне',
+    name: 'Бункер Рокитне',
     regionLabel: 'Центральна база сталкерів і рибалок',
     isBunker: true,
     backdropPhotoUrl: BUNKER_PHOTO_URL,
@@ -590,7 +590,7 @@ export const RADSUIT_UPGRADES: GearUpgradeDef[] = [
   { level: 3, name: 'Замкнутий скафандр «Булат-Р» (Рівень 3)', radResist: 3, price: 1850, description: 'Повний захист навіть у Блажовому на Блакитному розломі.' },
 ];
 
-// ПЕРСОНАЖІ БУНКЕРА (4 сталкери на локації «Бункер «Щит-04» · Рокитне»)
+// ПЕРСОНАЖІ БУНКЕРА (4 сталкери на локації «Бункер Рокитне»)
 export const CHARACTERS: Record<CharacterId, CharacterDef> = {
   taras: {
     id: 'taras',
