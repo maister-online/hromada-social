@@ -1138,7 +1138,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             <p className="text-xs text-slate-400 italic">«{q.dialoguePrompt}»</p>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                               <span className="font-mono-num text-amber-300">
-                                Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
+                                Нагорода: ₴ {q.rewardCredits}{q.rewardGoldCoins ? ` · ◈ ${q.rewardGoldCoins}` : ''}{q.rewardAmberShards ? ` · ◆ ${q.rewardAmberShards}` : ''} · +{q.rewardXp} XP
                               </span>
                               {!done && (
                                 <button
@@ -2128,7 +2128,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             <p className="text-xs text-slate-400 italic">«{q.dialoguePrompt}»</p>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                               <span className="font-mono-num text-amber-300">
-                                Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
+                                Нагорода: ₴ {q.rewardCredits}{q.rewardGoldCoins ? ` · ◈ ${q.rewardGoldCoins}` : ''}{q.rewardAmberShards ? ` · ◆ ${q.rewardAmberShards}` : ''} · +{q.rewardXp} XP
                               </span>
                               {!done && (
                                 <button
@@ -2238,7 +2238,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             <p className="text-xs text-slate-400 italic">«{q.dialoguePrompt}»</p>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                               <span className="font-mono-num text-amber-300">
-                                Нагорода: ₴ {q.rewardCredits} · ◈ {q.rewardGoldCoins ?? 0} · ◆ {q.rewardAmberShards ?? 0} · +{q.rewardXp} XP
+                                Нагорода: ₴ {q.rewardCredits}{q.rewardGoldCoins ? ` · ◈ ${q.rewardGoldCoins}` : ''}{q.rewardAmberShards ? ` · ◆ ${q.rewardAmberShards}` : ''} · +{q.rewardXp} XP
                               </span>
                               {!done && (
                                 <button
