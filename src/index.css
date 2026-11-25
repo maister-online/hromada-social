@@ -515,3 +515,85 @@
   .bunker-character-dock { bottom: 8px; padding: 7px; }
   .bunker-dock-person { min-height: 58px; padding-top: 6px; padding-bottom: 6px; }
 }
+
+/* Keep bunker character menus and bottom quick-actions inside the real phone viewport */
+.bunker-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  box-sizing: border-box;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+.bunker-dialog {
+  width: min(100%, 64rem);
+  height: auto;
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom)));
+  min-height: 0;
+  flex: 0 1 auto;
+  box-sizing: border-box;
+}
+.bunker-dialog-topbar {
+  flex: 0 0 auto;
+  min-height: 58px;
+}
+.bunker-dialog-content {
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+.bunker-character-dock {
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  width: min(920px, calc(100% - 16px));
+  max-height: min(34dvh, 190px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 640px) {
+  .bunker-dialog-backdrop {
+    align-items: stretch;
+    padding: max(6px, env(safe-area-inset-top)) 8px max(6px, env(safe-area-inset-bottom));
+  }
+  .bunker-dialog {
+    width: 100%;
+    max-height: 100%;
+    height: 100%;
+    border-radius: 13px;
+  }
+  .bunker-dialog-topbar {
+    min-height: 52px;
+    padding: 8px 10px;
+  }
+  .bunker-dialog-content {
+    flex: 1 1 0%;
+    padding: 10px;
+  }
+  .bunker-character-card {
+    gap: 10px;
+    padding: 10px;
+  }
+  .bunker-character-dock {
+    width: calc(100% - 12px);
+    max-height: min(31dvh, 174px);
+    padding: 6px;
+    border-radius: 12px;
+  }
+  .bunker-dock-person {
+    min-width: 0;
+    min-height: 58px;
+    padding: 6px 4px;
+    overflow: hidden;
+  }
+}
+@media (max-height: 620px) {
+  .bunker-character-dock { max-height: 27dvh; }
+  .bunker-dock-person { min-height: 48px; }
+}
