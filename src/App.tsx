@@ -200,7 +200,7 @@ export default function App() {
   const introAudioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
   // Музика використовується лише для вступного відео.
-  const [musicEnabled] = useState<boolean>(false);
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(false);
   const [showBestiary, setShowBestiary] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
