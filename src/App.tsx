@@ -197,9 +197,10 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [introEnded, setIntroEnded] = useState(false);
   const introVideoRef = useRef<HTMLVideoElement | null>(null);
+  const introAudioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
-  // Фонова музика увімкнена за замовчуванням під час кожного запуску гри.
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
+  // Музика використовується лише для вступного відео.
+  const [musicEnabled] = useState<boolean>(false);
   const [showBestiary, setShowBestiary] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
@@ -218,9 +219,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    audioEngine.setMusicEnabled(musicEnabled);
+    audioEngine.setMusicEnabled(false);
     return audioEngine.installUnlockListener();
-  }, [musicEnabled]);
+  }, []);
 
   useEffect(() => {
     if (screen === 'TITLE') return;
@@ -246,8 +247,14 @@ export default function App() {
     if (!video) return;
     // На мобільних браузерах автоматичний запуск зі звуком заборонений.
     // Тому відео стартує автоматично, а перший дотик вмикає звук.
+    const introAudio = introAudioRef.current;
+    if (introAudio) {
+      introAudio.pause();
+      introAudio.currentTime = 0;
+    }
     video.muted = true;
     void video.play().catch(() => {
+      introAudio?.pause();
       setIntroEnded(true);
     });
   }, [screen]);
@@ -269,7 +276,6 @@ export default function App() {
 
   const handleNewGame = useCallback(() => {
     audioEngine.init();
-    audioEngine.startBackgroundMusic();
     const fresh = createFreshSave();
     setGameState(fresh);
     setScreen('BUNKER');
@@ -1512,6 +1518,10 @@ export default function App() {
         const video = introVideoRef.current;
         if (!video) return;
         video.muted = false;
+        const introAudio = introAudioRef.current;
+        if (introAudio) {
+          void introAudio.play().catch(() => {});
+        }
         void video.play().catch(() => {});
       }}
     >
@@ -1522,12 +1532,28 @@ export default function App() {
               ref={introVideoRef}
               className="absolute inset-0 h-full w-full object-cover"
               muted={true}
-              onEnded={() => setIntroEnded(true)}
-              onError={() => setIntroEnded(true)}
+              onEnded={() => {
+                const introAudio = introAudioRef.current;
+                if (introAudio) {
+                  introAudio.pause();
+                  introAudio.currentTime = 0;
+                }
+                setIntroEnded(true);
+              }}
+              onError={() => {
+                introAudioRef.current?.pause();
+                setIntroEnded(true);
+              }}
               src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
               autoPlay
               playsInline
               preload="auto"
+            />
+            <audio
+              ref={introAudioRef}
+              src={`${import.meta.env.BASE_URL}assets/%D0%BF%D0%BE%D0%BB%D1%96%D1%81%D1%81%D1%8F%20%D0%B7%D0%B0%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B0.mp3`}
+              preload="auto"
+              loop
             />
           </div>
           <div className="absolute inset-0 z-10">
