@@ -369,6 +369,9 @@ export interface GearItemDef {
   fightPowerBonus?: number;
   description: string;
   effectLabel: string;
+  /** Premium-market prices; these items cannot be bought with ordinary hryvnias. */
+  goldPrice?: number;
+  amberPrice?: number;
 }
 
 export interface GearUpgradeDef {
@@ -404,6 +407,8 @@ export interface QuestDef {
   targetCount: number;
   rewardCredits: number;
   rewardXp: number;
+  rewardGoldCoins?: number;
+  rewardAmberShards?: number;
   rewardBaitId?: string;
   rewardBaitQty?: number;
 }
@@ -425,7 +430,9 @@ export interface SaveState {
   day: number;
   timeOfDay: number; // 0..24
   weather: WeatherType;
-  credits: number;
+  credits: number; // ordinary hryvnias (UAH)
+  goldCoins: number;
+  amberShards: number;
   xp: number;
   level: number;
   radiation: number; // 0..100
