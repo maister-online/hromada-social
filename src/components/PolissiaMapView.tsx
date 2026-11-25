@@ -4,17 +4,11 @@ import {
   BookMarked,
   BookOpen,
   Compass,
-  Maximize2,
-  Music,
   Navigation,
   Package,
   ScrollText,
   Shield,
-  Volume2,
-  VolumeX,
   Warehouse,
-  ZoomIn,
-  ZoomOut,
 } from 'lucide-react';
 import { LOCATIONS, MAP_IMAGE_URL, formatClock } from '../game/data';
 import { LocationDef, LocationId, WeatherType } from '../game/types';
