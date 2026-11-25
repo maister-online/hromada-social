@@ -66,6 +66,85 @@ const REAL_FISH_SIZE_PROFILES: Record<string, { minLengthCm: number; maxLengthCm
   beluga_relic: { minLengthCm: 80, maxLengthCm: 300, minWeightKg: 8, maxWeightKg: 200 },
 };
 
+
+type FaunaSizeProfile = { minLengthCm: number; maxLengthCm: number; minWeightKg: number; maxWeightKg: number };
+
+// Реальні габарити раків, комах, молюсків, земноводних та інших тварин.
+// Для фантастичних мутантів залишені окремі ігрові, а не біологічні межі.
+const EXTRA_FAUNA_SIZE_PROFILES: Record<string, FaunaSizeProfile> = {
+  // Додаткові риби-мутанти: великі, але з фіксованими межами та рідкісними трофеями.
+  crucian_glow: { minLengthCm: 12, maxLengthCm: 48, minWeightKg: 0.15, maxWeightKg: 3.1 },
+  tench_moss: { minLengthCm: 18, maxLengthCm: 72, minWeightKg: 0.3, maxWeightKg: 6.4 },
+  pike_ghost: { minLengthCm: 35, maxLengthCm: 135, minWeightKg: 0.5, maxWeightKg: 13.8 },
+  zander_crystal: { minLengthCm: 25, maxLengthCm: 105, minWeightKg: 0.25, maxWeightKg: 11.2 },
+  swamp_eel: { minLengthCm: 25, maxLengthCm: 125, minWeightKg: 0.08, maxWeightKg: 6.5 },
+  carp_mutant: { minLengthCm: 30, maxLengthCm: 115, minWeightKg: 0.5, maxWeightKg: 22.5 },
+  catfish_glow: { minLengthCm: 45, maxLengthCm: 250, minWeightKg: 0.8, maxWeightKg: 34 },
+  leviathan_polissia: { minLengthCm: 80, maxLengthCm: 300, minWeightKg: 8, maxWeightKg: 42 },
+
+  // Раки: довжина від кінчика рострума до хвоста, маса в кілограмах.
+  crayfish_small: { minLengthCm: 4, maxLengthCm: 8, minWeightKg: 0.004, maxWeightKg: 0.025 },
+  crayfish_common: { minLengthCm: 6, maxLengthCm: 16, minWeightKg: 0.01, maxWeightKg: 0.18 },
+  crayfish_large: { minLengthCm: 8, maxLengthCm: 18, minWeightKg: 0.025, maxWeightKg: 0.25 },
+  crayfish_blue: { minLengthCm: 6, maxLengthCm: 16, minWeightKg: 0.01, maxWeightKg: 0.18 },
+  crayfish_white: { minLengthCm: 6, maxLengthCm: 15, minWeightKg: 0.01, maxWeightKg: 0.16 },
+  crayfish_red: { minLengthCm: 6, maxLengthCm: 16, minWeightKg: 0.01, maxWeightKg: 0.18 },
+  crayfish_black: { minLengthCm: 7, maxLengthCm: 17, minWeightKg: 0.015, maxWeightKg: 0.2 },
+  crayfish_swamp: { minLengthCm: 5, maxLengthCm: 14, minWeightKg: 0.008, maxWeightKg: 0.12 },
+  crayfish_radiation: { minLengthCm: 10, maxLengthCm: 28, minWeightKg: 0.08, maxWeightKg: 1.6 },
+  crayfish_giant: { minLengthCm: 15, maxLengthCm: 35, minWeightKg: 0.2, maxWeightKg: 1.5 },
+  crayfish_mutant: { minLengthCm: 14, maxLengthCm: 32, minWeightKg: 0.15, maxWeightKg: 3.4 },
+  crayfish_spider: { minLengthCm: 12, maxLengthCm: 30, minWeightKg: 0.12, maxWeightKg: 2.9 },
+  crayfish_twoheaded: { minLengthCm: 16, maxLengthCm: 38, minWeightKg: 0.25, maxWeightKg: 4.6 },
+  crayfish_berserk: { minLengthCm: 18, maxLengthCm: 42, minWeightKg: 0.4, maxWeightKg: 6.8 },
+  crayfish_yobnutyi: { minLengthCm: 25, maxLengthCm: 65, minWeightKg: 1, maxWeightKg: 14.8 },
+
+  // Жуки та інші комахи: вага в грамах переведена в кілограми.
+  beetle_diving: { minLengthCm: 2.5, maxLengthCm: 4.5, minWeightKg: 0.0002, maxWeightKg: 0.0015 },
+  beetle_water_scavenger: { minLengthCm: 3, maxLengthCm: 5, minWeightKg: 0.0004, maxWeightKg: 0.0025 },
+  beetle_cockchafer: { minLengthCm: 2, maxLengthCm: 3.2, minWeightKg: 0.00015, maxWeightKg: 0.001 },
+  beetle_stag: { minLengthCm: 3, maxLengthCm: 8, minWeightKg: 0.001, maxWeightKg: 0.01 },
+  beetle_bark: { minLengthCm: 0.2, maxLengthCm: 0.8, minWeightKg: 0.000001, maxWeightKg: 0.00002 },
+  beetle_ladybug: { minLengthCm: 0.5, maxLengthCm: 0.9, minWeightKg: 0.00002, maxWeightKg: 0.00008 },
+  beetle_mutant_rad: { minLengthCm: 8, maxLengthCm: 35, minWeightKg: 0.03, maxWeightKg: 1.1 },
+  insect_dragonfly: { minLengthCm: 4.5, maxLengthCm: 8, minWeightKg: 0.0002, maxWeightKg: 0.0012 },
+  insect_mosquito: { minLengthCm: 0.4, maxLengthCm: 1.2, minWeightKg: 0.000001, maxWeightKg: 0.00001 },
+  insect_fly: { minLengthCm: 0.5, maxLengthCm: 1.2, minWeightKg: 0.000005, maxWeightKg: 0.00003 },
+  insect_grasshopper: { minLengthCm: 2.5, maxLengthCm: 5, minWeightKg: 0.0003, maxWeightKg: 0.002 },
+  insect_cricket: { minLengthCm: 1.5, maxLengthCm: 3, minWeightKg: 0.0002, maxWeightKg: 0.0012 },
+  insect_water_strider: { minLengthCm: 0.8, maxLengthCm: 2, minWeightKg: 0.00001, maxWeightKg: 0.00012 },
+  insect_ant: { minLengthCm: 0.4, maxLengthCm: 1, minWeightKg: 0.000005, maxWeightKg: 0.00003 },
+  insect_butterfly: { minLengthCm: 1.8, maxLengthCm: 3, minWeightKg: 0.0001, maxWeightKg: 0.0005 },
+  insect_hornet: { minLengthCm: 2, maxLengthCm: 3.5, minWeightKg: 0.0001, maxWeightKg: 0.0006 },
+
+  // Інша природна фауна.
+  wild_leech: { minLengthCm: 2, maxLengthCm: 15, minWeightKg: 0.0005, maxWeightKg: 0.005 },
+  wild_snail: { minLengthCm: 3, maxLengthCm: 6, minWeightKg: 0.003, maxWeightKg: 0.02 },
+  wild_frog: { minLengthCm: 5, maxLengthCm: 12, minWeightKg: 0.01, maxWeightKg: 0.05 },
+  wild_toad: { minLengthCm: 5, maxLengthCm: 15, minWeightKg: 0.015, maxWeightKg: 0.12 },
+  wild_newt: { minLengthCm: 7, maxLengthCm: 16, minWeightKg: 0.001, maxWeightKg: 0.008 },
+  wild_salamander: { minLengthCm: 14, maxLengthCm: 25, minWeightKg: 0.01, maxWeightKg: 0.05 },
+  wild_water_snake: { minLengthCm: 45, maxLengthCm: 100, minWeightKg: 0.03, maxWeightKg: 0.25 },
+  wild_water_spider: { minLengthCm: 0.8, maxLengthCm: 1.5, minWeightKg: 0.00005, maxWeightKg: 0.0003 },
+  wild_turtle: { minLengthCm: 12, maxLengthCm: 23, minWeightKg: 0.25, maxWeightKg: 1.2 },
+  wild_mussel: { minLengthCm: 5, maxLengthCm: 20, minWeightKg: 0.03, maxWeightKg: 0.5 },
+  wild_tadpole: { minLengthCm: 1, maxLengthCm: 6, minWeightKg: 0.0001, maxWeightKg: 0.003 },
+
+  // Мутанти: розміри фантастичні, але теж мають межі та не ростуть безконтрольно.
+  mutant_three_eyed_pike: { minLengthCm: 40, maxLengthCm: 150, minWeightKg: 0.8, maxWeightKg: 16.2 },
+  mutant_black_catfish: { minLengthCm: 55, maxLengthCm: 260, minWeightKg: 1.5, maxWeightKg: 39.5 },
+  mutant_giant_carp: { minLengthCm: 50, maxLengthCm: 170, minWeightKg: 2, maxWeightKg: 32 },
+  mutant_twoheaded_crucian: { minLengthCm: 18, maxLengthCm: 55, minWeightKg: 0.4, maxWeightKg: 4.9 },
+  mutant_electric_zander: { minLengthCm: 35, maxLengthCm: 130, minWeightKg: 0.6, maxWeightKg: 14.5 },
+  mutant_blind_bream: { minLengthCm: 25, maxLengthCm: 90, minWeightKg: 0.4, maxWeightKg: 7.4 },
+  mutant_ghost_fish: { minLengthCm: 25, maxLengthCm: 110, minWeightKg: 0.3, maxWeightKg: 8.9 },
+  mutant_armored_crayfish: { minLengthCm: 18, maxLengthCm: 45, minWeightKg: 0.35, maxWeightKg: 5.5 },
+  mutant_giant_leech: { minLengthCm: 20, maxLengthCm: 100, minWeightKg: 0.05, maxWeightKg: 7.2 },
+  mutant_swamp_frog: { minLengthCm: 20, maxLengthCm: 90, minWeightKg: 0.2, maxWeightKg: 4.8 },
+  mutant_giant_beetle: { minLengthCm: 20, maxLengthCm: 90, minWeightKg: 0.2, maxWeightKg: 3.6 },
+  mutant_water_predator: { minLengthCm: 70, maxLengthCm: 280, minWeightKg: 2, maxWeightKg: 36 },
+};
+
 function inferBodyShape(sp: FishSpeciesDef): Fauna3DBodyShape {
   if (sp.faunaKind === 'crayfish') return 'crayfish';
   if (sp.faunaKind === 'beetle') return 'beetle';
@@ -122,7 +201,7 @@ function enrichFauna(sp: FishSpeciesDef): FishSpeciesDef {
     scaleFactor: sizeClass === 'trophy' ? 1.45 : sizeClass === 'large' ? 1.18 : sizeClass === 'small' ? 0.72 : 1.0,
   };
 
-  const realSize = kind === 'fish' ? REAL_FISH_SIZE_PROFILES[sp.id] : undefined;
+  const realSize = REAL_FISH_SIZE_PROFILES[sp.id] ?? EXTRA_FAUNA_SIZE_PROFILES[sp.id];
 
   return {
     ...sp,
