@@ -112,6 +112,8 @@ export class ShoreFishingScene {
   private castFlightT = 0;
   private rippleTime = -10;
   private rippleStrength = 0;
+  private phaseEnteredAt = 0;
+  private visualFightDistanceM = 16;
   private smoothTension = 0;
   private smoothYaw = 0;
   private smoothFishX = 0;
@@ -200,6 +202,13 @@ export class ShoreFishingScene {
   public updateSync(next: ShoreSceneSync): void {
     const prevPhase = this.sync.phase;
     this.sync = next;
+    if (next.phase !== prevPhase) {
+      this.phaseEnteredAt = this.clock.getElapsedTime();
+      if (next.phase === 'FIGHTING') {
+        // Start the visual retrieve at the real cast point; never teleport the float to the fish.
+        this.visualFightDistanceM = Math.max(next.castTargetDistanceM, next.fishDistanceM);
+      }
+    }
 
     if (next.location.id !== this.currentLocId) {
       this.currentLocId = next.location.id;
@@ -915,14 +924,24 @@ export class ShoreFishingScene {
     let baseYaw = -0.14 - this.smoothYaw * 0.65;
     let rodPosZ = 0.88;
 
+    const phaseAge = Math.max(0, elapsed - this.phaseEnteredAt);
+    const fightLoadPulse =
+      phase === 'FIGHTING' || phase === 'SNAGGED'
+        ? (0.5 + 0.5 * Math.sin(elapsed * 4.1 + this.smoothFishX * 2.4)) * this.smoothTension
+        : 0;
     if (phase === 'CHARGING') {
-      basePitch = 0.28 + chargeRatio * 0.92; // pull back overhead
-      rodPosZ = 0.88 + chargeRatio * 0.16;
+      basePitch = 0.28 + chargeRatio * 0.98;
+      rodPosZ = 0.88 + chargeRatio * 0.2;
     } else if (phase === 'CASTING') {
-      basePitch = 0.08; // snap forward
+      // A short follow-through after the rod snaps forward.
+      basePitch = 0.08 - Math.sin(this.castFlightT * Math.PI) * 0.34;
+    } else if (phase === 'BITE') {
+      basePitch = 0.58 + Math.sin(Math.min(1, phaseAge * 3) * Math.PI) * 0.16;
     } else if (phase === 'FIGHTING' || phase === 'SNAGGED') {
-      basePitch = 0.48 + this.smoothTension * 0.28;
-      baseYaw = -this.smoothYaw * 0.65 - this.smoothFishX * 0.22;
+      basePitch = 0.42 + this.smoothTension * 0.34 + fightLoadPulse * 0.16;
+      baseYaw = -this.smoothYaw * 0.65 - this.smoothFishX * 0.28;
+    } else if (phase === 'NIBBLE') {
+      basePitch = 0.28 + Math.sin(elapsed * 8.5) * 0.025;
     }
 
     const breathY = Math.sin(elapsed * 1.9) * 0.012;
@@ -933,10 +952,16 @@ export class ShoreFishingScene {
     // Progressive bend across rod segments
     const bendForce =
       phase === 'FIGHTING' || phase === 'SNAGGED'
-        ? 0.08 + this.smoothTension * 0.28
-        : phase === 'CHARGING'
-          ? chargeRatio * 0.07
-          : 0.015;
+        ? THREE.MathUtils.clamp(0.11 + this.smoothTension * 0.38 + fightLoadPulse * 0.12, 0.08, 0.62)
+        : phase === 'BITE'
+          ? 0.2 + Math.sin(Math.min(1, phaseAge * 3) * Math.PI) * 0.08
+          : phase === 'CHARGING'
+            ? chargeRatio * 0.09
+            : phase === 'CASTING'
+              ? 0.12 + Math.sin(this.castFlightT * Math.PI) * 0.1
+              : phase === 'NIBBLE'
+                ? 0.035
+                : 0.012;
     this.rodRig.segments.forEach((seg, idx) => {
       const targetSegBend = -bendForce * (0.45 + idx * 0.22);
       seg.rotation.x = THREE.MathUtils.damp(seg.rotation.x, targetSegBend, 10, dt);
@@ -989,10 +1014,21 @@ export class ShoreFishingScene {
       this.bobberRig.group.position.copy(this.bobberWorldPos);
       this.bobberRig.group.rotation.z = Math.sin(t * 14) * 0.3;
     } else if (showLine) {
+      if (phase === 'FIGHTING') {
+        // The fish may pull line out or be reeled in, but the float travels continuously.
+        this.visualFightDistanceM = THREE.MathUtils.damp(
+          this.visualFightDistanceM,
+          fishDistanceM,
+          isReeling ? 3.1 : 1.15,
+          dt
+        );
+      }
       const rawDist =
-        phase === 'FIGHTING' || phase === 'SNAGGED'
-          ? fishDistanceM
-          : this.sync.castTargetDistanceM;
+        phase === 'FIGHTING'
+          ? this.visualFightDistanceM
+          : phase === 'SNAGGED'
+            ? fishDistanceM
+            : this.sync.castTargetDistanceM;
       const dist = this.toVisualWaterDist(rawDist, this.sync.maxCastDistanceM);
       const yaw = THREE.MathUtils.clamp(this.smoothYaw, -0.84, 0.84);
       let lat = phase === 'FIGHTING' ? this.smoothFishX * (this.isPhotoMode ? 2.4 : 4.2) : 0;
@@ -1014,21 +1050,28 @@ export class ShoreFishingScene {
         }
       }
 
-      let dipY = Math.sin(elapsed * 2.8) * 0.028;
+      let dipY =
+        Math.sin(elapsed * 1.7) * 0.018 +
+        Math.sin(elapsed * 3.3 + 0.8) * 0.009;
       if (phase === 'NIBBLE') {
-        dipY = -0.05 + Math.sin(elapsed * 18) * 0.045;
-        this.bobberRig.group.rotation.z = Math.sin(elapsed * 16) * 0.25;
+        // Small irregular taps, with a pause between bites rather than constant shaking.
+        const nibble = Math.max(0, Math.sin(elapsed * 8.2) * 0.72 + Math.sin(elapsed * 13.1) * 0.28);
+        dipY = -0.025 - nibble * 0.075;
+        this.bobberRig.group.rotation.z = Math.sin(elapsed * 7.4) * 0.09 + nibble * 0.08;
       } else if (phase === 'BITE') {
-        dipY = -0.22 - Math.abs(Math.sin(elapsed * 14)) * 0.08;
-        this.bobberRig.group.rotation.z = 0.45;
+        // The float plunges decisively, then trembles under sustained line pressure.
+        const plunge = Math.min(1, phaseAge * 4.5);
+        dipY = -0.04 - plunge * 0.27 + Math.sin(elapsed * 9.5) * 0.018;
+        this.bobberRig.group.rotation.z = 0.2 + Math.sin(elapsed * 8) * 0.08;
       } else if (phase === 'SNAGGED') {
-        dipY = -0.18 + Math.sin(elapsed * 28) * 0.015;
-        this.bobberRig.group.rotation.z = 0.62 + Math.sin(elapsed * 26) * 0.08;
+        dipY = -0.2 + Math.sin(elapsed * 17) * 0.025;
+        this.bobberRig.group.rotation.z = 0.48 + Math.sin(elapsed * 12) * 0.12;
       } else if (phase === 'FIGHTING') {
-        dipY = -0.14 + Math.sin(elapsed * 10) * 0.08;
-        this.bobberRig.group.rotation.z = this.smoothFishX * 0.6;
+        const struggle = 0.5 + 0.5 * Math.sin(elapsed * 4.8 + this.smoothFishX * 3);
+        dipY = -0.06 - this.smoothTension * 0.13 - struggle * 0.035;
+        this.bobberRig.group.rotation.z = this.smoothFishX * 0.48 + Math.sin(elapsed * 5.5) * 0.035;
       } else {
-        this.bobberRig.group.rotation.z = Math.sin(elapsed * 1.8) * 0.06;
+        this.bobberRig.group.rotation.z = Math.sin(elapsed * 1.5) * 0.035;
       }
 
       this.bobberWorldPos.set(bx, 0.06 + dipY, bz);
@@ -1039,6 +1082,13 @@ export class ShoreFishingScene {
         ((elapsed * 1.2) % 1.0) *
           (phase === 'BITE' || phase === 'FIGHTING' || phase === 'SNAGGED' ? 2.4 : 0.9);
       this.bobberRig.rippleRing.scale.set(rPulse, rPulse, 1);
+      const rippleMat = this.bobberRig.rippleRing.material as THREE.MeshBasicMaterial;
+      rippleMat.opacity =
+        phase === 'BITE' || phase === 'SNAGGED'
+          ? 0.42 + Math.sin(elapsed * 8) * 0.12
+          : phase === 'FIGHTING'
+            ? 0.24 + this.smoothTension * 0.18
+            : 0.18;
 
       this.waterMat.uniforms.uBobberPos.value.set(bx, bz);
       this.waterMat.uniforms.uRippleAge.value = elapsed - this.rippleTime;
