@@ -1517,7 +1517,7 @@ export default function App() {
         if (screen !== 'TITLE' || introEnded) return;
         const video = introVideoRef.current;
         if (!video) return;
-        video.muted = false;
+        video.muted = true;
         const introAudio = introAudioRef.current;
         if (introAudio) {
           void introAudio.play().catch(() => {});
