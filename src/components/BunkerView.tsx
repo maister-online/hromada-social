@@ -289,18 +289,19 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             </p>
           </div>
 
-          <div className="pointer-events-auto flex items-center gap-1.5">
-            <button type="button" onClick={onOpenMap} aria-label="Карта" title="Карта" className="btn-tactile btn-field min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-emerald-500/25 bg-[#080d0b]/80 text-emerald-200 backdrop-blur-md">
-              <Compass className="w-4 h-4" />
+          <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5">
+            <button type="button" onClick={onOpenMap} className="btn-tactile btn-field min-h-10 inline-flex items-center gap-1.5 rounded-md border border-emerald-500/25 bg-[#080d0b]/85 px-2.5 text-[11px] font-semibold text-emerald-100 backdrop-blur-md">
+              <Compass className="w-4 h-4" />Карта
             </button>
-            <button type="button" onClick={onOpenJournal} aria-label="Журнал" title="Журнал" className="btn-tactile btn-field min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-amber-500/25 bg-[#080d0b]/80 text-amber-200 backdrop-blur-md">
-              <BookMarked className="w-4 h-4" />
+            <button type="button" onClick={onOpenJournal} className="btn-tactile btn-field min-h-10 inline-flex items-center gap-1.5 rounded-md border border-amber-500/25 bg-[#080d0b]/85 px-2.5 text-[11px] font-semibold text-amber-100 backdrop-blur-md">
+              <BookMarked className="w-4 h-4" />Журнал
             </button>
-            <button type="button" onClick={onToggleMusic} aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'} title={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'} className={`btn-tactile min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border backdrop-blur-md ${musicEnabled && !muted ? 'bg-emerald-950/85 border-emerald-400/50 text-emerald-300' : 'bg-[#080d0b]/80 border-white/15 text-slate-400'}`}>
-              <Music className="w-4 h-4" />
+            <button type="button" onClick={onToggleMusic} className={`btn-tactile min-h-10 inline-flex items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-semibold backdrop-blur-md ${musicEnabled && !muted ? 'bg-emerald-950/85 border-emerald-400/50 text-emerald-200' : 'bg-[#080d0b]/85 border-white/15 text-slate-300'}`}>
+              <Music className="w-4 h-4" />Музика
             </button>
-            <button type="button" onClick={onToggleMute} aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'} title={muted ? 'Увімкнути звук' : 'Вимкнути звук'} className="btn-tactile min-w-10 min-h-10 inline-flex items-center justify-center rounded-md border border-white/15 bg-[#080d0b]/80 text-slate-300 backdrop-blur-md">
+            <button type="button" onClick={onToggleMute} className="btn-tactile min-h-10 inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-[#080d0b]/85 px-2.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {muted ? 'Звук вимкнено' : 'Звук'}
             </button>
           </div>
         </div>
