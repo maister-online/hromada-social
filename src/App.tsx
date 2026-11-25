@@ -225,6 +225,15 @@ export default function App() {
 
   useEffect(() => {
     if (screen === 'TITLE') return;
+    // Щойно гравець переходить у гру, гарантовано вмикаємо саме ігровий BGM.
+    audioEngine.init();
+    audioEngine.setMusicEnabled(true);
+    audioEngine.startBackgroundMusic();
+    setMusicEnabled(true);
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen === 'TITLE') return;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
     } catch {
