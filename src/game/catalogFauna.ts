@@ -1,5 +1,71 @@
 import { Fauna3DBodyShape, Fauna3DModelSpec, FishSpeciesDef, LocationId } from './types';
 
+
+// Біологічні межі реальних прісноводних риб (довжина см, маса кг).
+// Значення задають реалістичний діапазон для звичайного улову, а не рекорд світу.
+const REAL_FISH_SIZE_PROFILES: Record<string, { minLengthCm: number; maxLengthCm: number; minWeightKg: number; maxWeightKg: number }> = {
+  gudgeon: { minLengthCm: 4, maxLengthCm: 13, minWeightKg: 0.002, maxWeightKg: 0.05 },
+  piskar_river: { minLengthCm: 4, maxLengthCm: 12, minWeightKg: 0.002, maxWeightKg: 0.04 },
+  piscar_black: { minLengthCm: 5, maxLengthCm: 15, minWeightKg: 0.003, maxWeightKg: 0.07 },
+  bleak: { minLengthCm: 5, maxLengthCm: 15, minWeightKg: 0.002, maxWeightKg: 0.05 },
+  ukleika: { minLengthCm: 5, maxLengthCm: 14, minWeightKg: 0.002, maxWeightKg: 0.04 },
+  roach: { minLengthCm: 8, maxLengthCm: 30, minWeightKg: 0.01, maxWeightKg: 0.8 },
+  black_sea_roach: { minLengthCm: 12, maxLengthCm: 35, minWeightKg: 0.03, maxWeightKg: 1.2 },
+  perch_river: { minLengthCm: 7, maxLengthCm: 40, minWeightKg: 0.01, maxWeightKg: 2.0 },
+  rudd: { minLengthCm: 8, maxLengthCm: 45, minWeightKg: 0.01, maxWeightKg: 2.0 },
+  crucian: { minLengthCm: 8, maxLengthCm: 40, minWeightKg: 0.02, maxWeightKg: 2.5 },
+  silver_crucian: { minLengthCm: 8, maxLengthCm: 40, minWeightKg: 0.02, maxWeightKg: 2.5 },
+  crucian_common: { minLengthCm: 7, maxLengthCm: 35, minWeightKg: 0.015, maxWeightKg: 1.8 },
+  bream: { minLengthCm: 10, maxLengthCm: 75, minWeightKg: 0.02, maxWeightKg: 7.5 },
+  silver_bream: { minLengthCm: 7, maxLengthCm: 35, minWeightKg: 0.01, maxWeightKg: 0.9 },
+  white_bream_flat: { minLengthCm: 7, maxLengthCm: 30, minWeightKg: 0.01, maxWeightKg: 0.7 },
+  blue_bream: { minLengthCm: 8, maxLengthCm: 45, minWeightKg: 0.01, maxWeightKg: 1.8 },
+  white_eye_bream: { minLengthCm: 10, maxLengthCm: 40, minWeightKg: 0.02, maxWeightKg: 1.2 },
+  tench: { minLengthCm: 10, maxLengthCm: 65, minWeightKg: 0.02, maxWeightKg: 5.0 },
+  pike_river: { minLengthCm: 20, maxLengthCm: 130, minWeightKg: 0.05, maxWeightKg: 25 },
+  zander: { minLengthCm: 15, maxLengthCm: 100, minWeightKg: 0.03, maxWeightKg: 12 },
+  volga_zander: { minLengthCm: 12, maxLengthCm: 60, minWeightKg: 0.02, maxWeightKg: 4 },
+  carp_mirror: { minLengthCm: 20, maxLengthCm: 110, minWeightKg: 0.1, maxWeightKg: 30 },
+  carp_common: { minLengthCm: 15, maxLengthCm: 100, minWeightKg: 0.05, maxWeightKg: 25 },
+  carp_scaled: { minLengthCm: 20, maxLengthCm: 110, minWeightKg: 0.1, maxWeightKg: 30 },
+  carp_leather: { minLengthCm: 20, maxLengthCm: 100, minWeightKg: 0.1, maxWeightKg: 25 },
+  wild_carp: { minLengthCm: 20, maxLengthCm: 110, minWeightKg: 0.1, maxWeightKg: 30 },
+  chub: { minLengthCm: 8, maxLengthCm: 60, minWeightKg: 0.01, maxWeightKg: 5 },
+  chub_dwarf: { minLengthCm: 7, maxLengthCm: 30, minWeightKg: 0.01, maxWeightKg: 1.2 },
+  ide: { minLengthCm: 10, maxLengthCm: 60, minWeightKg: 0.02, maxWeightKg: 4 },
+  asp: { minLengthCm: 15, maxLengthCm: 100, minWeightKg: 0.05, maxWeightKg: 12 },
+  sabrefish: { minLengthCm: 10, maxLengthCm: 60, minWeightKg: 0.01, maxWeightKg: 2 },
+  nase: { minLengthCm: 10, maxLengthCm: 60, minWeightKg: 0.02, maxWeightKg: 3 },
+  vimba: { minLengthCm: 10, maxLengthCm: 50, minWeightKg: 0.02, maxWeightKg: 2 },
+  dace_river: { minLengthCm: 6, maxLengthCm: 25, minWeightKg: 0.005, maxWeightKg: 0.25 },
+  loach: { minLengthCm: 7, maxLengthCm: 30, minWeightKg: 0.003, maxWeightKg: 0.15 },
+  spined_loach: { minLengthCm: 5, maxLengthCm: 12, minWeightKg: 0.001, maxWeightKg: 0.015 },
+  bitterling: { minLengthCm: 3, maxLengthCm: 10, minWeightKg: 0.001, maxWeightKg: 0.02 },
+  stickleback: { minLengthCm: 3, maxLengthCm: 9, minWeightKg: 0.001, maxWeightKg: 0.01 },
+  ruffe: { minLengthCm: 5, maxLengthCm: 20, minWeightKg: 0.002, maxWeightKg: 0.15 },
+  donets_ruffe: { minLengthCm: 6, maxLengthCm: 25, minWeightKg: 0.005, maxWeightKg: 0.3 },
+  monkey_goby: { minLengthCm: 4, maxLengthCm: 20, minWeightKg: 0.002, maxWeightKg: 0.12 },
+  round_goby: { minLengthCm: 5, maxLengthCm: 25, minWeightKg: 0.005, maxWeightKg: 0.25 },
+  amur_sleeper: { minLengthCm: 5, maxLengthCm: 25, minWeightKg: 0.003, maxWeightKg: 0.4 },
+  sun_bass: { minLengthCm: 5, maxLengthCm: 30, minWeightKg: 0.005, maxWeightKg: 0.6 },
+  barbel: { minLengthCm: 15, maxLengthCm: 80, minWeightKg: 0.05, maxWeightKg: 8 },
+  brown_trout: { minLengthCm: 15, maxLengthCm: 70, minWeightKg: 0.05, maxWeightKg: 5 },
+  rainbow_trout: { minLengthCm: 15, maxLengthCm: 80, minWeightKg: 0.05, maxWeightKg: 8 },
+  grayling: { minLengthCm: 15, maxLengthCm: 55, minWeightKg: 0.05, maxWeightKg: 3 },
+  huchen: { minLengthCm: 40, maxLengthCm: 150, minWeightKg: 1, maxWeightKg: 35 },
+  burbot: { minLengthCm: 20, maxLengthCm: 120, minWeightKg: 0.05, maxWeightKg: 25 },
+  catfish: { minLengthCm: 35, maxLengthCm: 250, minWeightKg: 0.2, maxWeightKg: 100 },
+  catfish_bullhead: { minLengthCm: 10, maxLengthCm: 50, minWeightKg: 0.02, maxWeightKg: 2.5 },
+  european_eel: { minLengthCm: 20, maxLengthCm: 120, minWeightKg: 0.03, maxWeightKg: 6 },
+  sterlet: { minLengthCm: 25, maxLengthCm: 125, minWeightKg: 0.1, maxWeightKg: 16 },
+  russian_sturgeon: { minLengthCm: 50, maxLengthCm: 200, minWeightKg: 2, maxWeightKg: 80 },
+  grass_carp: { minLengthCm: 25, maxLengthCm: 120, minWeightKg: 0.2, maxWeightKg: 35 },
+  silver_carp: { minLengthCm: 30, maxLengthCm: 120, minWeightKg: 0.3, maxWeightKg: 40 },
+  bighead_carp: { minLengthCm: 30, maxLengthCm: 140, minWeightKg: 0.5, maxWeightKg: 60 },
+  black_amur: { minLengthCm: 30, maxLengthCm: 120, minWeightKg: 0.5, maxWeightKg: 40 },
+  beluga_relic: { minLengthCm: 80, maxLengthCm: 300, minWeightKg: 8, maxWeightKg: 200 },
+};
+
 function inferBodyShape(sp: FishSpeciesDef): Fauna3DBodyShape {
   if (sp.faunaKind === 'crayfish') return 'crayfish';
   if (sp.faunaKind === 'beetle') return 'beetle';
@@ -56,8 +122,11 @@ function enrichFauna(sp: FishSpeciesDef): FishSpeciesDef {
     scaleFactor: sizeClass === 'trophy' ? 1.45 : sizeClass === 'large' ? 1.18 : sizeClass === 'small' ? 0.72 : 1.0,
   };
 
+  const realSize = kind === 'fish' ? REAL_FISH_SIZE_PROFILES[sp.id] : undefined;
+
   return {
     ...sp,
+    ...(realSize ?? {}),
     faunaKind: kind,
     sizeClass,
     habitat:
