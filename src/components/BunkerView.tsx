@@ -277,7 +277,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
     ).length;
 
   return (
-    <div className="relative w-screen h-screen bg-[#050806] text-slate-100 overflow-hidden select-none">
+    <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
       {/* Bunker Header */}
       <header className="absolute top-0 left-0 right-0 z-20 px-4 sm:px-6 py-2.5 bg-[#09100c]/80 backdrop-blur-sm border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -377,8 +377,9 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
           <img
             src={BUNKER_PHOTO_URL}
             alt="Інтер’єр бункера Щит-04 з чотирма сталкерами"
-            className="absolute inset-0 w-full h-full object-fill select-none pointer-events-none"
+            className="absolute inset-0 block w-screen h-[100dvh] max-w-none object-cover object-center select-none pointer-events-none"
             draggable={false}
+            style={{ width: "100vw", height: "100dvh", objectFit: "cover", objectPosition: "center" }}
           />
 
           {/* Subtle bottom/top atmospheric scrim for crisp contrast */}
