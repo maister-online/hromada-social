@@ -590,9 +590,12 @@ export class ShoreFishingScene {
       this.scene.remove(this.rodRig.root);
     }
     this.rodRig = buildFishingRodRig(rodType, rodLevelIndex);
-    this.rodRig.root.position.set(0.42, 1.58, 0.88);
+    // First-person rig: parent it to the camera so the hands and rod stay
+    // visibly in the player's lower-right field of view on portrait screens.
+    this.rodRig.root.position.set(0.14, -0.30, -0.72);
     this.rodRig.root.rotation.set(0.26, -0.08, -0.05);
-    this.scene.add(this.rodRig.root);
+    this.rodRig.root.scale.setScalar(1.08);
+    this.camera.add(this.rodRig.root);
   }
 
   private rebuildBobber(loc: LocationDef, floatDef?: FloatDef): void {
@@ -927,7 +930,8 @@ export class ShoreFishingScene {
     }
 
     const breathY = Math.sin(elapsed * 1.9) * 0.012;
-    this.rodRig.root.position.set(0.42, 1.58 + breathY, rodPosZ);
+    // Camera-local placement keeps the grip and both hands on-screen in first person.
+    this.rodRig.root.position.set(0.14, -0.30 + breathY, -0.72);
     this.rodRig.root.rotation.x = THREE.MathUtils.damp(this.rodRig.root.rotation.x, basePitch, 10, dt);
     this.rodRig.root.rotation.y = THREE.MathUtils.damp(this.rodRig.root.rotation.y, baseYaw, 10, dt);
 
