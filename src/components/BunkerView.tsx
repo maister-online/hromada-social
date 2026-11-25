@@ -461,7 +461,8 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             className="bunker-dialog w-full max-w-5xl max-h-[92dvh] rounded-2xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bunker-dialog-topbar px-4 sm:px-5 py-3 flex items-center justify-between gap-3">\n              <div className="min-w-0"><div className="text-[9px] uppercase tracking-[0.24em] text-emerald-300/75">Зв’язок · Щит-04</div><div className="text-xs font-semibold text-slate-200">Інтерактивне меню персонажа</div></div>
+            <div className="bunker-dialog-topbar px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
+              <div className="min-w-0"><div className="text-[9px] uppercase tracking-[0.24em] text-emerald-300/75">Зв’язок · Щит-04</div><div className="text-xs font-semibold text-slate-200">Інтерактивне меню персонажа</div></div>
               <button
                 type="button"
                 onClick={() => setActiveNpc(null)}
