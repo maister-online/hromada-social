@@ -471,7 +471,9 @@ export default function App() {
         if (prevProg >= q.targetCount) continue;
 
         let inc = 0;
-        if (q.type === 'catch_at_location' && fish.locationId === q.targetLocationId) {
+        const faunaKind = fish.faunaKind ?? sp?.faunaKind ?? (fish.isMutant ? 'mutant' : 'fish');
+        const isFishCatch = faunaKind === 'fish';
+        if (q.type === 'catch_at_location' && isFishCatch && fish.locationId === q.targetLocationId) {
           inc = 1;
         } else if (q.type === 'catch_species') {
           if (q.id === 'q_taras_catfish') {
@@ -481,7 +483,7 @@ export default function App() {
           }
         } else if (q.type === 'catch_mutants' && fish.isMutant) {
           inc = 1;
-        } else if (q.type === 'catch_weight') {
+        } else if (q.type === 'catch_weight' && isFishCatch) {
           inc = fish.weightKg;
         }
 
@@ -578,7 +580,7 @@ export default function App() {
       const nextProgressMap: Record<string, number> = { ...cur.questProgress };
       const newlyReadyTitles: string[] = [];
 
-      if (item.category !== 'consumable') {
+      if (item.category !== 'consumable' && entry.depthLayer === 'bottom') {
         for (const q of QUESTS) {
           if (q.type !== 'find_loot' || cur.completedQuestIds.includes(q.id)) continue;
           const prevProg = nextProgressMap[q.id] ?? 0;
