@@ -657,10 +657,11 @@ export const FishingView: React.FC<FishingViewProps> = ({
     // One shared size percentile controls both mass and length: a longer fish is also heavier.
     // A beta-like curve makes small/ordinary specimens common and trophy specimens genuinely rare.
     const sizeBoost = Math.min(0.12, Math.max(0, gbWeight + depthWeightBonus + rigStats.weightBoostMult));
-    const sizeRoll = Math.min(0.999, Math.pow(Math.random(), 1.75) + sizeBoost);
+    const sizeRoll = Math.min(0.999, Math.pow(Math.random(), 2.4) + sizeBoost);
     // Fish mass grows approximately with the cube of body length, not linearly.
     const rawW = chosen.minWeightKg + Math.pow(sizeRoll, 3) * (chosen.maxWeightKg - chosen.minWeightKg);
-    const weightKg = Number(rawW.toFixed(3));
+    // Preserve sub-gram precision for insects and other tiny catches.
+    const weightKg = Number(rawW.toFixed(rawW < 0.01 ? 6 : rawW < 1 ? 3 : 2));
     return {
       kind: 'fish' as const,
       species: chosen,
@@ -725,15 +726,17 @@ export const FishingView: React.FC<FishingViewProps> = ({
         setStatusMsg(`Витягнуто з дна: ${fin.lootItem.name}!`);
       } else if (fin.species) {
         const sp = fin.species;
+        // Trophy specimens are the extreme upper tail, not ordinary large fish.
+        // 90% of the species' biological weight interval keeps records genuinely rare.
         const isTrophy =
-          fin.weightKg >= sp.minWeightKg + (sp.maxWeightKg - sp.minWeightKg) * 0.78;
+          fin.weightKg >= sp.minWeightKg + (sp.maxWeightKg - sp.minWeightKg) * 0.90;
         const sizeProfile = sp.minLengthCm != null && sp.maxLengthCm != null;
         const weightRatio = Math.max(0, Math.min(1,
           (fin.weightKg - sp.minWeightKg) / Math.max(0.001, sp.maxWeightKg - sp.minWeightKg)
         ));
         const sizeRatio = sizeProfile ? Math.cbrt(weightRatio) : weightRatio;
         const lengthCm = sizeProfile
-          ? Math.round(sp.minLengthCm! + sizeRatio * (sp.maxLengthCm! - sp.minLengthCm!))
+          ? Number((sp.minLengthCm! + sizeRatio * (sp.maxLengthCm! - sp.minLengthCm!)).toFixed(1))
           : Math.max(6, Math.round(14 + Math.pow(fin.weightKg, 0.42) * 26));
         const value = Math.max(
           8,
