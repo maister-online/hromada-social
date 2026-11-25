@@ -2036,6 +2036,11 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           const dur = Math.round(gameState.itemDurability[r.id] ?? 100);
                           if (dur < 100) wornItems.push({ id: r.id, name: r.name, kind: 'Котушка', basePrice: r.price || 55, dur });
                         }
+                        for (const l of LINES) {
+                          if (!gameState.ownedLineIds.includes(l.id)) continue;
+                          const dur = Math.round(gameState.itemDurability[l.id] ?? 100);
+                          if (dur < 100) wornItems.push({ id: l.id, name: l.name, kind: 'Волосінь', basePrice: l.price || 45, dur });
+                        }
                         for (const b of BOTTOM_RIGS) {
                           if (b.id === 'brig_none' || !gameState.ownedBottomRigIds.includes(b.id)) continue;
                           const dur = Math.round(gameState.itemDurability[b.id] ?? 100);
@@ -2050,7 +2055,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         if (wornItems.length === 0) {
                           return (
                             <div className="p-8 text-center text-xs text-emerald-300 bg-[#0b130f] border border-emerald-500/25 rounded-xl">
-                              Усі ваші вудки, котушки та спорядження у відмінному стані (100% міцності)!
+                              Усі ваші вудки, котушки, волосіні та спорядження у відмінному стані (100% міцності)!
                             </div>
                           );
                         }
