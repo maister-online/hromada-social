@@ -722,3 +722,35 @@
   .bunker-dock-person { height: 66px; min-height: 66px; }
   .bunker-dock-person > span:last-child { display: none; }
 }
+
+/* Hard-pin the NPC dock to the phone viewport: prevent horizontal drift/cropping */
+@media (max-width: 640px) {
+  .bunker-character-dock {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  .bunker-character-dock,
+  .bunker-character-dock * {
+    box-sizing: border-box;
+  }
+  .bunker-character-dock > .grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .bunker-dock-person {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+}
