@@ -29,7 +29,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onOpenBestiary,
 }) => {
   return (
-    <div className="relative w-full h-full min-h-0 flex flex-col overflow-hidden bg-gradient-to-b from-[#101b18] via-[#080e0c] to-black">
+    <div className="relative w-full h-full min-h-0 flex flex-col overflow-hidden bg-transparent">
 
       <style>{`@keyframes menuReveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       <main className={`relative z-10 flex-1 flex items-end justify-center px-4 pb-3 sm:pb-5 transition-all duration-700 ease-out ${menuVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
