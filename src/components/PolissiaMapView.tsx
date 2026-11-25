@@ -339,117 +339,57 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   return (
     <div className={compact ? 'fixed inset-0 z-[90] w-screen h-[100dvh] bg-[#060a09] overflow-hidden' : 'fixed inset-0 z-[90] w-screen h-[100dvh] overflow-hidden bg-[#060a09] select-none'}>
       <div className="absolute inset-0 w-screen h-[100dvh] overflow-hidden bg-[#060a09]">
-      {/* Top Game Menu Bar */}
-      <header className="absolute top-0 left-0 right-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#09110d]/90 backdrop-blur-sm border-b border-emerald-500/20">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-lg sm:text-xl font-bold text-slate-100 whitespace-nowrap">
-            Полісся: Карта регіону
-          </h1>
-          <div className="hidden xl:flex items-center gap-2.5 text-xs text-slate-300">
-            <span className="font-mono-num text-amber-300 font-semibold">
-              День {day} · {clock} ({phaseLabel})
-            </span>
-            <span className="text-slate-600" aria-hidden="true">·</span>
-            <span>{WEATHER_LABELS[weather]}</span>
-            <span className="text-slate-600" aria-hidden="true">·</span>
-            <span>Рівень {level}</span>
+      {/* Компактний сталкерський HUD карти */}
+      <header className="absolute top-0 left-0 right-0 z-40 p-2 sm:p-3 pointer-events-none">
+        <div className="flex items-start justify-between gap-2">
+          <div className="pointer-events-auto rounded-md border border-emerald-500/25 bg-[#080d0b]/80 px-3 py-2 shadow-lg shadow-black/30 backdrop-blur-md">
+            <h1 className="font-display text-sm sm:text-base font-bold tracking-wider text-emerald-100 uppercase">
+              Карта Полісся
+            </h1>
+            <p className="text-[10px] sm:text-xs text-emerald-200/65">
+              ДЕНЬ {day} · {clock} · {phaseLabel} · {WEATHER_LABELS[weather]} · РІВ. {level}
+            </p>
+          </div>
+          <div className="pointer-events-auto flex items-center gap-1.5">
+            {!compact && (
+              <button
+                type="button"
+                onClick={() => onSelectDestination('rokitne_bunker')}
+                className="btn-tactile btn-primary-emerald min-h-10 rounded-md border border-emerald-400/35 bg-[#082016]/90 px-3 text-[11px] font-bold text-emerald-100 backdrop-blur-md"
+              >
+                Бункер
+              </button>
+            )}
+            {compact && onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-tactile min-h-10 rounded-md border border-white/20 bg-[#080d0b]/90 px-3 text-[11px] font-bold text-slate-100 backdrop-blur-md"
+              >
+                Закрити карту
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center gap-2.5 bg-[#0d1813] border border-white/10 rounded px-3 py-1.5">
-            <span className="font-mono-num font-semibold text-amber-300">₴ {credits}</span>
-            <span className="font-mono-num font-semibold text-yellow-300">◈ {goldCoins}</span>
-            <span className="font-mono-num font-semibold text-orange-300">◆ {amberShards}</span>
-            <span className="text-slate-600" aria-hidden="true">·</span>
-            <span className="font-mono-num text-slate-200 hidden sm:inline">
-              Садок: {keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг ({keepnetCount})
-            </span>
-            <span className="text-slate-600 hidden sm:inline" aria-hidden="true">·</span>
-            <span className="font-mono-num text-emerald-300">Захист {radSuitLevel}</span>
-            <span className="text-slate-600" aria-hidden="true">·</span>
-            <span
-              className={`font-mono-num ${
-                sanity <= 30
-                  ? 'text-rose-400 font-semibold'
-                  : sanity <= 60
-                    ? 'text-amber-300'
-                    : 'text-indigo-300'
-              }`}
-            >
-              Розсудл. {Math.round(sanity)}%
-            </span>
+        <div className="pointer-events-auto mt-2 flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-2 rounded-md border border-amber-500/25 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
+            <span className="font-mono-num font-bold text-amber-300">₴ {credits}</span>
+            <span className="font-mono-num font-bold text-yellow-300">◈ {goldCoins}</span>
+            <span className="font-mono-num font-bold text-orange-300">◆ {amberShards}</span>
           </div>
-
-          <button
-            type="button"
-            onClick={onOpenInventory}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
-          >
-            <Package className="w-4 h-4 text-amber-300" />
-            Рюкзак{lootCount > 0 ? ` (${lootCount})` : ''}
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenQuests}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
-          >
-            <ScrollText className="w-4 h-4 text-emerald-300" />
-            Завдання{readyQuestsCount > 0 ? ` (!${readyQuestsCount})` : ''}
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenBestiary}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
-          >
-            <BookOpen className="w-4 h-4 text-teal-400" />
-            Бестіарій
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenJournal}
-            className="btn-tactile btn-field min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer font-semibold"
-          >
-            <BookMarked className="w-4 h-4 text-amber-300" />
-            Журнал
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSelectDestination('rokitne_bunker')}
-            className="btn-tactile btn-primary-emerald min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 font-bold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            <Warehouse className="w-4 h-4" />
-            Бункер
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleMusic}
-            className={`btn-tactile min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg cursor-pointer border ${
-              musicEnabled && !muted
-                ? 'bg-emerald-950/75 border-emerald-400/50 text-emerald-300'
-                : 'btn-field text-slate-400'
-            }`}
-            aria-label={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-            title={musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}
-          >
-            <Music className="w-4 h-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleMute}
-            className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-            aria-label={muted ? 'Увімкнути звук' : 'Вимкнути звук'}
-          >
-            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
+          <div className="rounded-md border border-sky-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs text-slate-200 backdrop-blur-md">
+            САДОК <span className="font-mono-num font-semibold text-sky-200">{keepnetWeightKg.toFixed(1)}/{keepnetCapacityKg} кг</span>
+          </div>
+          <div className="rounded-md border border-emerald-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
+            <span className="text-slate-400">ЗАХИСТ </span>
+            <span className="font-mono-num font-semibold text-emerald-300">{radSuitLevel}</span>
+          </div>
+          <div className="rounded-md border border-violet-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
+            <span className="text-slate-400">ПСИХІКА </span>
+            <span className={`font-mono-num font-semibold ${sanity <= 30 ? 'text-rose-400' : sanity <= 60 ? 'text-amber-300' : 'text-violet-300'}`}>{Math.round(sanity)}%</span>
+          </div>
         </div>
-        {compact && onClose && <button type="button" onClick={onClose} className="absolute right-3 top-3 z-[60] min-h-[42px] rounded-lg border border-white/20 bg-black/80 px-4 text-sm font-bold text-white shadow-lg">Закрити ✕</button>}
       </header>
 
       {/* Main Interactive Zoomable Map + Tactical Inspector */}
@@ -571,34 +511,34 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
 
           </div>
 
-          {/* Touch Zoom Controls Overlay */}
-          <div className="absolute bottom-4 left-4 z-30 flex items-center gap-1.5 panel-field rounded-xl p-1.5">
+          {/* Робочі кнопки масштабу */}
+          <div className="absolute bottom-4 left-3 z-30 flex items-center gap-1 rounded-md border border-emerald-500/25 bg-[#080d0b]/85 p-1.5 backdrop-blur-md">
             <button
               type="button"
               onClick={() => applyZoomAtPoint(zoom - 0.35)}
-              className="btn-tactile btn-field min-w-[46px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+              className="btn-tactile btn-field min-w-10 min-h-10 rounded-md text-lg font-bold text-slate-100"
               aria-label="Віддалити карту"
             >
-              <ZoomOut className="w-4 h-4" />
+              −
             </button>
-            <span className="font-mono-num text-xs text-slate-200 px-2 min-w-[48px] text-center font-semibold">
+            <span className="font-mono-num min-w-12 px-1 text-center text-[11px] font-semibold text-emerald-200">
               {Math.round(zoom * 100)}%
             </span>
             <button
               type="button"
               onClick={() => applyZoomAtPoint(zoom + 0.35)}
-              className="btn-tactile btn-field min-w-[46px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+              className="btn-tactile btn-field min-w-10 min-h-10 rounded-md text-lg font-bold text-slate-100"
               aria-label="Наблизити карту"
             >
-              <ZoomIn className="w-4 h-4" />
+              +
             </button>
             <button
               type="button"
               onClick={resetView}
-              className="btn-tactile btn-field min-w-[46px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
+              className="btn-tactile btn-field min-h-10 rounded-md px-2 text-[10px] font-semibold text-emerald-200"
               aria-label="Скинути масштаб карти"
             >
-              <Maximize2 className="w-4 h-4" />
+              Центр
             </button>
           </div>
 
