@@ -658,7 +658,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
     // A beta-like curve makes small/ordinary specimens common and trophy specimens genuinely rare.
     const sizeBoost = Math.min(0.12, Math.max(0, gbWeight + depthWeightBonus + rigStats.weightBoostMult));
     const sizeRoll = Math.min(0.999, Math.pow(Math.random(), 1.75) + sizeBoost);
-    const rawW = chosen.minWeightKg + sizeRoll * (chosen.maxWeightKg - chosen.minWeightKg);
+    // Fish mass grows approximately with the cube of body length, not linearly.
+    const rawW = chosen.minWeightKg + Math.pow(sizeRoll, 3) * (chosen.maxWeightKg - chosen.minWeightKg);
     const weightKg = Number(rawW.toFixed(3));
     return {
       kind: 'fish' as const,
@@ -727,9 +728,10 @@ export const FishingView: React.FC<FishingViewProps> = ({
         const isTrophy =
           fin.weightKg >= sp.minWeightKg + (sp.maxWeightKg - sp.minWeightKg) * 0.78;
         const sizeProfile = sp.minLengthCm != null && sp.maxLengthCm != null;
-        const sizeRatio = sizeProfile
-          ? Math.max(0, Math.min(1, (fin.weightKg - sp.minWeightKg) / Math.max(0.001, sp.maxWeightKg - sp.minWeightKg)))
-          : Math.max(0, Math.min(1, (fin.weightKg - sp.minWeightKg) / Math.max(0.001, sp.maxWeightKg - sp.minWeightKg)));
+        const weightRatio = Math.max(0, Math.min(1,
+          (fin.weightKg - sp.minWeightKg) / Math.max(0.001, sp.maxWeightKg - sp.minWeightKg)
+        ));
+        const sizeRatio = sizeProfile ? Math.cbrt(weightRatio) : weightRatio;
         const lengthCm = sizeProfile
           ? Math.round(sp.minLengthCm! + sizeRatio * (sp.maxLengthCm! - sp.minLengthCm!))
           : Math.max(6, Math.round(14 + Math.pow(fin.weightKg, 0.42) * 26));
