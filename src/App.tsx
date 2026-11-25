@@ -198,14 +198,8 @@ export default function App() {
   const [introEnded, setIntroEnded] = useState(false);
   const introVideoRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(false);
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('polissia_music_enabled');
-      return saved === null ? true : saved === 'true';
-    } catch {
-      return true;
-    }
-  });
+  // Фонова музика увімкнена за замовчуванням під час кожного запуску гри.
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [showBestiary, setShowBestiary] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
@@ -275,6 +269,7 @@ export default function App() {
 
   const handleNewGame = useCallback(() => {
     audioEngine.init();
+    audioEngine.startBackgroundMusic();
     const fresh = createFreshSave();
     setGameState(fresh);
     setScreen('BUNKER');
@@ -283,6 +278,7 @@ export default function App() {
 
   const handleContinue = useCallback(() => {
     audioEngine.init();
+    audioEngine.startBackgroundMusic();
     const loc = stateRef.current.currentLocationId;
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : 'FISHING');
   }, []);
