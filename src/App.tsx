@@ -197,7 +197,6 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [introEnded, setIntroEnded] = useState(false);
   const introVideoRef = useRef<HTMLVideoElement | null>(null);
-  const introAudioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
   // Музика використовується лише для вступного відео.
   const [musicEnabled, setMusicEnabled] = useState<boolean>(false);
@@ -253,25 +252,9 @@ export default function App() {
   useEffect(() => {
     if (screen !== 'TITLE') return;
     const video = introVideoRef.current;
-    const introAudio = introAudioRef.current;
-    if (!video || !introAudio) return;
-
-    // Окремий MP3 заставки: пробуємо запустити автоматично разом із відео.
-    // Якщо браузер блокує autoplay зі звуком, обійти це обмеження вебсторінка не може.
-    introAudio.pause();
-    introAudio.currentTime = 0;
-    introAudio.muted = false;
-    introAudio.volume = 1;
-    introAudio.load();
+    if (!video) return;
     video.muted = true;
     void video.play().catch(() => setIntroEnded(true));
-    void introAudio.play().catch(() => {
-      // Залишаємо заставку без звуку, якщо autoplay заборонений браузером.
-    });
-
-    return () => {
-      introAudio.pause();
-    };
   }, [screen]);
 
   const handleToggleMusic = useCallback(() => {
@@ -1541,29 +1524,12 @@ export default function App() {
               ref={introVideoRef}
               className="absolute inset-0 h-full w-full object-cover"
               muted={true}
-              onEnded={() => {
-                const introAudio = introAudioRef.current;
-                if (introAudio) {
-                  introAudio.pause();
-                  introAudio.currentTime = 0;
-                }
-                setIntroEnded(true);
-              }}
-              onError={() => {
-                introAudioRef.current?.pause();
-                setIntroEnded(true);
-              }}
+              onEnded={() => setIntroEnded(true)}
+              onError={() => setIntroEnded(true)}
               src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
               autoPlay
               playsInline
               preload="auto"
-            />
-            <audio
-              ref={introAudioRef}
-              src={`${import.meta.env.BASE_URL}assets/%D0%BF%D0%BE%D0%BB%D1%96%D1%81%D1%81%D1%8F%20%D0%B7%D0%B0%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B0.mp3`}
-              preload="auto"
-              autoPlay
-              loop
             />
           </div>
           <div className="absolute inset-0 z-10">
