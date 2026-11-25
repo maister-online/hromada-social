@@ -696,7 +696,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               {selectedLoc.isBunker ? (
                 <>
                   <Warehouse className="w-4 h-4" />
-                  Увійти в Бункер «Щит-04»
+                  Увійти в Бункер Рокитне
                 </>
               ) : (
                 <>
