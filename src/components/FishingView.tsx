@@ -653,11 +653,13 @@ export const FishingView: React.FC<FishingViewProps> = ({
     }
 
     const chosen = weighted[Math.floor(Math.random() * weighted.length)];
-    const depthWeightBonus = isDeepSpot ? 0.14 : 0;
-    const rawW = chosen.minWeightKg + Math.random() * (chosen.maxWeightKg - chosen.minWeightKg);
-    const weightKg = Number(
-      (rawW * (1 + gbWeight + depthWeightBonus + rigStats.weightBoostMult)).toFixed(2)
-    );
+    const depthWeightBonus = isDeepSpot ? 0.035 : 0;
+    // One shared size percentile controls both mass and length: a longer fish is also heavier.
+    // A beta-like curve makes small/ordinary specimens common and trophy specimens genuinely rare.
+    const sizeBoost = Math.min(0.12, Math.max(0, gbWeight + depthWeightBonus + rigStats.weightBoostMult));
+    const sizeRoll = Math.min(0.999, Math.pow(Math.random(), 1.75) + sizeBoost);
+    const rawW = chosen.minWeightKg + sizeRoll * (chosen.maxWeightKg - chosen.minWeightKg);
+    const weightKg = Number(rawW.toFixed(3));
     return {
       kind: 'fish' as const,
       species: chosen,
@@ -724,7 +726,13 @@ export const FishingView: React.FC<FishingViewProps> = ({
         const sp = fin.species;
         const isTrophy =
           fin.weightKg >= sp.minWeightKg + (sp.maxWeightKg - sp.minWeightKg) * 0.78;
-        const lengthCm = Math.max(6, Math.round(14 + Math.pow(fin.weightKg, 0.42) * 26));
+        const sizeProfile = sp.minLengthCm != null && sp.maxLengthCm != null;
+        const sizeRatio = sizeProfile
+          ? Math.max(0, Math.min(1, (fin.weightKg - sp.minWeightKg) / Math.max(0.001, sp.maxWeightKg - sp.minWeightKg)))
+          : Math.max(0, Math.min(1, (fin.weightKg - sp.minWeightKg) / Math.max(0.001, sp.maxWeightKg - sp.minWeightKg)));
+        const lengthCm = sizeProfile
+          ? Math.round(sp.minLengthCm! + sizeRatio * (sp.maxLengthCm! - sp.minLengthCm!))
+          : Math.max(6, Math.round(14 + Math.pow(fin.weightKg, 0.42) * 26));
         const value = Math.max(
           8,
           Math.round(fin.weightKg * sp.basePricePerKg * (sp.isMutant ? 0.6 : 0.75) * (isTrophy ? 1.25 : 1.0))
