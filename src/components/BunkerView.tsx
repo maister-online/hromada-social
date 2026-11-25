@@ -219,7 +219,6 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   onOpenMap,
 }) => {
   const [activeNpc, setActiveNpc] = useState<CharacterId | null>(null);
-  const [hoveredNpc, setHoveredNpc] = useState<CharacterId | null>(null);
   const [tarasTab, setTarasTab] = useState<'catch' | 'rest' | 'quests'>('catch');
   const [shopCat, setShopCat] = useState<ShopCategory>('rods');
   const [velychkoTab, setVelychkoTab] = useState<'quests' | 'bestiary'>('quests');
@@ -393,9 +392,6 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 
           {/* Interactive Clickable Hotspots Over Each Character in the Photo */}
           {BUNKER_HOTSPOTS.map((spot) => {
-            const char = CHARACTERS[spot.id];
-            const isHovered = hoveredNpc === spot.id;
-            const isSelected = activeNpc === spot.id;
             const readyCount = getReadyQuestsCount(spot.id);
 
             return (
@@ -404,21 +400,16 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveNpc(spot.id)}
-                  onMouseEnter={() => setHoveredNpc(spot.id)}
-                  onMouseLeave={() => setHoveredNpc((prev) => (prev === spot.id ? null : prev))}
                   style={{
                     left: `${spot.leftPct}%`,
                     top: `${spot.topPct}%`,
                     width: `${spot.widthPct}%`,
                     height: `${spot.heightPct}%`,
-                    borderColor:
-                      isHovered || isSelected ? char.accentHex : 'rgba(255,255,255,0.08)',
-                    boxShadow:
-                      isHovered || isSelected
-                        ? `0 0 28px ${char.accentHex}38, inset 0 0 18px ${char.accentHex}22`
-                        : 'none',
+                    borderColor: 'transparent',
+                    background: 'transparent',
+                    boxShadow: 'none',
                   }}
-                  className="absolute rounded-2xl border-2 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                  className="absolute rounded-2xl border-2 border-transparent bg-transparent cursor-pointer focus-visible:outline-none"
                   aria-label={`Відкрити: ${spot.displayName}`}
                 />
                 <div
