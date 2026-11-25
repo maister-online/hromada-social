@@ -2027,7 +2027,7 @@ export const WILDLIFE_SPECIES: FishSpeciesDef[] = [
     faunaKind: 'wildlife',
     isMutant: false,
     rarity: 'rare',
-    preferredBaits: ['worm', 'caddis', 'slug', 'leech_bait'],
+    preferredBaits: ['worm', 'caddis', 'maggot', 'leech_bait'],
     preferredTime: 'night',
     minWeightKg: 0.06,
     maxWeightKg: 0.22,
