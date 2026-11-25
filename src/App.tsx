@@ -195,6 +195,9 @@ export default function App() {
   const [existingSave] = useState<SaveState | null>(() => loadSavedGame());
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
+  const [showGamePresentation, setShowGamePresentation] = useState(false);
+  const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
+  const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
   // Музика використовується лише для вступного відео.
   const [musicEnabled, setMusicEnabled] = useState<boolean>(false);
@@ -262,16 +265,39 @@ export default function App() {
     });
   }, [showToast]);
 
-  const handleNewGame = useCallback(() => {
-    audioEngine.init();
-    audioEngine.setMusicEnabled(true);
-    audioEngine.startBackgroundMusic();
-    setMusicEnabled(true);
-    const fresh = createFreshSave();
-    setGameState(fresh);
+  const finishGamePresentation = useCallback(() => {
+    const audio = presentationAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    const video = presentationVideoRef.current;
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+    setShowGamePresentation(false);
     setScreen('BUNKER');
     showToast('Ви у бункері. Відкрийте карту, щоб обрати локацію.');
   }, [showToast]);
+
+  const handleNewGame = useCallback(() => {
+    const fresh = createFreshSave();
+    setGameState(fresh);
+    setShowGamePresentation(true);
+    const video = presentationVideoRef.current;
+    const audio = presentationAudioRef.current;
+    if (video) {
+      video.currentTime = 0;
+      video.muted = true;
+      void video.play().catch(() => finishGamePresentation());
+    }
+    if (audio) {
+      audio.currentTime = 0;
+      audio.volume = 1;
+      void audio.play().catch(() => {});
+    }
+  }, [finishGamePresentation]);
 
   const handleContinue = useCallback(() => {
     audioEngine.init();
@@ -1507,6 +1533,21 @@ export default function App() {
     <div
       className="relative w-screen h-screen overflow-hidden bg-[#060a08]"
     >
+      <video
+        ref={presentationVideoRef}
+        className={showGamePresentation ? "fixed inset-0 z-[100] h-full w-full object-cover bg-black" : "hidden"}
+        muted
+        playsInline
+        preload="auto"
+        onEnded={finishGamePresentation}
+        onError={finishGamePresentation}
+        src="https://raw.githubusercontent.com/maister-online/hromada-social/main/Video_game_trailer_presentation_63f758c3.mp4"
+      />
+      <audio
+        ref={presentationAudioRef}
+        preload="auto"
+        src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D0%BE%D0%BB%D1%96%D1%81%D1%81%D1%8F%20%D0%BD%D0%B0%20%D0%B7%D0%B0%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83_2026_11_25_18_24_12.mp3"
+      />
       {screen === 'TITLE' && (
         <>
           <div className="absolute inset-0 z-10">
