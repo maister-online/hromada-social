@@ -90,6 +90,14 @@ export class ShoreFishingScene {
 
   // Weather particles (rain / anomaly spores)
   private weatherParticles!: THREE.Points;
+  // Ambient wildlife: lightweight procedural birds and occasional fish jumps.
+  private ambientBirds: Array<{ group: THREE.Group; leftWing: THREE.Mesh; rightWing: THREE.Mesh; phase: number; speed: number; radius: number }> = [];
+  private jumpingFish!: THREE.Group;
+  private fishSplash!: THREE.Mesh;
+  private fishJumpStart = -100;
+  private fishJumpX = 0;
+  private fishJumpZ = -24;
+  private nextFishJump = 8;
   private weatherPos!: Float32Array;
   private currentLocId: string;
   private currentRodKey: string;
@@ -175,6 +183,7 @@ export class ShoreFishingScene {
     this.rebuildRod(initial.rodType, initial.rodLevelIndex);
     this.setupBobberAndLine(initial.location);
     this.setupWeatherParticles();
+    this.setupAmbientWildlife();
 
     if (!this.isSoftwareGl) {
       this.renderer.compile(this.scene, this.camera);
@@ -655,6 +664,99 @@ export class ShoreFishingScene {
     this.scene.add(this.aimReticleGroup);
   }
 
+  private setupAmbientWildlife(): void {
+    // Small dark silhouettes read naturally against the sky and stay inexpensive on mobile.
+    const feather = new THREE.MeshStandardMaterial({ color: 0x202a2b, roughness: 0.92, side: THREE.DoubleSide });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x303a38, roughness: 0.95 });
+    for (let i = 0; i < 4; i++) {
+      const group = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.105, 7, 5), bodyMat);
+      body.scale.set(1.65, 0.72, 0.72);
+      group.add(body);
+      const wingGeo = new THREE.BufferGeometry();
+      wingGeo.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, -0.42,0.015,-0.13, -0.12,0.025,0.18], 3));
+      wingGeo.computeVertexNormals();
+      const leftWing = new THREE.Mesh(wingGeo, feather);
+      const rightWing = new THREE.Mesh(wingGeo, feather);
+      leftWing.position.set(0, 0.025, -0.035);
+      rightWing.position.set(0, 0.025, 0.035);
+      rightWing.rotation.y = Math.PI;
+      group.add(leftWing, rightWing);
+      group.scale.setScalar(0.75 + (i % 2) * 0.22);
+      this.scene.add(group);
+      this.ambientBirds.push({ group, leftWing, rightWing, phase: i * 1.7, speed: 0.48 + i * 0.055, radius: 8 + i * 1.2 });
+    }
+
+    // A natural-coloured fish briefly breaks the surface, then disappears with a small ring ripple.
+    this.jumpingFish = new THREE.Group();
+    const fishBody = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 12, 8),
+      new THREE.MeshStandardMaterial({ color: 0x87958a, roughness: 0.48, metalness: 0.08 })
+    );
+    fishBody.scale.set(1.75, 0.72, 0.62);
+    this.jumpingFish.add(fishBody);
+    const tail = new THREE.Mesh(
+      new THREE.ConeGeometry(0.13, 0.28, 5),
+      new THREE.MeshStandardMaterial({ color: 0x68796f, roughness: 0.62, side: THREE.DoubleSide })
+    );
+    tail.rotation.z = Math.PI / 2;
+    tail.position.x = -0.43;
+    this.jumpingFish.add(tail);
+    this.jumpingFish.visible = false;
+    this.scene.add(this.jumpingFish);
+
+    this.fishSplash = new THREE.Mesh(
+      new THREE.RingGeometry(0.12, 0.2, 28),
+      new THREE.MeshBasicMaterial({ color: 0xc7d8d4, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false })
+    );
+    this.fishSplash.rotation.x = -Math.PI / 2;
+    this.fishSplash.position.y = 0.075;
+    this.fishSplash.visible = false;
+    this.scene.add(this.fishSplash);
+  }
+
+  private updateAmbientWildlife(elapsed: number): void {
+    for (const bird of this.ambientBirds) {
+      const t = elapsed * bird.speed + bird.phase;
+      bird.group.position.set(Math.sin(t * 0.42) * bird.radius, 6.4 + Math.sin(t * 1.15) * 0.48, -19 + Math.cos(t * 0.31) * 5);
+      bird.group.rotation.y = Math.cos(t * 0.42) > 0 ? Math.PI : 0;
+      const flap = Math.sin(t * 5.2) * 0.52;
+      bird.leftWing.rotation.z = flap;
+      bird.rightWing.rotation.z = -flap;
+    }
+
+    if (elapsed > this.nextFishJump && elapsed - this.fishJumpStart > 2.1) {
+      this.fishJumpStart = elapsed;
+      this.fishJumpX = (Math.random() - 0.5) * 8;
+      this.fishJumpZ = -17 - Math.random() * 17;
+      this.nextFishJump = elapsed + 11 + Math.random() * 17;
+      this.jumpingFish.visible = true;
+      this.fishSplash.visible = true;
+      this.fishSplash.position.set(this.fishJumpX, 0.075, this.fishJumpZ);
+    }
+
+    const jumpAge = elapsed - this.fishJumpStart;
+    if (jumpAge >= 0 && jumpAge < 1.05) {
+      const progress = jumpAge / 1.05;
+      const arc = Math.sin(progress * Math.PI);
+      this.jumpingFish.position.set(this.fishJumpX, 0.12 + arc * 1.35, this.fishJumpZ);
+      this.jumpingFish.rotation.z = -Math.cos(progress * Math.PI) * 0.42;
+      this.jumpingFish.rotation.y = Math.sin(progress * Math.PI) * 0.18;
+      this.jumpingFish.rotation.x = Math.sin(progress * Math.PI * 2) * 0.08;
+      this.fishSplash.scale.setScalar(0.45 + progress * 1.9);
+      (this.fishSplash.material as THREE.MeshBasicMaterial).opacity = progress > 0.72 ? (1 - progress) * 1.8 : 0.12;
+    } else {
+      this.jumpingFish.visible = false;
+      if (jumpAge >= 1.05 && jumpAge < 2.0) {
+        const ripple = (jumpAge - 1.05) / 0.95;
+        this.fishSplash.scale.setScalar(1.2 + ripple * 2.2);
+        (this.fishSplash.material as THREE.MeshBasicMaterial).opacity = (1 - ripple) * 0.38;
+      } else {
+        this.fishSplash.visible = false;
+      }
+    }
+  }
+
   private setupWeatherParticles(): void {
     const count = 460;
     this.weatherPos = new Float32Array(count * 3);
@@ -1032,6 +1134,7 @@ export class ShoreFishingScene {
 
     this.updateAtmosphere(elapsed);
     this.updateRodBobberAndWeather(dt, elapsed);
+    this.updateAmbientWildlife(elapsed);
 
     this.renderer.render(this.scene, this.camera);
     if (this.isSoftwareGl) {
