@@ -195,7 +195,6 @@ export default function App() {
   const [existingSave] = useState<SaveState | null>(() => loadSavedGame());
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
-  const [introFinished, setIntroFinished] = useState(false);
   const [muted, setMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(() => {
     try {
@@ -1498,41 +1497,31 @@ export default function App() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#060a08]">
       {screen === 'TITLE' && (
-        <TitleScreen
-          hasSave={existingSave !== null}
-          discoveredCount={Object.keys(gameState.discovered).length}
-          totalSpeciesCount={FISH_SPECIES.length}
-          musicEnabled={musicEnabled}
-          muted={muted}
-          onToggleMusic={handleToggleMusic}
-          onToggleMute={handleToggleMute}
-          onNewGame={handleNewGame}
-          onContinue={handleContinue}
-          onOpenBestiary={() => setShowBestiary(true)}
-        />
-      )}
-
-      {screen === 'TITLE' && !introFinished && (
-        <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
-            autoPlay
-            playsInline
-            preload="auto"
-            onEnded={() => setIntroFinished(true)}
-            onError={() => setIntroFinished(true)}
-          />
-          <div className="absolute top-4 right-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIntroFinished(true)}
-              className="rounded-xl border border-white/25 bg-black/65 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm"
-            >
-              Пропустити
-            </button>
+        <>
+          <div className="fixed inset-0 z-0 bg-black overflow-hidden">
+            <video
+              className="absolute inset-0 h-full w-full object-cover"
+              src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BB%D1%8F_80660f17.mp4"
+              autoPlay
+              playsInline
+              preload="auto"
+            />
           </div>
-        </div>
+          <div className="absolute inset-0 z-10">
+            <TitleScreen
+              hasSave={existingSave !== null}
+              discoveredCount={Object.keys(gameState.discovered).length}
+              totalSpeciesCount={FISH_SPECIES.length}
+              musicEnabled={musicEnabled}
+              muted={muted}
+              onToggleMusic={handleToggleMusic}
+              onToggleMute={handleToggleMute}
+              onNewGame={handleNewGame}
+              onContinue={handleContinue}
+              onOpenBestiary={() => setShowBestiary(true)}
+            />
+          </div>
+        </>
       )}
 
       {screen === 'MAP' && (
