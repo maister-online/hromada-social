@@ -196,8 +196,6 @@ export default function App() {
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [introEnded, setIntroEnded] = useState(false);
-  const [videoMuted, setVideoMuted] = useState(false);
-  const [needsSoundTap, setNeedsSoundTap] = useState(false);
   const introVideoRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(() => {
@@ -244,50 +242,18 @@ export default function App() {
     setMuted((prev) => {
       const next = !prev;
       audioEngine.setMuted(next);
-      setVideoMuted(next);
-      if (introVideoRef.current) introVideoRef.current.muted = next;
       return next;
     });
-  }, []);
-
-  const handleEnableIntroSound = useCallback(() => {
-    audioEngine.init();
-    const video = introVideoRef.current;
-    if (video) {
-      video.muted = false;
-      video.play().then(() => {
-        setVideoMuted(false);
-        setNeedsSoundTap(false);
-      }).catch(() => {
-        setVideoMuted(true);
-        setNeedsSoundTap(true);
-      });
-    }
   }, []);
 
   useEffect(() => {
     if (screen !== 'TITLE') return;
     const video = introVideoRef.current;
     if (!video) return;
-    const startVideo = async () => {
-      try {
-        video.muted = false;
-        await video.play();
-        setVideoMuted(false);
-        setNeedsSoundTap(false);
-      } catch {
-        // Mobile browsers commonly block autoplay with sound. Keep the video visible and playing silently.
-        video.muted = true;
-        setVideoMuted(true);
-        setNeedsSoundTap(true);
-        try {
-          await video.play();
-        } catch {
-          // A browser may still require a tap even for muted playback.
-        }
-      }
-    };
-    void startVideo();
+    video.muted = false;
+    void video.play().catch(() => {
+      // Браузер може заборонити autoplay зі звуком до першої взаємодії користувача.
+    });
   }, [screen]);
 
   const handleToggleMusic = useCallback(() => {
@@ -1548,24 +1514,14 @@ export default function App() {
             <video
               ref={introVideoRef}
               className="absolute inset-0 h-full w-full object-cover"
-              muted={videoMuted}
+              muted={false}
               onEnded={() => setIntroEnded(true)}
-              onError={() => setNeedsSoundTap(true)}
               src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
               autoPlay
               playsInline
               preload="auto"
             />
           </div>
-          {needsSoundTap && !introEnded && (
-            <button
-              type="button"
-              onClick={handleEnableIntroSound}
-              className="absolute z-20 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/30 bg-black/65 px-5 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur-sm"
-            >
-              Торкніться, щоб увімкнути звук
-            </button>
-          )}
           <div className="absolute inset-0 z-10">
             <TitleScreen
               menuVisible={introEnded}
@@ -1573,9 +1529,7 @@ export default function App() {
               discoveredCount={Object.keys(gameState.discovered).length}
               totalSpeciesCount={FISH_SPECIES.length}
               musicEnabled={musicEnabled}
-              muted={muted}
               onToggleMusic={handleToggleMusic}
-              onToggleMute={handleToggleMute}
               onNewGame={handleNewGame}
               onContinue={handleContinue}
               onOpenBestiary={() => setShowBestiary(true)}
