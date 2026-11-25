@@ -195,6 +195,7 @@ export default function App() {
   const [existingSave] = useState<SaveState | null>(() => loadSavedGame());
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
+  const [introEnded, setIntroEnded] = useState(false);
   const [muted, setMuted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(() => {
     try {
@@ -1501,6 +1502,8 @@ export default function App() {
           <div className="fixed inset-0 z-0 bg-black overflow-hidden">
             <video
               className="absolute inset-0 h-full w-full object-cover"
+              muted={false}
+              onEnded={() => setIntroEnded(true)}
               src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BB%D1%8F_80660f17.mp4"
               autoPlay
               playsInline
@@ -1509,6 +1512,7 @@ export default function App() {
           </div>
           <div className="absolute inset-0 z-10">
             <TitleScreen
+              menuVisible={introEnded}
               hasSave={existingSave !== null}
               discoveredCount={Object.keys(gameState.discovered).length}
               totalSpeciesCount={FISH_SPECIES.length}
