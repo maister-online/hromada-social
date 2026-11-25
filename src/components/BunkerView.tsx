@@ -277,7 +277,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
-      {/* Bunker Header */}
+      {/* Назва локації: Бункер Рокитне */}
       <header className="bunker-main-header absolute top-0 left-0 right-0 z-20 px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-lg sm:text-2xl font-bold text-slate-100">
