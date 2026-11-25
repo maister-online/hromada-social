@@ -281,7 +281,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       <header className="bunker-main-header absolute top-0 left-0 right-0 z-20 px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-lg sm:text-2xl font-bold text-slate-100">
-            Бункер «Щит-04» · Рокитне
+            Бункер Рокитне
           </h1>
           <p className="text-xs text-slate-400">
             День {gameState.day} · {clock} ({phaseLabel}) · Рівень {gameState.level} ({gameState.xp} XP)
@@ -375,7 +375,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#070b09]">
           <img
             src={BUNKER_PHOTO_URL}
-            alt="Інтер’єр бункера Щит-04 з чотирма сталкерами"
+            alt="Інтер’єр Бункера Рокитне з чотирма сталкерами"
             className="absolute inset-0 block w-screen h-[100dvh] max-w-none object-cover object-center select-none pointer-events-none"
             draggable={false}
             style={{ width: "100vw", height: "100dvh", objectFit: "cover", objectPosition: "center" }}
@@ -442,7 +442,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bunker-dialog-topbar px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
-              <div className="min-w-0"><div className="text-[9px] uppercase tracking-[0.24em] text-emerald-300/75">Зв’язок · Щит-04</div><div className="text-xs font-semibold text-slate-200">Інтерактивне меню персонажа</div></div>
+              <div className="min-w-0"><div className="text-[9px] uppercase tracking-[0.24em] text-emerald-300/75">Зв’язок · Бункер Рокитне</div><div className="text-xs font-semibold text-slate-200">Інтерактивне меню персонажа</div></div>
               <button
                 type="button"
                 onClick={() => setActiveNpc(null)}
