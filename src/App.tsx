@@ -247,8 +247,8 @@ export default function App() {
     const introAudio = introAudioRef.current;
     if (!video || !introAudio) return;
 
-    // Підготовлюємо MP3 заздалегідь. Мобільний браузер дозволяє
-    // запустити його лише безпосередньо з реальної дії користувача.
+    // Окремий MP3 заставки: пробуємо запустити автоматично разом із відео.
+    // Якщо браузер блокує autoplay зі звуком, обійти це обмеження вебсторінка не може.
     introAudio.pause();
     introAudio.currentTime = 0;
     introAudio.muted = false;
@@ -256,33 +256,12 @@ export default function App() {
     introAudio.load();
     video.muted = true;
     void video.play().catch(() => setIntroEnded(true));
-
-    let soundStarted = false;
-    const startIntroSound = () => {
-      if (soundStarted || video.ended) return;
-      introAudio.muted = false;
-      introAudio.volume = 1;
-      const playback = introAudio.play();
-      if (playback) {
-        void playback.then(() => {
-          soundStarted = true;
-          document.removeEventListener('pointerdown', startIntroSound, true);
-          document.removeEventListener('touchstart', startIntroSound, true);
-          document.removeEventListener('click', startIntroSound, true);
-        }).catch(() => {
-          // Якщо браузер ще не дозволив звук, наступний дотик повторить запуск.
-        });
-      }
-    };
-
-    document.addEventListener('pointerdown', startIntroSound, true);
-    document.addEventListener('touchstart', startIntroSound, true);
-    document.addEventListener('click', startIntroSound, true);
+    void introAudio.play().catch(() => {
+      // Залишаємо заставку без звуку, якщо autoplay заборонений браузером.
+    });
 
     return () => {
-      document.removeEventListener('pointerdown', startIntroSound, true);
-      document.removeEventListener('touchstart', startIntroSound, true);
-      document.removeEventListener('click', startIntroSound, true);
+      introAudio.pause();
     };
   }, [screen]);
 
@@ -303,6 +282,9 @@ export default function App() {
 
   const handleNewGame = useCallback(() => {
     audioEngine.init();
+    audioEngine.setMusicEnabled(true);
+    audioEngine.startBackgroundMusic();
+    setMusicEnabled(true);
     const fresh = createFreshSave();
     setGameState(fresh);
     setScreen('BUNKER');
@@ -311,7 +293,9 @@ export default function App() {
 
   const handleContinue = useCallback(() => {
     audioEngine.init();
+    audioEngine.setMusicEnabled(true);
     audioEngine.startBackgroundMusic();
+    setMusicEnabled(true);
     const loc = stateRef.current.currentLocationId;
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : 'FISHING');
   }, []);
@@ -1569,6 +1553,7 @@ export default function App() {
               ref={introAudioRef}
               src={`${import.meta.env.BASE_URL}assets/%D0%BF%D0%BE%D0%BB%D1%96%D1%81%D1%81%D1%8F%20%D0%B7%D0%B0%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B0.mp3`}
               preload="auto"
+              autoPlay
               loop
             />
           </div>
