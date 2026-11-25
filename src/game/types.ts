@@ -178,6 +178,7 @@ export interface FoundLootEntry {
   locationId: LocationId;
   foundDay: number;
   value: number;
+  depthLayer?: 'surface' | 'mid' | 'bottom';
 }
 
 export interface RodDef {
