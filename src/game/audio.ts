@@ -80,6 +80,19 @@ class PolissiaAudioEngine {
     return this.muted;
   }
 
+  public startBackgroundMusic(): void {
+    this.ensureBgm();
+    if (!this.musicEnabled || this.muted || !this.bgmAudio) return;
+    this.bgmAudio.loop = true;
+    this.bgmAudio.volume = this.musicVolume;
+    this.bgmAudio.muted = false;
+    if (this.bgmAudio.paused) {
+      this.bgmAudio.play().catch(() => {
+        // The game-start button is a user gesture; retry on the next interaction if needed.
+      });
+    }
+  }
+
   public setMusicEnabled(enabled: boolean): void {
     this.musicEnabled = enabled;
     this.ensureBgm();
