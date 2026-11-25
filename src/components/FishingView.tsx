@@ -385,7 +385,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const isTackleBroken = isRodBroken || isReelBroken || isLineBroken;
 
   const rodIdx = RODS.findIndex((r) => r.id === rod.id);
-  const maxCastM = Math.min(location.maxCastDistanceM + rigStats.totalCastBonusM, reel.lineCapacityM, line.lengthM);
+  // Float tackle is a short-range setup; feeder/donka and spinning use their actual gear limits.
+  const gearCastLimitM = Math.min(location.maxCastDistanceM + rigStats.totalCastBonusM, reel.lineCapacityM, line.lengthM);
+  const maxCastM = rod.type === 'float' ? Math.min(6, gearCastLimitM) : gearCastLimitM;
   const keepnetCap =
     (KEEPNET_UPGRADES[gameState.keepnetLevel - 1]?.capacityKg ?? 15) +
     rigStats.keepnetBonusKg;
@@ -405,18 +407,18 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [phase, setPhase] = useState<FishingVisualPhase>('IDLE');
   const [chargeRatio, setChargeRatio] = useState(0);
   const [aimYaw, setAimYaw] = useState(0);
-  const [castDistM, setCastDistM] = useState(16);
-  const [activeCastSpot, setActiveCastSpot] = useState<{ yaw: number; distM: number }>({
+  const [castDistM, setCastDistM] = useState(() => Math.min(6, maxCastM));
+  const [activeCastSpot, setActiveCastSpot] = useState<{ yaw: number; distM: number }>(() => ({
     yaw: 0,
-    distM: 16,
-  });
+    distM: Math.min(6, maxCastM),
+  }));
   const [fishingDepthM, setFishingDepthM] = useState(1.8);
   const [bottomLock, setBottomLock] = useState(false);
   const [isAimingRecast, setIsAimingRecast] = useState(false);
   const [aimBlockedByShore, setAimBlockedByShore] = useState(false);
   const [dragLevel, setDragLevel] = useState(5); // 1..10 friction brake
   const [tensionRatio, setTensionRatio] = useState(0);
-  const [fishDistM, setFishDistM] = useState(16);
+  const [fishDistM, setFishDistM] = useState(() => Math.min(6, maxCastM));
   const [fishLateral, setFishLateral] = useState(0);
   const [isReeling, setIsReeling] = useState(false);
   const [snagProgress, setSnagProgress] = useState(0);
@@ -450,7 +452,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   phaseRef.current = phase;
   const aimYawRef = useRef(0);
   aimYawRef.current = aimYaw;
-  const castDistRef = useRef(16);
+  const castDistRef = useRef(Math.min(6, maxCastM));
   castDistRef.current = castDistM;
   const fishingDepthRef = useRef(1.8);
   const bottomLockRef = useRef(false);
