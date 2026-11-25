@@ -408,3 +408,46 @@
 @media (prefers-reduced-motion: reduce) {
   .bunker-npc-tag, .bunker-scene-footer { animation: none; }
 }
+
+/* Character interaction terminal */
+.bunker-dialog-backdrop { animation: bunker-backdrop-in 180ms ease-out both; }
+.bunker-dialog {
+  background: linear-gradient(145deg, rgba(9, 19, 14, 0.99), rgba(3, 9, 7, 0.99));
+  border: 1px solid rgba(110, 231, 183, 0.28);
+  box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 0 1px rgba(255,255,255,.035) inset, 0 0 42px rgba(16,185,129,.08);
+  animation: bunker-dialog-in 220ms cubic-bezier(.2,.8,.2,1) both;
+}
+.bunker-dialog-topbar {
+  background: linear-gradient(90deg, rgba(8, 24, 17, .98), rgba(5, 12, 9, .98));
+  border-bottom: 1px solid rgba(110,231,183,.18);
+}
+.bunker-dialog-content {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(16,185,129,.075), transparent 55%),
+    linear-gradient(180deg, #07100c, #050a08);
+}
+.bunker-character-card {
+  background: linear-gradient(120deg, rgba(17, 35, 26, .96), rgba(8, 17, 12, .96));
+  border: 1px solid rgba(167,243,208,.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 8px 24px rgba(0,0,0,.22);
+}
+.bunker-character-card h2 { letter-spacing: .015em; text-shadow: 0 2px 14px rgba(0,0,0,.6); }
+.bunker-dialogue-bubble {
+  max-width: 760px;
+  margin-top: 9px;
+  padding: 10px 12px;
+  border-left: 2px solid rgba(52,211,153,.62);
+  border-radius: 0 10px 10px 0;
+  background: linear-gradient(90deg, rgba(16,185,129,.10), rgba(16,185,129,.025));
+}
+.bunker-dialog-content button { transition: transform 140ms ease, border-color 140ms ease, background 140ms ease; }
+.bunker-dialog-content button:active { transform: scale(.985); }
+@keyframes bunker-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bunker-dialog-in { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 640px) {
+  .bunker-dialog { max-height: 94dvh; border-radius: 15px; }
+  .bunker-dialogue-bubble { padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bunker-dialog-backdrop, .bunker-dialog { animation: none; }
+}
