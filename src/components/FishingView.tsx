@@ -1623,9 +1623,11 @@ export const FishingView: React.FC<FishingViewProps> = ({
               </button>
             </div>
 
-            <div className="mb-4 grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-black/25 p-3 text-[11px]">
+            <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border border-white/10 bg-black/25 p-3 text-[11px]">
               <div><div className="text-slate-400">Час</div><div className="font-mono-num font-semibold text-amber-300">{clock}</div></div>
-              <div><div className="text-slate-400">Баланс</div><div className="font-mono-num font-semibold text-emerald-300">₴ {gameState.credits}</div></div>
+              <div><div className="text-slate-400">Гривні</div><div className="font-mono-num font-semibold text-emerald-300">₴ {gameState.credits}</div></div>
+              <div><div className="text-slate-400">Золото</div><div className="font-mono-num font-semibold text-yellow-300">◈ {gameState.goldCoins ?? 0}</div></div>
+              <div><div className="text-slate-400">Бурштин</div><div className="font-mono-num font-semibold text-orange-300">◆ {gameState.amberShards ?? 0}</div></div>
               <div><div className="text-slate-400">Садок</div><div className="font-mono-num font-semibold text-slate-100">{keepnetWeight.toFixed(1)} / {keepnetCap} кг</div></div>
               <div><div className="text-slate-400">Радіація</div><div className="font-mono-num text-slate-100">{Math.round(gameState.radiation)} мЗв</div></div>
               <div><div className="text-slate-400">Розсудливість</div><div className="font-mono-num text-slate-100">{Math.round(gameState.sanity)}%</div></div>
