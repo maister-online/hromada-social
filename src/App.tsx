@@ -195,8 +195,6 @@ export default function App() {
   const [existingSave] = useState<SaveState | null>(() => loadSavedGame());
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
-  const [introEnded, setIntroEnded] = useState(false);
-  const introVideoRef = useRef<HTMLVideoElement | null>(null);
   const [muted, setMuted] = useState(false);
   // Музика використовується лише для вступного відео.
   const [musicEnabled, setMusicEnabled] = useState<boolean>(false);
@@ -248,14 +246,6 @@ export default function App() {
       return next;
     });
   }, []);
-
-  useEffect(() => {
-    if (screen !== 'TITLE') return;
-    const video = introVideoRef.current;
-    if (!video) return;
-    video.muted = true;
-    void video.play().catch(() => setIntroEnded(true));
-  }, [screen]);
 
   const handleToggleMusic = useCallback(() => {
     audioEngine.init();
@@ -1519,22 +1509,9 @@ export default function App() {
     >
       {screen === 'TITLE' && (
         <>
-          <div className="fixed inset-0 z-0 bg-black overflow-hidden">
-            <video
-              ref={introVideoRef}
-              className="absolute inset-0 h-full w-full object-cover"
-              muted={true}
-              onEnded={() => setIntroEnded(true)}
-              onError={() => setIntroEnded(true)}
-              src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
-              autoPlay
-              playsInline
-              preload="auto"
-            />
-          </div>
           <div className="absolute inset-0 z-10">
             <TitleScreen
-              menuVisible={introEnded}
+              menuVisible={true}
               hasSave={existingSave !== null}
               discoveredCount={Object.keys(gameState.discovered).length}
               totalSpeciesCount={FISH_SPECIES.length}
