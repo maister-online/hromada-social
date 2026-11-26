@@ -10,6 +10,8 @@ import {
   ScrollText,
   Shield,
   Warehouse,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { LOCATIONS, MAP_IMAGE_URL, formatClock } from '../game/data';
 import { LocationDef, LocationId, WeatherType } from '../game/types';
@@ -396,6 +398,14 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             </p>
           </div>
           <div className="pointer-events-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onToggleMute}
+              className="btn-tactile min-h-10 inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-[#080d0b]/90 px-3 text-[11px] font-bold text-slate-100 backdrop-blur-md"
+            >
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {muted ? 'Звук вимкнено' : 'Звук'}
+            </button>
             {!compact && (
               <button
                 type="button"
