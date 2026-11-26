@@ -48,6 +48,7 @@ import {
 } from './game/types';
 
 const SAVE_KEY = 'polissia_fishing_save_v1';
+const MAP_BGM_TRACK_URL = `${import.meta.env.BASE_URL}assets/${encodeURIComponent('Музика на карту_2026_11_26_10_12_26.mp3')}`;
 
 const WEATHER_CYCLE: WeatherType[] = ['clear', 'fog', 'rain', 'anomaly_surge'];
 
@@ -198,6 +199,7 @@ export default function App() {
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
+  const mapMusicRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
   // Фонова музика за замовчуванням увімкнена, але звучить тільки в бункері.
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
@@ -224,15 +226,47 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen === 'BUNKER' && musicEnabled) {
+    if (screen === 'BUNKER' && !showBunkerMap && musicEnabled) {
       audioEngine.init();
       audioEngine.setMusicEnabled(true);
       audioEngine.startBackgroundMusic();
       return;
     }
-    // На водоймі, карті та титульному екрані фонова музика не звучить.
+    // Музика бункера вимикається на водоймі та під час відкритої карти.
     audioEngine.setMusicEnabled(false);
-  }, [screen, musicEnabled]);
+  }, [screen, showBunkerMap, musicEnabled]);
+
+  useEffect(() => {
+    const isMapOpen = screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap);
+    if (!mapMusicRef.current) {
+      const audio = new Audio(MAP_BGM_TRACK_URL);
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.volume = 0.42;
+      mapMusicRef.current = audio;
+    }
+
+    const audio = mapMusicRef.current;
+    if (isMapOpen && musicEnabled && !muted) {
+      audio.volume = 0.42;
+      audio.loop = true;
+      void audio.play().catch(() => {
+        // Якщо браузер заблокував автозапуск, повторна спроба буде при наступному відкритті карти.
+      });
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    return () => {
+      audio.pause();
+    };
+  }, [screen, showBunkerMap, musicEnabled, muted]);
+
+  useEffect(() => () => {
+    mapMusicRef.current?.pause();
+    mapMusicRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (screen === 'TITLE') return;
@@ -257,7 +291,7 @@ export default function App() {
     setMusicEnabled((prev) => {
       const next = !prev;
       // Перемикач керує фоновою музикою, але дозволяє її лише в бункері.
-      audioEngine.setMusicEnabled(screen === 'BUNKER' && next);
+      audioEngine.setMusicEnabled(screen === 'BUNKER' && !showBunkerMap && next);
       try {
         localStorage.setItem('polissia_music_enabled', String(next));
       } catch {
@@ -266,7 +300,7 @@ export default function App() {
       showToast(next ? 'Музику увімкнено' : 'Музику вимкнено');
       return next;
     });
-  }, [showToast]);
+  }, [showToast, screen, showBunkerMap]);
 
   const finishGamePresentation = useCallback(() => {
     const audio = presentationAudioRef.current;
