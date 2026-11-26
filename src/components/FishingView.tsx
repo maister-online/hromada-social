@@ -454,7 +454,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [sonarTop, setSonarTop] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
-      return Number.isFinite(saved.top) ? Math.max(0, saved.top) : 8;
+      return Number.isFinite(saved.top) ? Math.max(0, saved.top) : 105;
     } catch { return 8; }
   });
   const sonarDragRef = useRef<{ pointerX: number; pointerY: number; left: number; top: number } | null>(null);
@@ -471,8 +471,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const handleSonarDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!sonarDragRef.current) return;
     const start = sonarDragRef.current;
-    setSonarLeft(Math.max(0, Math.min(window.innerWidth - 110, start.left + event.clientX - start.pointerX)));
-    setSonarTop(Math.max(0, Math.min(window.innerHeight - 70, start.top + event.clientY - start.pointerY)));
+    setSonarLeft(Math.max(8, Math.min(window.innerWidth - Math.min(360, window.innerWidth - 16) - 8, start.left + event.clientX - start.pointerX)));
+    setSonarTop(Math.max(28, Math.min(window.innerHeight - 190, start.top + event.clientY - start.pointerY)));
   };
   const stopSonarDrag = () => { sonarDragRef.current = null; };
   const [sonarRange, setSonarRange] = useState(10);
@@ -1763,8 +1763,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[90] w-[min(300px,calc(100vw-16px))] select-none"
-          style={{ left: 8, top: 105 }}
+          className="pointer-events-none fixed z-[90] w-[min(360px,calc(100vw-16px))] select-none"
+          style={{ left: sonarLeft, top: sonarTop }}
         >
           <div className="relative aspect-[16/9] w-full">
             <div
