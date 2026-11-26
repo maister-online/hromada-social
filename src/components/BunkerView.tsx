@@ -24,7 +24,6 @@ import {
   VolumeX,
   Wrench,
   X,
-  Zap,
 } from 'lucide-react';
 import {
   ACCESSORIES,
@@ -705,7 +704,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         </div>
                       </div>
                       <p className="text-xs text-slate-400">
-                        Сон на спальниках у бункері знімає психологічне напруження після викидів (+55% ситості при зміні часу доби) або повністю відновлює ситість до 100%.
+                        Сон на спальниках у бункері допомагає відновити сили й ситість (+55% ситості при зміні часу доби) або повністю відновлює ситість до 100%.
                       </p>
                       <div className="flex flex-wrap items-center gap-3">
                         <button
@@ -762,7 +761,6 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                               ['clear', 'Ясно', Sun, 'text-amber-300'],
                               ['fog', 'Густий туман', CloudFog, 'text-teal-200'],
                               ['rain', 'Дощ / Мряка', CloudRain, 'text-sky-300'],
-                              ['anomaly_surge', 'Викид', Zap, 'text-cyan-300'],
                             ] as [
                               WeatherType,
                               string,
