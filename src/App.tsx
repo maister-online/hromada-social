@@ -171,7 +171,6 @@ function loadSavedGame(): SaveState | null {
         ...(parsed.itemDurability ?? {}),
       },
       foundLoot: parsed.foundLoot ?? [],
-      hunger: 100,
       hunger: typeof parsed.hunger === 'number' ? Math.max(0, Math.min(100, parsed.hunger)) : 100,
       energyBoostUntilMs: parsed.energyBoostUntilMs ?? 0,
       activeGroundbaitByLoc: parsed.activeGroundbaitByLoc ?? {},
