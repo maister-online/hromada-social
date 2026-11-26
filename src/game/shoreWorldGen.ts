@@ -90,36 +90,36 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Worn black-carbon carp blank: near-black graphite with a restrained satin clearcoat.
-  const blankColor = 0x111714;
+  const blankColor = 0x12332f; // saturated deep petrol-black carbon
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x242a25,
-    roughness: 0.94,
+    color: 0x59412c,
+    roughness: 0.9,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x111612,
+    color: 0x241d16,
     roughness: 1,
     metalness: 0,
   });
   const evaMat = new THREE.MeshStandardMaterial({
-    color: 0x171d1a,
-    roughness: 0.66,
+    color: 0x263c36,
+    roughness: 0.58,
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0x454d49,
-    roughness: 0.4,
+    color: 0x899b91,
+    roughness: 0.34,
     metalness: 0.82,
   });
   const ceramicMat = new THREE.MeshPhysicalMaterial({
-    color: 0x0b1112,
-    roughness: 0.24,
+    color: 0x102c2b,
+    roughness: 0.2,
     metalness: 0.18,
     clearcoat: 0.8,
   });
   const threadMat = new THREE.MeshStandardMaterial({
-    color: 0x303a34,
+    color: 0x9a542d,
     roughness: 0.48,
     metalness: 0.28,
   });
@@ -131,8 +131,8 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     clearcoatRoughness: 0.22,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x151c19,
-    roughness: 0.32,
+    color: 0x1b3430,
+    roughness: 0.28,
     metalness: 0.82,
   });
 
@@ -148,12 +148,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   root.add(grip);
   // Uneven olive field tape wrapped around the handle, like repaired Zone gear.
   const tapeMat = new THREE.MeshStandardMaterial({
-    color: 0x343c2d,
-    roughness: 0.98,
+    color: 0x667b36,
+    roughness: 0.94,
     metalness: 0,
   });
   const darkTapeMat = new THREE.MeshStandardMaterial({
-    color: 0x1b211c,
+    color: 0x273321,
     roughness: 1,
     metalness: 0,
   });
@@ -453,8 +453,8 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     metalness: 0.08,
   });
   const wornSteelMat = new THREE.MeshStandardMaterial({
-    color: 0x414943,
-    roughness: 0.56,
+    color: 0x667c70,
+    roughness: 0.48,
     metalness: 0.72,
   });
   for (const t of [0.035, 0.075, 0.13, 0.30, 0.52, 0.73, 0.91]) {
