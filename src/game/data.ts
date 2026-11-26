@@ -444,7 +444,7 @@ const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
     glowColor: '#22d3ee',
     description:
       'Найбільш загадкова водойма Полісся: вода світиться холодним блакитним сяйвом, компас тремтить, а з дна виринають рідкісні кристалічні мутанти та «ЙОБНУТИЙ РАК».',
-    bestTimeHint: 'Ніч і викид · Потрібен захисний костюм рів. 3',
+    bestTimeHint: 'Нічна риболовля · Потрібен захисний костюм рів. 3',
     speciesIds: [
       'sterlet',
       'zander_crystal',
