@@ -97,65 +97,63 @@ export function getWaterSpotInfo(
   distM: number,
   maxCastM: number
 ): WaterSpotInfo {
-  const [dMin, dMax] = loc.depthRangeM;
+  const [shoreDepth, maxDepth] = loc.depthRangeM;
   const seed = locHash(loc.id) * Math.PI * 2;
   const distNorm = Math.max(0, Math.min(1, (distM - 3) / Math.max(8, maxCastM - 3)));
   const yawNorm = Math.max(-1, Math.min(1, yaw / 0.85));
+  const smooth = (x: number) => {
+    const t = Math.max(0, Math.min(1, x));
+    return t * t * (3 - 2 * t);
+  };
 
-  // Base longitudinal profile: near-bank shelf -> drop-off -> deep channel/pit -> slight rise near far shore
+  // Depth grows from the bank toward the main water. Each location supplies
+  // its own real-world-inspired maximum; the relief adds shoals, pits and ledges.
   let profileFactor: number;
   if (loc.waterType === 'river') {
-    // Channel thalweg shifts slightly left/right depending on location
-    const channelCenter = Math.sin(seed * 1.7) * 0.25;
-    const bankSlope = Math.sin(Math.min(1, distNorm * 1.15) * Math.PI * 0.86);
-    const channelBoost = Math.exp(-Math.pow((yawNorm - channelCenter) * 1.5, 2)) * 0.28;
-    profileFactor = bankSlope * 0.72 + channelBoost;
+    const channelCenter = Math.sin(seed * 1.7) * 0.22;
+    const channel = Math.exp(-Math.pow((yawNorm - channelCenter) * 1.75, 2));
+    const gradualSlope = smooth(distNorm / 0.92) * 0.48;
+    const channelBed = channel * smooth((distNorm - 0.12) / 0.58) * 0.34;
+    const nearBankShelf = distNorm < 0.16 ? distNorm * 0.32 : 0.05;
+    const shoal = Math.max(0, Math.sin(distNorm * 10.5 + yawNorm * 4.1 + seed)) * 0.07;
+    const dropOff = Math.exp(-Math.pow((distNorm - (0.42 + channelCenter * 0.12)) * 13, 2)) * channel * 0.12;
+    profileFactor = nearBankShelf + gradualSlope + channelBed + shoal + dropOff;
   } else if (loc.waterType === 'swamp') {
-    // Undulating peat pits and submerged hummocks
-    const base = Math.pow(Math.sin(distNorm * Math.PI * 0.92), 0.75) * 0.65;
-    const peatPit =
-      Math.max(
-        0,
-        Math.sin(distNorm * 7.2 + yawNorm * 3.1 + seed) * 0.22 +
-          Math.cos(yawNorm * 4.5 - distNorm * 3.8 + seed) * 0.14
-      );
-    profileFactor = base + peatPit;
+    const gradualSlope = smooth(distNorm / 0.96) * 0.38;
+    const peatPit = Math.max(
+      0,
+      Math.sin(distNorm * 9.2 + yawNorm * 3.1 + seed) * 0.20 +
+        Math.cos(yawNorm * 5.2 - distNorm * 4.2 + seed) * 0.12
+    );
+    const hummock = Math.max(0, Math.sin(yawNorm * 8 + seed * 0.7) * 0.07);
+    profileFactor = gradualSlope + peatPit + hummock;
   } else if (loc.waterType === 'anomaly_lake') {
-    // Steep funnel / crater toward the anomalous rift
     const pitX = Math.cos(seed) * 0.22;
-    const pitD = 0.62;
-    const radial = Math.hypot((yawNorm - pitX) * 0.9, (distNorm - pitD) * 1.35);
-    const crater = Math.exp(-radial * radial * 4.2) * 0.62;
-    const shelf = Math.sin(distNorm * Math.PI * 0.88) * 0.44;
-    profileFactor = shelf + crater;
+    const pit = Math.exp(-Math.pow((yawNorm - pitX) * 1.05, 2) - Math.pow((distNorm - 0.72) * 2.0, 2)) * 0.58;
+    const basinSlope = smooth(distNorm / 0.9) * 0.42;
+    const shelf = Math.max(0, Math.sin(distNorm * 8.5 + yawNorm * 2.8 + seed)) * 0.08;
+    profileFactor = basinSlope + pit + shelf;
   } else {
-    // Lake / Granite quarry: steep rock drop-off on one side, deep basin in center-far
     const basinOffset = loc.id === 'tomashgorod' ? 0.14 : -0.12;
-    const shelf =
-      loc.id === 'tomashgorod'
-        ? Math.pow(Math.sin(distNorm * Math.PI * 0.88), 0.68) * 0.72
-        : Math.sin(distNorm * Math.PI * 0.92) * 0.66;
-    const ledge =
-      Math.exp(-Math.pow((yawNorm - basinOffset) * 1.4, 2)) *
-      Math.sin(distNorm * Math.PI * 0.95) *
-      0.32;
-    profileFactor = shelf + ledge;
+    const basin = Math.exp(-Math.pow((yawNorm - basinOffset) * 1.35, 2)) *
+      smooth((distNorm - 0.16) / 0.7) * 0.42;
+    const gradualSlope = smooth(distNorm / 0.94) * 0.43;
+    const rockLedge = Math.exp(-Math.pow((distNorm - 0.48) * 15, 2)) *
+      Math.exp(-Math.pow((yawNorm - basinOffset) * 1.7, 2)) * 0.13;
+    profileFactor = gradualSlope + basin + rockLedge;
   }
 
-  // Natural micro-relief (submerged logs, granite steps, bars)
+  // Small deterministic bottom irregularities; kept subtle so the bank remains shallow.
   const micro =
-    Math.sin(distNorm * 11.5 + yawNorm * 4.2 + seed) * 0.06 +
-    Math.cos(yawNorm * 6.5 - distNorm * 5.0 + seed * 0.7) * 0.04;
-
-  const depthNorm = Math.max(0.03, Math.min(1, profileFactor + micro));
-  const depthM = Number((dMin + depthNorm * (dMax - dMin)).toFixed(1));
+    Math.sin(distNorm * 12.5 + yawNorm * 4.2 + seed) * 0.025 +
+    Math.cos(yawNorm * 6.5 - distNorm * 5.0 + seed * 0.7) * 0.018;
+  const depthNorm = Math.max(0, Math.min(1, profileFactor + micro));
+  const depthM = Number((shoreDepth + depthNorm * (maxDepth - shoreDepth)).toFixed(1));
 
   let zoneLabel = 'Середня вода';
-  if (distNorm < 0.2 || depthNorm < 0.25) {
+  if (distNorm < 0.18 || depthNorm < 0.18) {
     zoneLabel = Math.abs(yawNorm) > 0.55 ? 'Прибережний очерет' : 'Берегова мілина';
-  } else if (distNorm > 0.86 && depthNorm < 0.52) {
-    zoneLabel = 'Під протилежним берегом';
-  } else if (depthNorm >= 0.76) {
+  } else if (depthNorm >= 0.78) {
     zoneLabel =
       loc.waterType === 'anomaly_lake'
         ? 'Аномальний вир'
@@ -168,13 +166,13 @@ export function getWaterSpotInfo(
     zoneLabel =
       loc.waterType === 'river'
         ? loc.id === 'rokitne'
-          ? 'Сосновий підмив'
+          ? 'Руслова яма під мостом'
           : 'Руслова бровка'
         : loc.id === 'tomashgorod'
           ? 'Скельний свал'
           : 'Донна бровка';
   } else if (Math.abs(yawNorm) > 0.6) {
-    zoneLabel = yawNorm < 0 ? 'Ліва затока' : 'Права затока';
+    zoneLabel = yawNorm < 0 ? 'Ліва мілина / затока' : 'Права мілина / затока';
   }
 
   let bottomLabel = 'Пісок і мул';
