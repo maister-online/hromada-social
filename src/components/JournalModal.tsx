@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Award, BookMarked, Box, Trophy, X } from 'lucide-react';
+import { Award, BookMarked, Trophy, X } from 'lucide-react';
 import { FISH_MAP, LOCATIONS } from '../game/data';
 import { FaunaKind, FishSpeciesDef, SaveState } from '../game/types';
 import { FishIllustration } from './FishIllustration';
@@ -208,10 +208,9 @@ export const JournalModal: React.FC<JournalModalProps> = ({ gameState, onClose }
                           type="button"
                           onClick={() => setInspectSpecies(sp)}
                           className="btn-tactile btn-field min-h-[38px] px-2.5 py-1.5 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer"
-                          title="Оглянути 3D-модель"
+                          title="Переглянути деталі виду"
                         >
-                          <Box className="w-3.5 h-3.5 text-cyan-300" />
-                          3D
+                          Деталі
                         </button>
                       )}
                     </div>
@@ -262,8 +261,7 @@ export const JournalModal: React.FC<JournalModalProps> = ({ gameState, onClose }
                         onClick={() => setInspectSpecies(species)}
                         className="btn-tactile btn-field px-2.5 py-1 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Box className="w-3.5 h-3.5 text-cyan-300" />
-                        3D
+                        Деталі
                       </button>
                     </div>
                   </div>
@@ -274,7 +272,7 @@ export const JournalModal: React.FC<JournalModalProps> = ({ gameState, onClose }
         </div>
       </div>
 
-      {/* 3D Specimen Modal */}
+      {/* Fish details modal */}
       {inspectSpecies && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/82"
