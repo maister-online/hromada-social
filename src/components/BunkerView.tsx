@@ -653,7 +653,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Redirect / Hint to Yeltsin's Market */}
+                      {/* Redirect / Hint to Baryga's Market */}
                       <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 bg-[#0a130f] border rounded-xl p-4">
                         <div>
                           <h3 className="text-sm font-semibold text-slate-100">
