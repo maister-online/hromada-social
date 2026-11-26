@@ -109,10 +109,8 @@ interface FishingViewProps {
   location: LocationDef;
   gameState: SaveState;
   muted: boolean;
-  musicEnabled: boolean;
   isModalOpen?: boolean;
   onToggleMute: () => void;
-  onToggleMusic: () => void;
   onSelectBait: (baitId: string) => void;
   onConsumeBait: (baitId: string) => void;
   onLineSnap?: (baitId: string) => void;
@@ -144,10 +142,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
   location,
   gameState,
   muted,
-  musicEnabled,
   isModalOpen = false,
   onToggleMute,
-  onToggleMusic,
   onSelectBait,
   onConsumeBait,
   onLineSnap,
@@ -1685,8 +1681,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenQuests(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><ScrollText className="mr-2 inline h-4 w-4 text-emerald-300" />Завдання</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenMap(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Map className="mr-2 inline h-4 w-4 text-teal-300" />Карта</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onGoToBunker(); }} className="btn-tactile btn-primary-emerald col-span-2 min-h-[48px] rounded-xl px-3 text-sm font-bold"><Warehouse className="mr-2 inline h-4 w-4" />Повернутися до бункера</button>
-              <button type="button" onClick={onToggleMusic} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}</button>
-              <button type="button" onClick={onToggleMute} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{muted ? 'Увімкнути звук' : 'Вимкнути звук'}</button>
+                    <button type="button" onClick={onToggleMute} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{muted ? 'Звук вимкнено' : 'Звук'}</button>
             </div>
           </section>
         </div>
