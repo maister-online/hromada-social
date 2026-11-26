@@ -90,25 +90,25 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Neutral graphite-grey finish across every rod tier.
-  const blankColor = 0x343a40;
+  const blankColor = 0x30372f;
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x292f34,
+    color: 0x414536,
     roughness: 0.96,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x171c20,
+    color: 0x20251d,
     roughness: 1,
     metalness: 0,
   });
   const evaMat = new THREE.MeshStandardMaterial({
-    color: 0x181c22,
+    color: 0x252b24,
     roughness: 0.72,
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0x68727a,
+    color: 0x515b53,
     roughness: 0.34,
     metalness: 0.82,
   });
@@ -125,13 +125,13 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   });
   const blankMat = new THREE.MeshPhysicalMaterial({
     color: blankColor,
-    roughness: rodType === 'float' ? 0.27 : 0.19,
-    metalness: rodLevelIndex >= 3 ? 0.42 : 0.28,
-    clearcoat: 1,
-    clearcoatRoughness: 0.12,
+    roughness: rodType === 'float' ? 0.48 : 0.42,
+    metalness: rodLevelIndex >= 3 ? 0.24 : 0.16,
+    clearcoat: 0.55,
+    clearcoatRoughness: 0.32,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x242a2f,
+    color: 0x252b26,
     roughness: 0.28,
     metalness: 0.82,
   });
@@ -146,6 +146,27 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   grip.rotation.x = Math.PI / 2;
   grip.position.set(0, 0, -0.06);
   root.add(grip);
+  // Uneven olive field tape wrapped around the handle, like repaired Zone gear.
+  const tapeMat = new THREE.MeshStandardMaterial({
+    color: 0x55543d,
+    roughness: 0.98,
+    metalness: 0,
+  });
+  const darkTapeMat = new THREE.MeshStandardMaterial({
+    color: 0x292f25,
+    roughness: 1,
+    metalness: 0,
+  });
+  for (let i = 0; i < 8; i++) {
+    const tape = new THREE.Mesh(
+      new THREE.TorusGeometry(0.019 + (i % 2) * 0.0007, 0.0028, 5, 18),
+      i % 3 === 0 ? darkTapeMat : tapeMat
+    );
+    tape.rotation.x = Math.PI / 2;
+    tape.rotation.z = (i % 2 ? 0.12 : -0.12);
+    tape.position.set(0, 0, -0.205 + i * 0.047);
+    root.add(tape);
+  }
   // Fine cork grip rings and a worn, matte end collar.
   for (let i = 0; i < 7; i++) {
     const seam = new THREE.Mesh(new THREE.TorusGeometry(0.0205, 0.0014, 5, 16), corkSeamMat);
@@ -427,12 +448,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Subdued olive-drab thread wraps and steel collars give the blank a rugged
   // field-repaired, STALKER-style look without bright gaming-style decoration.
   const fieldWrapMat = new THREE.MeshStandardMaterial({
-    color: 0x42483b,
+    color: 0x51513a,
     roughness: 0.82,
     metalness: 0.08,
   });
   const wornSteelMat = new THREE.MeshStandardMaterial({
-    color: 0x59636a,
+    color: 0x596057,
     roughness: 0.48,
     metalness: 0.72,
   });
