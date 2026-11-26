@@ -223,8 +223,7 @@ export function scanSectorFish(
     locHash(loc.id) * 997 +
     sectorBucket * 37.3 +
     timeBucket * 13.7 +
-    scanNonce * 19.1 +
-    (weather === 'anomaly_surge' ? 41 : 0);
+    scanNonce * 19.1;
 
   const pseudoRand = (idx: number) => {
     const x = Math.sin(baseSeed + idx * 12.9898) * 43758.5453;
@@ -259,7 +258,7 @@ export function scanSectorFish(
     const depthFrac = Math.min(0.92, Math.max(0.18, bottomBias + r4 * (0.9 - bottomBias)));
     const swimDepthM = Number(Math.max(0.4, Math.min(spot.depthM - 0.25, spot.depthM * depthFrac)).toFixed(1));
 
-    const isMutant = Boolean(sp?.isMutant) || (r4 < loc.anomalyActivity / 180 && weather === 'anomaly_surge');
+    const isMutant = Boolean(sp?.isMutant);
     const label =
       sizeClass === 'giant'
         ? isMutant
