@@ -923,8 +923,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
           sceneRef.current?.triggerWaterSplash(1.0);
           setPhase('WAITING');
           const gbSpeed = activeGbDef ? 1 + activeGbDef.biteRateBoost : 1;
-          const baseDelay = 2.4 + Math.random() * 4.0;
-          waitTimerRef.current = baseDelay / (rigStats.biteSpeedMult * gbSpeed);
+          const biteRate = Math.max(0.75, Math.min(1.8, rigStats.biteSpeedMult * gbSpeed));
+          // Give fish time to find the bait; even good tackle cannot cause an instant bite.
+          waitTimerRef.current = (8 + Math.random() * 14) / biteRate;
           setStatusMsg(
             `Поплавок на воді (${castDistRef.current.toFixed(1)} м · спуск ${fishingDepthRef.current.toFixed(1)} м). Торкніться води щоб перекинути`
           );
@@ -933,21 +934,31 @@ export const FishingView: React.FC<FishingViewProps> = ({
         waitTimerRef.current -= dt;
         if (waitTimerRef.current <= 0) {
           setPhase('NIBBLE');
-          waitTimerRef.current = 0.85 + Math.random() * 1.1;
-          setStatusMsg('Пробує наживку... Готуйтесь підсікти!');
+          waitTimerRef.current = 1.4 + Math.random() * 2.8;
+          setStatusMsg('Ледь помітні дотики до наживки...');
         }
       } else if (curPhase === 'NIBBLE') {
         waitTimerRef.current -= dt;
         if (waitTimerRef.current <= 0) {
-          audioEngine.playBiteBell();
-          if (rigStats.hasAcousticAlarm) {
-            window.setTimeout(() => audioEngine.playBiteBell(), 140);
+          // Fish often tests the bait and leaves. A bite is not guaranteed on every approach.
+          const takeChance = Math.min(0.76, Math.max(0.38, 0.52 + (rigStats.biteSpeedMult - 1) * 0.1));
+          if (Math.random() > takeChance) {
+            audioEngine.playSplash(0.16);
+            setPhase('WAITING');
+            const gbSpeed = activeGbDef ? 1 + activeGbDef.biteRateBoost : 1;
+            const biteRate = Math.max(0.75, Math.min(1.8, rigStats.biteSpeedMult * gbSpeed));
+            waitTimerRef.current = (5 + Math.random() * 13) / biteRate;
+            setStatusMsg('Риба торкнулася наживки, але не взяла. Чекаємо...');
+          } else {
+            audioEngine.playBiteBell();
+            if (rigStats.hasAcousticAlarm) {
+              window.setTimeout(() => audioEngine.playBiteBell(), 140);
+            }
+            sceneRef.current?.triggerWaterSplash(0.8);
+            setPhase('BITE');
+            biteWindowRef.current = 2.6 + rigStats.hookRetentionBonus;
+            setStatusMsg('КЛЮЄ! Тисніть [ПІДСІКТИ] або [Пробіл]!');
           }
-          audioEngine.playSplash(0.65);
-          sceneRef.current?.triggerWaterSplash(0.8);
-          setPhase('BITE');
-          biteWindowRef.current = 2.6 + rigStats.hookRetentionBonus;
-          setStatusMsg('КЛЮЄ! Тисніть [ПІДСІКТИ] або [Пробіл]!');
         }
       } else if (curPhase === 'BITE') {
         biteWindowRef.current -= dt;
@@ -1261,7 +1272,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
     overloadTimerRef.current = 0;
     looseTimerRef.current = 0;
     setTensionRatio(tensionRef.current);
-    audioEngine.playSplash(1.25);
+    audioEngine.playHookSet();
+    audioEngine.playSplash(0.72);
     sceneRef.current?.triggerWaterSplash(1.3);
     setPhase('FIGHTING');
     setStatusMsg(
