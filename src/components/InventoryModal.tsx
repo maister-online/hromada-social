@@ -953,7 +953,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                     <Package className="w-4 h-4 text-amber-300" />
                     Донні знахідки ({relicsLoot.length})
                   </span>
-                  <span className="text-slate-400">Продаються Єльцину на Ринку в Бункері</span>
+                  <span className="text-slate-400">Продаються Баризі на Ринку в Бункері</span>
                 </div>
                 {relicsLoot.length === 0 ? (
                   <div className="p-8 text-center text-xs text-slate-400 bg-[#070d0a] border border-white/10 rounded-xl">
@@ -1001,7 +1001,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                   <Sparkles className="w-4 h-4 text-cyan-300" />
                   Аномальні артефакти ({artifactsLoot.length})
                 </span>
-                <span className="text-slate-400">Висока ціна у Єльцина на Підпільному ринку</span>
+                <span className="text-slate-400">Висока ціна у Бариги на Підпільному ринку</span>
               </div>
               {artifactsLoot.length === 0 ? (
                 <div className="p-8 text-center text-xs text-slate-400 bg-[#070d0a] border border-white/10 rounded-xl">
