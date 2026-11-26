@@ -2,7 +2,7 @@ export type ScreenMode = 'TITLE' | 'MAP' | 'FISHING' | 'BUNKER' | 'HOME' | 'CITY
 
 export type WaterType = 'river' | 'lake' | 'swamp' | 'anomaly_lake';
 
-export type WeatherType = 'clear' | 'fog' | 'rain' | 'anomaly_surge';
+export type WeatherType = 'clear' | 'fog' | 'rain';
 
 export type LocationId =
   | 'rokitne_city'
