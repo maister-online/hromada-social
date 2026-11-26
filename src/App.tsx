@@ -156,9 +156,9 @@ function loadSavedGame(): SaveState | null {
       ownedBottomRigIds: parsed.ownedBottomRigIds?.length
         ? parsed.ownedBottomRigIds
         : base.ownedBottomRigIds,
-      ownedGearIds: parsed.ownedGearIds ?? [],
+      ownedGearIds: (parsed.ownedGearIds ?? []).filter((id) => !['gear_chair', 'gear_flashlight', 'gear_thermos'].includes(id)),
       equippedAccessoryIds: parsed.equippedAccessoryIds ?? [],
-      equippedGearIds: parsed.equippedGearIds ?? [],
+      equippedGearIds: (parsed.equippedGearIds ?? []).filter((id) => !['gear_chair', 'gear_flashlight', 'gear_thermos'].includes(id)),
       baitInventory: { ...base.baitInventory, ...(parsed.baitInventory ?? {}) },
       flavoringInventory: {
         ...base.flavoringInventory,
