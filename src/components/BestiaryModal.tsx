@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Box, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { BAIT_MAP, FISH_SPECIES, LOCATIONS } from '../game/data';
-import { DiscoveryEntry, FishSpeciesDef } from '../game/types';
-import { Fauna3DPreview } from './Fauna3DPreview';
+import { DiscoveryEntry } from '../game/types';
 import { FishIllustration } from './FishIllustration';
 
 interface BestiaryModalProps {
@@ -15,7 +14,6 @@ type BestiaryFilter = 'all' | 'fish' | 'crayfish' | 'wildlife' | 'mutant';
 export const BestiaryModal: React.FC<BestiaryModalProps> = ({ discovered, onClose }) => {
   const [filter, setFilter] = useState<BestiaryFilter>('all');
   const [query, setQuery] = useState('');
-  const [selectedSpecies, setSelectedSpecies] = useState<FishSpeciesDef | null>(null);
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -78,13 +76,13 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ discovered, onClos
               <span className="font-mono-num text-emerald-300 font-semibold">
                 {Object.keys(discovered).length}/{FISH_SPECIES.length}
               </span>{' '}
-              · Натисніть на досліджений вид для 3D-огляду
+              · Переглядайте характеристики та результати вилову
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl cursor-pointer"
+            className="btn-tactile btn-field min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl "
             aria-label="Закрити бестіарій"
           >
             <X className="w-5 h-5" />
@@ -158,7 +156,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ discovered, onClos
             return (
               <div
                 key={sp.id}
-                onClick={() => rec && setSelectedSpecies(sp)}
                 className={`border rounded-xl p-4 flex flex-col justify-between space-y-3 transition-colors ${
                   rec
                     ? sp.isMutant
@@ -198,12 +195,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ discovered, onClos
                         {rec ? sp.latinName : 'Очікує вилову на водоймах'}
                       </p>
                     </div>
-                    {rec && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#060c09] border border-cyan-400/30 text-[10px] font-semibold text-cyan-300 shrink-0">
-                        <Box className="w-3 h-3" />
-                        3D
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -229,101 +220,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ discovered, onClos
         </div>
       </div>
 
-      {/* Interactive 3D Detail Modal */}
-      {selectedSpecies && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/82"
-          onClick={() => setSelectedSpecies(null)}
-        >
-          <div
-            className="w-full max-w-xl panel-window rounded-2xl p-5 sm:p-6 space-y-4 max-h-[88vh] overflow-y-auto custom-scroll"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-display text-xl font-bold text-slate-100">
-                  {selectedSpecies.name}
-                </h3>
-                <p className="text-xs text-slate-400 italic">{selectedSpecies.latinName}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedSpecies(null)}
-                className="btn-tactile btn-field min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-                aria-label="Закрити 3D картку"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <Fauna3DPreview species={selectedSpecies} className="w-full h-60" />
-
-            <p className="text-xs text-slate-300 leading-relaxed">{selectedSpecies.description}</p>
-            {selectedSpecies.anomalyNote && (
-              <p className="text-xs text-cyan-300 leading-relaxed">{selectedSpecies.anomalyNote}</p>
-            )}
-
-            <div className="grid grid-cols-2 gap-2.5 text-xs bg-[#070d0a] border border-white/10 rounded-xl p-3.5">
-              <div>
-                <span className="text-slate-400 block">Діапазон ваги</span>
-                <span className="font-mono-num text-emerald-300 font-semibold">
-                  {selectedSpecies.minWeightKg}–{selectedSpecies.maxWeightKg} кг
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-400 block">Ціна за кг</span>
-                <span className="font-mono-num text-amber-300 font-semibold">
-                  ₴ {selectedSpecies.basePricePerKg}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-400 block">Улюблена глибина</span>
-                <span className="text-slate-200 font-medium">
-                  {selectedSpecies.preferredDepth === 'bottom'
-                    ? 'Дно / Ями'
-                    : selectedSpecies.preferredDepth === 'surface'
-                      ? 'Поверхня / Прибережні зарості'
-                      : selectedSpecies.preferredDepth === 'mid'
-                        ? 'Середні шари води'
-                        : 'Будь-яка глибина'}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-400 block">Час активності</span>
-                <span className="text-slate-200 font-medium">
-                  {selectedSpecies.preferredTime === 'night'
-                    ? 'Ніч'
-                    : selectedSpecies.preferredTime === 'dusk'
-                      ? 'Світанок / Сутінки'
-                      : selectedSpecies.preferredTime === 'day'
-                        ? 'День'
-                        : 'Цілодобово'}
-                </span>
-              </div>
-              {selectedSpecies.habitat && (
-                <div className="col-span-2">
-                  <span className="text-slate-400 block">Середовище проживання</span>
-                  <span className="text-slate-200">{selectedSpecies.habitat}</span>
-                </div>
-              )}
-              {selectedSpecies.behavior && (
-                <div className="col-span-2">
-                  <span className="text-slate-400 block">Поведінка при виважуванні</span>
-                  <span className="text-slate-200">{selectedSpecies.behavior}</span>
-                </div>
-              )}
-              <div className="col-span-2">
-                <span className="text-slate-400 block">Улюблені наживки / приманки</span>
-                <span className="text-amber-200">
-                  {selectedSpecies.preferredBaits
-                    .map((id) => BAIT_MAP[id]?.name ?? id)
-                    .join(', ')}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
