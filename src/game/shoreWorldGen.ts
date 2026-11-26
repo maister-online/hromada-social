@@ -431,8 +431,8 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     new THREE.MeshStandardMaterial({ color: 0xd66b2e, roughness: 0.38, metalness: 0.06 })
   );
   tipBand.rotation.x = Math.PI / 2;
-  tipBand.position.z = -0.34 - rodLength + 0.025;
-  root.add(tipBand);
+  tipBand.position.z = 0.025;
+  tipMarker.add(tipBand);
   return { root, rodBlank, rodBasePositions: rodPositions, rodGuideGroups, rodGuideT, rodLength, tipMarker, reelHandle, spoolMesh };
 }
 
