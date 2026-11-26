@@ -144,7 +144,14 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   };
 
   // Zoom & Pan Engine State
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(() => {
+    try {
+      const saved = Number(window.localStorage.getItem('polissia_map_zoom_v1'));
+      return Number.isFinite(saved) ? Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, saved)) : 1;
+    } catch {
+      return 1;
+    }
+  });
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isInteracting, setIsInteracting] = useState(false);
 
@@ -171,24 +178,16 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   });
 
   const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const pinchRef = useRef<{
-    startDist: number;
-    startZoom: number;
-    startPanX: number;
-    startPanY: number;
-    startMidX: number;
-    startMidY: number;
-  } | null>(null);
+  const pinchRef = useRef<{ startDist: number; startZoom: number } | null>(null);
 
-  const clampPan = useCallback((nextX: number, nextY: number, z: number) => {
-    const rect = stageRef.current?.getBoundingClientRect();
-    const maxW = rect ? rect.width * 0.48 * Math.max(0.28, z - 0.35) : 520;
-    const maxH = rect ? rect.height * 0.48 * Math.max(0.28, z - 0.35) : 340;
-    return {
-      x: Math.max(-maxW, Math.min(maxW, nextX)),
-      y: Math.max(-maxH, Math.min(maxH, nextY)),
-    };
-  }, []);
+  // Масштаб карти зберігається окремо від прогресу гри та відновлюється після завантаження.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('polissia_map_zoom_v1', String(zoom));
+    } catch {
+      // Якщо сховище недоступне, карта все одно працює.
+    }
+  }, [zoom]);
 
   // Масштабуємо тільки від центру екрана: карта не зсувається за пальцем.
   const applyZoomAtPoint = useCallback((nextZoom: number) => {
@@ -245,16 +244,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     if (pointersRef.current.size === 2) {
       const pts = Array.from(pointersRef.current.values());
       const dist = Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
-      const midX = (pts[0].x + pts[1].x) / 2;
-      const midY = (pts[0].y + pts[1].y) / 2;
-      pinchRef.current = {
-        startDist: dist,
-        startZoom: zoomRef.current,
-        startPanX: panRef.current.x,
-        startPanY: panRef.current.y,
-        startMidX: midX,
-        startMidY: midY,
-      };
+      pinchRef.current = { startDist: dist, startZoom: zoomRef.current };
       dragStateRef.current.active = false;
       setIsInteracting(true);
       return;
@@ -281,8 +271,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     if (pointersRef.current.size === 2 && pinchRef.current) {
       const pts = Array.from(pointersRef.current.values());
       const dist = Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
-      const midX = (pts[0].x + pts[1].x) / 2;
-      const midY = (pts[0].y + pts[1].y) / 2;
       const p = pinchRef.current;
 
       const nextZoom = Math.max(
@@ -310,22 +298,15 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         dragStateRef.current.moved = false;
       }, 30);
     } else if (pointersRef.current.size === 1) {
-      // Seamlessly transition remaining finger to pan
-      const [rem] = Array.from(pointersRef.current.values());
-      dragStateRef.current = {
-        active: true,
-        moved: true,
-        startX: rem.x,
-        startY: rem.y,
-        origPanX: panRef.current.x,
-        origPanY: panRef.current.y,
-      };
+      // Після жесту масштабування карта не переходить у режим перетягування.
+      dragStateRef.current.active = false;
+      dragStateRef.current.moved = false;
     }
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const delta = e.deltaY < 0 ? 0.22 : -0.22;
-    applyZoomAtPoint(zoomRef.current + delta, e.clientX, e.clientY);
+    applyZoomAtPoint(zoomRef.current + delta);
   };
 
   const selectedLoc: LocationDef = LOCATIONS[selectedId];
