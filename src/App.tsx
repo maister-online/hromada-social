@@ -1601,7 +1601,7 @@ export default function App() {
           level={gameState.level}
           radSuitLevel={gameState.radSuitLevel}
           sanity={gameState.sanity}
-          keepnetCount={gameState.keepnet.length}
+          hunger={gameState.hunger} keepnetCount={gameState.keepnet.length}
           keepnetWeightKg={keepnetWeight}
           keepnetCapacityKg={keepnetCap}
           lootCount={gameState.foundLoot.length}
@@ -1706,7 +1706,7 @@ export default function App() {
           compact onClose={() => setShowBunkerMap(false)}
           currentLocationId={gameState.currentLocationId} day={gameState.day} timeOfDay={gameState.timeOfDay}
           weather={gameState.weather} credits={gameState.credits} goldCoins={gameState.goldCoins ?? 0} amberShards={gameState.amberShards ?? 0} level={gameState.level} radSuitLevel={gameState.radSuitLevel}
-          sanity={gameState.sanity} keepnetCount={gameState.keepnet.length} keepnetWeightKg={keepnetWeight}
+          hunger={gameState.hunger} keepnetCount={gameState.keepnet.length} keepnetWeightKg={keepnetWeight}
           keepnetCapacityKg={keepnetCap} lootCount={gameState.foundLoot.length} readyQuestsCount={readyQuestsCount}
           visitedLocationIds={gameState.visitedLocationIds} activeGroundbaitLocs={activeGroundbaitLocs}
           muted={muted} musicEnabled={musicEnabled} onSelectDestination={handleSelectDestination}
