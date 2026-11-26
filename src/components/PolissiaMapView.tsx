@@ -442,6 +442,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               <span className="relative flex items-center justify-center">
                 <span className="w-3.5 h-3.5 rounded-full border-2 shadow-[0_0_8px_rgba(0,0,0,0.95)] transition-transform bg-amber-400 border-amber-100 group-hover:scale-115" />
               </span>
+              <span className="text-[9px] font-medium lowercase leading-none text-amber-100/90 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">дім</span>
             </button>
 
             {/* Cartographic Settlement Markers (no boxed windows — authentic map points + direct settlement text) */}
@@ -498,6 +499,11 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                       }`}
                     />
                   </span>
+                  {isBunker && (
+                    <span className="text-[9px] font-medium lowercase leading-none text-emerald-100/90 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
+                      бункер
+                    </span>
+                  )}
 
                   {/* Show a readable callout only for the active pin.
                       The other pins stay as dots so their names never cover
