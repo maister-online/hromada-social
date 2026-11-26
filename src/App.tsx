@@ -7,6 +7,7 @@ import { JournalModal } from './components/JournalModal';
 import { PolissiaMapView } from './components/PolissiaMapView';
 import { QuestsModal } from './components/QuestsModal';
 import { TitleScreen } from './components/TitleScreen';
+import { HomeView } from './components/HomeView';
 import { audioEngine } from './game/audio';
 import {
   ACCESSORIES,
@@ -43,6 +44,7 @@ import {
   LocationId,
   LootItemDef,
   SaveState,
+  SavedTackleSet,
   ScreenMode,
   WeatherType,
 } from './game/types';
@@ -127,6 +129,7 @@ function createFreshSave(): SaveState {
     totalEarnedCredits: 0,
     haggleDay: 0,
     haggleBonusPct: 0,
+    savedTackleSets: [],
   };
 }
 
@@ -184,6 +187,7 @@ function loadSavedGame(): SaveState | null {
       visitedLocationIds: parsed.visitedLocationIds ?? ['rokitne_bunker'],
       haggleDay: parsed.haggleDay ?? 0,
       haggleBonusPct: parsed.haggleBonusPct ?? 0,
+      savedTackleSets: parsed.savedTackleSets ?? [],
     };
   } catch {
     return null;
@@ -1468,6 +1472,39 @@ export default function App() {
     [showToast]
   );
 
+  const handleHomeRest = useCallback(() => {
+    const cur = stateRef.current;
+    let nextTod = cur.timeOfDay + 8;
+    let nextDay = cur.day;
+    if (nextTod >= 24) { nextTod -= 24; nextDay += 1; }
+    const nextWeather = WEATHER_CYCLE[(nextDay * 4 + Math.floor(nextTod / 6)) % WEATHER_CYCLE.length];
+    setGameState((prev) => ({ ...prev, day: nextDay, timeOfDay: nextTod, weather: nextWeather, stamina: 100, hunger: 100, radiation: Math.max(0, prev.radiation - 15) }));
+    showToast('Відпочинок удома завершено: сили й ситість відновлено, радіацію знижено.');
+  }, [showToast]);
+
+  const handleSaveTackleSet = useCallback((name: string) => {
+    const cur = stateRef.current;
+    const set: SavedTackleSet = {
+      id: `home-set-${Date.now()}`, name: name.trim() || `Комплект ${cur.savedTackleSets?.length ? cur.savedTackleSets.length + 1 : 1}`,
+      equippedRodId: cur.equippedRodId, equippedReelId: cur.equippedReelId, equippedLineId: cur.equippedLineId,
+      equippedBaitId: cur.equippedBaitId, equippedFloatId: cur.equippedFloatId, equippedHookId: cur.equippedHookId,
+      equippedSinkerId: cur.equippedSinkerId, equippedFeederId: cur.equippedFeederId, equippedBottomRigId: cur.equippedBottomRigId,
+      equippedFlavoringId: cur.equippedFlavoringId, equippedAccessoryIds: [...cur.equippedAccessoryIds], equippedGearIds: [...cur.equippedGearIds],
+    };
+    setGameState((prev) => ({ ...prev, savedTackleSets: [...(prev.savedTackleSets ?? []), set] }));
+    showToast(`Комплект «${set.name}» збережено вдома.`);
+  }, [showToast]);
+
+  const handleEquipTackleSet = useCallback((set: SavedTackleSet) => {
+    setGameState((prev) => ({ ...prev, ...set }));
+    showToast(`Комплект «${set.name}» встановлено.`);
+  }, [showToast]);
+
+  const handleDeleteTackleSet = useCallback((id: string) => {
+    setGameState((prev) => ({ ...prev, savedTackleSets: (prev.savedTackleSets ?? []).filter((set) => set.id !== id) }));
+    showToast('Збережений комплект видалено.');
+  }, [showToast]);
+
   const handleFullBunkerRest = useCallback(() => {
     const cur = stateRef.current;
     let nextTod = cur.timeOfDay + 2.5;
@@ -1621,6 +1658,19 @@ export default function App() {
         </>
       )}
 
+      {screen === 'HOME' && (
+        <HomeView
+          gameState={gameState}
+          savedTackleSets={gameState.savedTackleSets ?? []}
+          onBack={() => setScreen('MAP')}
+          onSaveTackleSet={handleSaveTackleSet}
+          onEquipTackleSet={handleEquipTackleSet}
+          onDeleteTackleSet={handleDeleteTackleSet}
+          onUseConsumable={handleUseConsumable}
+          onRest={handleHomeRest}
+        />
+      )}
+
       {screen === 'MAP' && (
         <PolissiaMapView
           currentLocationId={gameState.currentLocationId}
@@ -1642,6 +1692,7 @@ export default function App() {
           muted={muted}
           musicEnabled={musicEnabled}
           onSelectDestination={handleSelectDestination}
+          onOpenHome={() => setScreen('HOME')}
           onOpenInventory={() => setShowInventory(true)}
           onOpenQuests={() => setShowQuests(true)}
           onOpenBestiary={() => setShowBestiary(true)}
