@@ -1620,7 +1620,7 @@ export default function App() {
     >
       <video
         ref={presentationVideoRef}
-        className={showGamePresentation ? "fixed inset-0 z-[100] h-full w-full object-cover bg-black" : "hidden"}
+        className={showGamePresentation ? "presentation-video-enter fixed inset-0 z-[100] h-full w-full object-cover bg-black" : "hidden"}
         muted
         playsInline
         preload="auto"
@@ -1629,7 +1629,7 @@ export default function App() {
         src={`${import.meta.env.BASE_URL}Presentation_and_promo_video_340f25b1.mp4`}
       />
       {showRiverIntro && (
-        <div className="fixed inset-0 z-[120] bg-black">
+        <div className="river-intro-enter fixed inset-0 z-[120] bg-black">
           <video
             className="h-full w-full object-cover"
             autoPlay
