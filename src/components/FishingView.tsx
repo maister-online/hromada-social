@@ -258,10 +258,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
       (sum, g) => sum + (g.radResistBonus ?? 0),
       0
     );
-    const gearSanityShieldBonus = equippedGearItems.reduce(
-      (sum, g) => sum + (g.sanityShieldBonus ?? 0),
-      0
-    );
 
     const accBiteSpeedBonus = equippedAccessories.reduce(
       (sum, a) => sum + a.biteSpeedBonus,
@@ -338,7 +334,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
       gearSnagEscapeBonus,
       gearLandingBonus,
       gearRadResistBonus,
-      gearSanityShieldBonus,
       hookRetentionBonus: hookDef.hookRetentionBonus,
       hasBottomRig,
       hasFeeder,
@@ -866,7 +861,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     tensionRatio,
   ]);
 
-  // Game clock + radiation + sanity tick
+  // Game clock and radiation tick
   useEffect(() => {
     const id = window.setInterval(() => {
       if (
@@ -895,7 +890,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     location.radiationLevel,
     onClockAndRadTick,
     rigStats.gearRadResistBonus,
-    rigStats.gearSanityShieldBonus,
     showKeepnet,
     showRigDrawer,
     showSonar,
@@ -1468,7 +1462,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const antiradQty = gameState.consumableInventory['antirad_ai2'] ?? 0;
   const energyQty = gameState.consumableInventory['energy_stalker'] ?? 0;
   const hungerFoods = LOOT_ITEMS.filter(
-    (i) => i.category === 'consumable' && (i.isFood || i.sanityRestore) && (gameState.consumableInventory[i.id] ?? 0) > 0
+    (i) => i.category === 'consumable' && i.isFood && (gameState.consumableInventory[i.id] ?? 0) > 0
   );
 
   const filteredBaits = useMemo(() => {
@@ -1620,7 +1614,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
         weather={gameState.weather}
         timeOfDay={gameState.timeOfDay}
         anomalyActivity={location.anomalyActivity}
-        sanity={100}
         isPhotoMode={Boolean(location.backdropPhotoUrl)}
       />
 
