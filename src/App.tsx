@@ -1556,7 +1556,7 @@ export default function App() {
             preload="auto"
             onEnded={() => setShowRiverIntro(false)}
             onError={() => setShowRiverIntro(false)}
-            src="https://raw.githubusercontent.com/maister-online/hromada-social/main/Video_game_trailer_presentation_63f758c3.mp4"
+            src="https://raw.githubusercontent.com/maister-online/hromada-social/main/public/assets/aistudio/Stalker_goes_fishing_93c283a9.mp4"
           />
           <button
             type="button"
