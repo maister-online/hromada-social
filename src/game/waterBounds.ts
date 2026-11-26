@@ -91,14 +91,11 @@ export function toVisualWaterDist(loc: LocationDef, distM: number, maxCastM: num
   const safeMax = Math.max(12, maxCastM);
   if (loc.backdropPhotoUrl) {
     const { near, far } = getPhotoVisualBounds(loc);
-    const frac = Math.max(0, Math.min(1, (distM - 4.5) / Math.max(8, safeMax - 4.5)));
+    const frac = Math.max(0, Math.min(1, (distM - 1) / Math.max(1, safeMax - 1)));
     return near + frac * (far - near);
   }
   const farSafe = getProceduralFarSafeZ(loc);
-  if (safeMax <= farSafe) {
-    return Math.max(4.5, Math.min(farSafe, distM));
-  }
-  const frac = Math.max(0, Math.min(1, (distM - 4.5) / Math.max(8, safeMax - 4.5)));
+  const frac = Math.max(0, Math.min(1, (distM - 1) / Math.max(1, safeMax - 1)));
   return 4.5 + frac * (farSafe - 4.5);
 }
 
@@ -107,14 +104,11 @@ export function fromVisualWaterDist(loc: LocationDef, visualDist: number, maxCas
   if (loc.backdropPhotoUrl) {
     const { near, far } = getPhotoVisualBounds(loc);
     const frac = Math.max(0, Math.min(1, (visualDist - near) / Math.max(1, far - near)));
-    return Number((4.5 + frac * Math.max(8, safeMax - 4.5)).toFixed(1));
+    return Number((1 + frac * Math.max(1, safeMax - 1)).toFixed(1));
   }
   const farSafe = getProceduralFarSafeZ(loc);
-  if (safeMax <= farSafe) {
-    return Number(Math.max(4.5, Math.min(safeMax, visualDist)).toFixed(1));
-  }
   const frac = Math.max(0, Math.min(1, (visualDist - 4.5) / Math.max(1, farSafe - 4.5)));
-  return Number((4.5 + frac * Math.max(8, safeMax - 4.5)).toFixed(1));
+  return Number((1 + frac * Math.max(1, safeMax - 1)).toFixed(1));
 }
 
 function pointInPolygon(x: number, y: number, poly: ReadonlyArray<readonly [number, number]>): boolean {
@@ -239,7 +233,7 @@ export function isWaterSpotValid(
   vp?: ViewportDims
 ): boolean {
   if (loc.isBunker || maxCastM <= 0) return false;
-  if (Math.abs(yaw) > 0.83 || distM < 4.5 || distM > maxCastM + 0.05) return false;
+  if (Math.abs(yaw) > 0.83 || distM < 1 || distM > maxCastM + 0.05) return false;
 
   const vDist = toVisualWaterDist(loc, distM, maxCastM);
   const wx = Math.sin(yaw) * vDist;
@@ -272,7 +266,7 @@ export function getWaterDistBoundsForYaw(
   let maxValid: number | null = null;
 
   for (let i = 0; i <= steps; i++) {
-    const d = 4.5 + (i / steps) * Math.max(1, maxCastM - 4.5);
+    const d = 1 + (i / steps) * Math.max(1, maxCastM - 1);
     if (isWaterSpotValid(loc, safeYaw, d, maxCastM, dims)) {
       if (minValid === null) minValid = d;
       maxValid = d;
@@ -280,7 +274,7 @@ export function getWaterDistBoundsForYaw(
   }
 
   if (minValid === null || maxValid === null) {
-    return { minDistM: 6, maxDistM: Math.min(maxCastM, 16), hasWater: false };
+    return { minDistM: 1, maxDistM: Math.min(maxCastM, 16), hasWater: false };
   }
 
   return {
@@ -299,7 +293,7 @@ export function clampCastToWaterBounds(
 ): { yaw: number; distM: number; clamped: boolean } {
   const dims = vp ?? getViewportDims();
   const cYaw = Number(Math.max(-0.82, Math.min(0.82, yaw)).toFixed(3));
-  const cDist = Number(Math.max(4.5, Math.min(maxCastM, distM)).toFixed(1));
+  const cDist = Number(Math.max(1, Math.min(maxCastM, distM)).toFixed(1));
 
   if (isWaterSpotValid(loc, cYaw, cDist, maxCastM, dims)) {
     return {
@@ -349,7 +343,7 @@ export function clampCastToWaterBounds(
   // Guaranteed safe center fallback
   return {
     yaw: 0,
-    distM: Number(Math.max(5.5, Math.min(maxCastM, 12)).toFixed(1)),
+    distM: Number(Math.max(1, Math.min(maxCastM, 12)).toFixed(1)),
     clamped: true,
   };
 }
