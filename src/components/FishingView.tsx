@@ -430,7 +430,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
   );
   const [showKeepnet, setShowKeepnet] = useState(false);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
-  const [showFishingControls, setShowFishingControls] = useState(false);
   const [showBaitDrawer, setShowBaitDrawer] = useState(false);
   const [baitFilter, setBaitFilter] = useState<BaitFilterTab>('all');
   const [showRigDrawer, setShowRigDrawer] = useState(false);
@@ -1871,186 +1870,94 @@ export const FishingView: React.FC<FishingViewProps> = ({
         </div>
       )}
 
-      {/* LOWER CONTROLS: hidden until requested */}
-      {!showFishingControls && (
-        <button
-          type="button"
-          onClick={() => setShowFishingControls(true)}
-          className="fixed bottom-3 left-1/2 z-30 -translate-x-1/2 btn-tactile btn-field min-h-[46px] inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-xl"
-          aria-label="Відкрити керування риболовлею"
-        >
-          <Anchor className="h-4 w-4 text-amber-300" />
-          Керування риболовлею
-        </button>
-      )}
-
-      {/* BOTTOM TOUCH & DESKTOP CONTROLS DOCK */}
-      {showFishingControls && (
-      <div className="fixed bottom-3 inset-x-0 z-20 flex flex-wrap items-end justify-between gap-2.5 px-2.5 sm:px-5 pointer-events-none">
-        {/* Left Thumb Cluster */}
-        <div className="pointer-events-auto panel-field rounded-xl p-2 flex flex-wrap items-center gap-1.5 sm:gap-2 max-w-full lg:max-w-[64vw]">
-          {(phase === 'IDLE' || phase === 'CHARGING') && (
-            <div className="flex items-center gap-1 pr-2 border-r border-white/10">
-              <button
-                type="button"
-                onClick={() => {
-                  const nextYaw = Math.max(-0.82, aimYawRef.current - 0.14);
-                  const bounded = clampCastToWaterBounds(location, nextYaw, castDistRef.current, maxCastM);
-                  setAimYaw(bounded.yaw);
-                  setCastDistM(bounded.distM);
-                  setAimBlockedByShore(false);
-                }}
-                className="btn-tactile btn-field min-w-[44px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-                aria-label="Прицілитись лівіше"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextYaw = Math.min(0.82, aimYawRef.current + 0.14);
-                  const bounded = clampCastToWaterBounds(location, nextYaw, castDistRef.current, maxCastM);
-                  setAimYaw(bounded.yaw);
-                  setCastDistM(bounded.distM);
-                  setAimBlockedByShore(false);
-                }}
-                className="btn-tactile btn-field min-w-[44px] min-h-[46px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-                aria-label="Прицілитись правіше"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {/* Quick Touch Fishing Depth Control */}
-          <div className="flex items-center gap-1 pl-1.5 border-l border-white/10">
+      {/* SIMPLE DIRECT FISHING CONTROLS — no separate control window */}
+      <div className="fixed bottom-3 inset-x-0 z-30 flex items-end justify-center gap-2 px-3 pointer-events-none">
+        {(phase === 'IDLE' || phase === 'WAITING') && (
+          <div className="pointer-events-auto flex items-center gap-1 rounded-xl bg-[#06100c]/75 border border-white/10 p-1.5 backdrop-blur-sm">
             <button
               type="button"
-              onClick={() =>
-                handleChangeFishingDepth(
-                  Math.max(0.4, Number((effectiveFishingDepthM - 0.4).toFixed(1))),
-                  false
-                )
-              }
+              onClick={() => handleChangeFishingDepth(Math.max(0.4, Number((effectiveFishingDepthM - 0.4).toFixed(1))), false)}
               disabled={rigStats.hasBottomRig}
-              className="btn-tactile btn-field min-w-[38px] min-h-[46px] rounded-lg text-sm font-bold cursor-pointer disabled:opacity-45"
-              aria-label="Зменшити глибину спуску"
-              title="Підняти поплавок вище"
+              className="btn-tactile btn-field min-w-[38px] min-h-[44px] rounded-lg text-sm font-bold disabled:opacity-40"
+              aria-label="Підняти поплавок"
+            >−</button>
+            <button
+              type="button"
+              onClick={() => handleChangeFishingDepth(currentWaterSpot.depthM, !bottomLock)}
+              disabled={rigStats.hasBottomRig}
+              className="btn-tactile btn-field min-h-[44px] min-w-[62px] rounded-lg px-2 text-center disabled:opacity-50"
+              title="Зафіксувати гачок біля дна"
             >
-              −
+              <span className="block text-[9px] text-slate-400">{rigStats.hasBottomRig ? 'ДОНКА' : bottomLock ? 'НА ДНІ' : 'СПУСК'}</span>
+              <span className="block font-mono-num text-xs font-bold text-amber-300">{effectiveFishingDepthM.toFixed(1)} м</span>
             </button>
             <button
               type="button"
-              onClick={() =>
-                handleChangeFishingDepth(currentWaterSpot.depthM, !bottomLock)
-              }
+              onClick={() => handleChangeFishingDepth(Math.min(currentWaterSpot.depthM - 0.1, Number((effectiveFishingDepthM + 0.4).toFixed(1))), false)}
               disabled={rigStats.hasBottomRig}
-              className={`btn-tactile min-h-[46px] px-2.5 rounded-lg text-center cursor-pointer border ${
-                bottomLock || rigStats.hasBottomRig
-                  ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
-                  : 'btn-field text-slate-200'
-              }`}
-              title="Натисніть щоб поставити на дно або зняти фіксацію дна"
-            >
-              <div className="text-[9px] leading-none text-slate-400">
-                {rigStats.hasBottomRig ? 'ДОНКА' : bottomLock ? 'НА ДНІ' : 'Спуск'}
-              </div>
-              <div className="font-mono-num text-xs font-bold text-amber-300 mt-0.5">
-                {effectiveFishingDepthM.toFixed(1)}м
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleChangeFishingDepth(
-                  Math.min(
-                    currentWaterSpot.depthM - 0.1,
-                    Number((effectiveFishingDepthM + 0.4).toFixed(1))
-                  ),
-                  false
-                )
-              }
-              disabled={rigStats.hasBottomRig}
-              className="btn-tactile btn-field min-w-[38px] min-h-[46px] rounded-lg text-sm font-bold cursor-pointer disabled:opacity-45"
-              aria-label="Збільшити глибину спуску"
-              title="Опустити гачок глибше"
-            >
-              +
-            </button>
+              className="btn-tactile btn-field min-w-[38px] min-h-[44px] rounded-lg text-sm font-bold disabled:opacity-40"
+              aria-label="Опустити гачок"
+            >+</button>
           </div>
-        </div>
+        )}
 
-        {/* Right Thumb Cluster: Drag Brake & Big Primary Cast/Strike/Reel Touch Button */}
-        <div className="pointer-events-auto panel-field rounded-xl p-2 flex items-center gap-2 ml-auto">
-          <button
-            type="button"
-            onClick={() => setShowFishingControls(false)}
-            className="btn-tactile btn-field min-w-[42px] min-h-[46px] inline-flex items-center justify-center rounded-lg"
-            aria-label="Згорнути керування риболовлею"
-            title="Згорнути панель"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-1">
+        {phase === 'FIGHTING' && (
+          <div className="pointer-events-auto flex items-center gap-1 rounded-xl bg-[#06100c]/80 border border-amber-300/20 p-1.5 backdrop-blur-sm">
             <button
               type="button"
               onClick={() => setDragLevel((d) => Math.max(1, d - 1))}
-              className="btn-tactile btn-field min-w-[46px] min-h-[50px] rounded-lg text-base font-bold cursor-pointer"
-              aria-label="Зменшити фрикціон"
-            >
-              −
-            </button>
-            <div className="px-1.5 text-center min-w-[42px]">
-              <div className="text-[10px] text-slate-400">Фрикц.</div>
-              <div className="font-mono-num text-sm font-bold text-amber-300">{dragLevel}</div>
+              className="btn-tactile btn-field min-w-[38px] min-h-[44px] rounded-lg text-base font-bold"
+              aria-label="Послабити фрикціон"
+            >−</button>
+            <div className="min-w-[54px] text-center">
+              <span className="block text-[9px] text-slate-400">ФРИКЦІОН</span>
+              <span className="block font-mono-num text-sm font-bold text-amber-300">{dragLevel}/10</span>
             </div>
             <button
               type="button"
               onClick={() => setDragLevel((d) => Math.min(10, d + 1))}
-              className="btn-tactile btn-field min-w-[46px] min-h-[50px] rounded-lg text-base font-bold cursor-pointer"
-              aria-label="Збільшити фрикціон"
-            >
-              +
-            </button>
+              className="btn-tactile btn-field min-w-[38px] min-h-[44px] rounded-lg text-base font-bold"
+              aria-label="Затягнути фрикціон"
+            >+</button>
           </div>
+        )}
 
-          {(phase === 'WAITING' || phase === 'NIBBLE') && (
-            <button
-              type="button"
-              onClick={handleReelOutReset}
-              className="btn-tactile btn-field min-h-[52px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Вимотати
-            </button>
-          )}
-
+        {phase === 'WAITING' && (
           <button
             type="button"
-            onPointerDown={handlePrimaryDown}
-            onPointerUp={handlePrimaryUp}
-            className={`btn-tactile min-h-[54px] min-w-[148px] sm:min-w-[164px] inline-flex items-center justify-center gap-2 px-5 py-3 font-bold text-sm rounded-lg cursor-pointer touch-none ${
-              phase === 'BITE'
-                ? 'bg-gradient-to-b from-rose-500 to-rose-600 text-white border border-rose-300/60 shadow-[0_6px_22px_rgba(244,63,94,0.5)]'
+            onClick={handleReelOutReset}
+            className="pointer-events-auto btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-xs font-semibold"
+          >Вимотати</button>
+        )}
+
+        <button
+          type="button"
+          onPointerDown={handlePrimaryDown}
+          onPointerUp={handlePrimaryUp}
+          onPointerCancel={handlePrimaryUp}
+          className={`pointer-events-auto btn-tactile min-h-[54px] min-w-[150px] inline-flex items-center justify-center gap-2 px-5 py-3 font-bold text-sm rounded-xl cursor-pointer touch-none shadow-lg ${
+            phase === 'FIGHTING'
+              ? 'bg-gradient-to-b from-emerald-500 to-emerald-700 text-white border border-emerald-300/60 shadow-[0_6px_22px_rgba(16,185,129,0.35)]'
+              : phase === 'BITE' || phase === 'NIBBLE'
+                ? 'bg-gradient-to-b from-rose-500 to-rose-600 text-white border border-rose-300/60'
                 : 'btn-primary-amber'
-            }`}
-          >
-            <Anchor className="w-4 h-4" />
-            {phase === 'IDLE'
-              ? 'ЗАКИНУТИ'
-              : phase === 'CHARGING'
-                ? 'ВІДПУСТИТИ!'
-                : phase === 'BITE' || phase === 'NIBBLE'
-                  ? 'ПІДСІКТИ!'
-                  : phase === 'FIGHTING'
-                    ? 'ТЯГНУТИ!'
-                    : phase === 'SNAGGED'
-                      ? 'ВІДЧЕПИТИ!'
-                      : 'ОЧІКУВАННЯ'}
-          </button>
-        </div>
+          }`}
+          aria-label={phase === 'FIGHTING' ? 'Утримуйте, щоб підмотувати волосінь' : 'Основна дія риболовлі'}
+        >
+          <Anchor className="w-4 h-4" />
+          {phase === 'IDLE'
+            ? 'ЗАКИНУТИ'
+            : phase === 'CHARGING'
+              ? 'ВІДПУСТИТИ!'
+              : phase === 'BITE' || phase === 'NIBBLE'
+                ? 'ПІДСІКТИ!'
+                : phase === 'FIGHTING'
+                  ? isReeling ? 'ПІДМОТУВАННЯ…' : 'УТРИМУЙ: ТЯГНИ'
+                  : phase === 'SNAGGED'
+                    ? 'ВІДЧЕПИТИ!'
+                    : 'ОЧІКУВАННЯ'}
+        </button>
       </div>
-      )}
 
       {/* TOUCH BAIT DRAWER MODAL */}
       {showBaitDrawer && (
