@@ -196,6 +196,7 @@ export default function App() {
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [showGamePresentation, setShowGamePresentation] = useState(false);
+  const [showRiverIntro, setShowRiverIntro] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -326,9 +327,11 @@ export default function App() {
       }));
 
       if (target.isBunker) {
+        setShowRiverIntro(false);
         setScreen('BUNKER');
         showToast('Ласкаво просимо до Бункер Рокитне.');
       } else {
+        setShowRiverIntro(locId === 'rokitne');
         setScreen('FISHING');
         if (isNew) {
           showToast(`Відкрито локацію: ${target.name}!`);
@@ -1544,6 +1547,26 @@ export default function App() {
         onError={finishGamePresentation}
         src="https://raw.githubusercontent.com/maister-online/hromada-social/main/Video_game_trailer_presentation_63f758c3.mp4"
       />
+      {showRiverIntro && (
+        <div className="fixed inset-0 z-[120] bg-black">
+          <video
+            className="h-full w-full object-cover"
+            autoPlay
+            playsInline
+            preload="auto"
+            onEnded={() => setShowRiverIntro(false)}
+            onError={() => setShowRiverIntro(false)}
+            src="https://raw.githubusercontent.com/maister-online/hromada-social/main/%D0%9F%D1%80%D0%B5%D0%B7%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D1%96%D1%8F_%D0%B3%D1%80%D0%B8_%D0%90%D0%BD%D0%BE%D0%BC%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0_%D1%80%D0%B8%D0%B1%D0%BE%D0%BB%D0%BE%D0%B2%D0%BB%D1%8F_80660f17.mp4"
+          />
+          <button
+            type="button"
+            onClick={() => setShowRiverIntro(false)}
+            className="absolute bottom-6 right-5 rounded-xl border border-white/30 bg-black/65 px-5 py-3 text-sm font-semibold text-white backdrop-blur"
+          >
+            Пропустити
+          </button>
+        </div>
+      )}
       <audio
         ref={presentationAudioRef}
         preload="auto"
