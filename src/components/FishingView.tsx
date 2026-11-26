@@ -1763,7 +1763,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[90] w-[min(190px,calc(100vw-16px))] select-none"
+          className="pointer-events-none fixed z-[90] w-[min(300px,calc(100vw-16px))] select-none"
           style={{ left: 8, top: 105 }}
         >
           <div className="relative aspect-[16/9] w-full">
