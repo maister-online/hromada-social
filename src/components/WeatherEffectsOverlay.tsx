@@ -87,7 +87,8 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
 
     const splashes: WaterSplash[] = [];
 
-    const sporeCount = weather === 'fog' ? 0 : isDuskOrNight || highAnomalySpot ? 20 : 8;
+    // Floating yellow/amber anomaly particles removed: no ambient glowing specks in the fishing view.
+    const sporeCount = 0;
 
     const spores: AnomalySpore[] = Array.from({ length: sporeCount }, () => {
       const r = Math.random();
@@ -253,7 +254,7 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
         />
       )}
 
-      {/* Live animated weather canvas (raindrops, water splashes, ambient spores and fireflies) */}
+      {/* Live animated weather canvas (rain and water impacts only; no floating glow particles) */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
     </div>
   );
