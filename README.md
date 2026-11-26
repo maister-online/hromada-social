@@ -1,13 +1,17 @@
-# Поліська аномальна рибалка
+# Дике Полісся
 
-React + TypeScript + Vite game for GitHub Pages.
+Мобільна гра про риболовлю, дослідження водойм і локацій Полісся.
 
-## Development
-- `npm install`
-- `npm run dev`
+## Розробка
+- Встановити залежності: `npm install`
+- Запустити локально: `npm run dev`
 
-## Build
-- `npm run build`
+## Перевірка та збірка
+- Перевірка TypeScript: `npm run typecheck`
+- Production-збірка: `npm run build`
+- Перегляд зібраної версії: `npm run preview`
 
-GitHub Pages is published from the `main` branch using GitHub Actions.
-The public URL is `https://maister-online.github.io/hromada-social/`.
+## Публікація
+Гра публікується на GitHub Pages через GitHub Actions після успішної перевірки TypeScript і production-збірки.
+
+Публічна адреса: https://maister-online.github.io/hromada-social/
