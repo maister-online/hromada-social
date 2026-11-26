@@ -179,37 +179,74 @@ class PolissiaAudioEngine {
     src.start(now);
   }
 
+  // A quiet natural water plip instead of an electronic notification bell.
   public playBiteBell(): void {
     if (this.muted || !this.ctx) return;
-    const now = this.ctx.currentTime;
-    [980, 1460].forEach((freq, idx) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + idx * 0.07);
-      gain.gain.setValueAtTime(0.09, now + idx * 0.07);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.28);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now + idx * 0.07);
-      osc.stop(now + idx * 0.07 + 0.3);
-    });
+    this.playSplash(0.3);
   }
 
-  public playReelTick(tensionRatio: number): void {
+  // Short line/rod "twang" when the angler sets the hook.
+  public playHookSet(): void {
     if (this.muted || !this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(240 + tensionRatio * 340, now);
-    gain.gain.setValueAtTime(0.035, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.032);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    const body = this.ctx.createGain();
+    const noise = this.ctx.createBufferSource();
+    const length = Math.floor(this.ctx.sampleRate * 0.11);
+    const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    }
+    noise.buffer = buffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1250, now);
+    filter.Q.value = 1.1;
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(185, now);
+    osc.frequency.exponentialRampToValueAtTime(92, now + 0.12);
+    body.gain.setValueAtTime(0.0001, now);
+    body.gain.linearRampToValueAtTime(0.09, now + 0.012);
+    body.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+    const snapGain = this.ctx.createGain();
+    snapGain.gain.setValueAtTime(0.0001, now);
+    snapGain.gain.linearRampToValueAtTime(0.045, now + 0.006);
+    snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    osc.connect(body);
+    body.connect(this.ctx.destination);
+    noise.connect(filter);
+    filter.connect(snapGain);
+    snapGain.connect(this.ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.035);
+    osc.stop(now + 0.15);
+    noise.start(now);
+  }
+
+  // Soft, irregular reel/drag clicks with filtered noise, not a repeating square-wave beep.
+  public playReelTick(tensionRatio: number): void {
+    if (this.muted || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const length = Math.floor(this.ctx.sampleRate * 0.045);
+    const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.4);
+    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(850 + tensionRatio * 950 + Math.random() * 180, now);
+    filter.Q.value = 1.8;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.018 + tensionRatio * 0.018, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    source.start(now);
   }
 
   public playCatch(isMutant: boolean): void {
