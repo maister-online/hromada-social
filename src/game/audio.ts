@@ -77,6 +77,7 @@ class PolissiaAudioEngine {
     this.syncBgmPlayback();
     if (this.waterEntryAudio) this.waterEntryAudio.muted = m;
     if (this.hookSetAudio) this.hookSetAudio.muted = m;
+    if (this.biteWaterAudio) this.biteWaterAudio.muted = m;
   }
 
   public isMuted(): boolean {
@@ -254,24 +255,36 @@ class PolissiaAudioEngine {
     });
   }
 
-  // A quiet natural water plip instead of an electronic notification bell.
+  // Very quiet real water plop for the float dipping before the hook (SFXMint, CC0 1.0).
+  private biteWaterAudio: HTMLAudioElement | null = null;
+
   public playBiteBell(): void {
-    if (this.muted || !this.ctx) return;
-    this.playSplash(0.3);
+    if (this.muted || typeof Audio === 'undefined') return;
+    if (!this.biteWaterAudio) {
+      this.biteWaterAudio = new Audio('https://sfxmint.com/dl/water-plop-01.mp3');
+      this.biteWaterAudio.preload = 'auto';
+      this.biteWaterAudio.volume = 0.035;
+    }
+    this.biteWaterAudio.muted = this.muted;
+    this.biteWaterAudio.volume = 0.035;
+    this.biteWaterAudio.currentTime = 0;
+    this.biteWaterAudio.play().catch(() => {
+      // Retry on the next user interaction if the browser blocks external audio.
+    });
   }
 
-  // Natural rope/line tension creak from SFXMint (CC0 1.0), not a synthesized electronic tone.
+  // Short natural fishing-line snap transient for setting the hook (SFXMint, CC0 1.0).
   private hookSetAudio: HTMLAudioElement | null = null;
 
   public playHookSet(): void {
     if (this.muted || typeof Audio === 'undefined') return;
     if (!this.hookSetAudio) {
-      this.hookSetAudio = new Audio('https://sfxmint.com/dl/rope-tension-02.mp3');
+      this.hookSetAudio = new Audio('https://sfxmint.com/dl/fishing-reel-03.mp3');
       this.hookSetAudio.preload = 'auto';
-      this.hookSetAudio.volume = 0.16;
+      this.hookSetAudio.volume = 0.055;
     }
     this.hookSetAudio.muted = this.muted;
-    this.hookSetAudio.volume = 0.16;
+    this.hookSetAudio.volume = 0.055;
     this.hookSetAudio.currentTime = 0;
     this.hookSetAudio.play().catch(() => {
       // Retry on the next user interaction if the browser blocks external audio.
