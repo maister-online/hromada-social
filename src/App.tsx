@@ -8,6 +8,7 @@ import { PolissiaMapView } from './components/PolissiaMapView';
 import { QuestsModal } from './components/QuestsModal';
 import { TitleScreen } from './components/TitleScreen';
 import { HomeView } from './components/HomeView';
+import { CityView } from './components/CityView';
 import { audioEngine } from './game/audio';
 import {
   ACCESSORIES,
@@ -342,7 +343,7 @@ export default function App() {
 
   const handleContinue = useCallback(() => {
     const loc = stateRef.current.currentLocationId;
-    setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : 'FISHING');
+    setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : loc === 'rokitne_city' ? 'CITY' : 'FISHING');
   }, []);
 
   const handleSelectDestination = useCallback(
@@ -361,7 +362,11 @@ export default function App() {
           : [...prev.visitedLocationIds, locId],
       }));
 
-      if (target.isBunker) {
+      if (target.isCity) {
+        setShowRiverIntro(false);
+        setScreen('CITY');
+        showToast('Ви прибули до Рокитного.');
+      } else if (target.isBunker) {
         setShowRiverIntro(false);
         setScreen('BUNKER');
         showToast('Ласкаво просимо до Бункер Рокитне.');
@@ -1671,6 +1676,15 @@ export default function App() {
         />
       )}
 
+      {screen === 'CITY' && (
+        <CityView
+          credits={gameState.credits}
+          goldCoins={gameState.goldCoins ?? 0}
+          amberShards={gameState.amberShards ?? 0}
+          onBack={() => setScreen('MAP')}
+        />
+      )}
+
       {screen === 'MAP' && (
         <PolissiaMapView
           currentLocationId={gameState.currentLocationId}
@@ -1702,7 +1716,7 @@ export default function App() {
         />
       )}
 
-      {screen === 'FISHING' && !currentLoc.isBunker && (
+      {screen === 'FISHING' && !currentLoc.isBunker && !currentLoc.isCity && (
         <FishingView
           key={currentLoc.id}
           location={currentLoc}
