@@ -344,13 +344,13 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // One continuous tapered blank: the rod bends as a single elastic piece,
   // not as five visibly hinged sections.
   const rodLength = rodType === 'float' ? 2.82 : 2.46;
-  const longitudinalSegments = 64;
-  const radialSegments = 12;
+  const longitudinalSegments = 96;
+  const radialSegments = 16;
   const rodPositions = new Float32Array((longitudinalSegments + 1) * (radialSegments + 1) * 3);
   const rodIndices: number[] = [];
   for (let row = 0; row <= longitudinalSegments; row++) {
     const t = row / longitudinalSegments;
-    const radius = THREE.MathUtils.lerp(0.0145, 0.0021, Math.pow(t, 0.92));
+    const radius = THREE.MathUtils.lerp(0.0175, 0.0026, Math.pow(t, 0.88));
     const z = -0.34 - rodLength * t;
     for (let side = 0; side <= radialSegments; side++) {
       const a = (side / radialSegments) * Math.PI * 2;
@@ -389,9 +389,9 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Lightweight ceramic guides follow the same smooth curve as the blank.
   const rodGuideGroups: THREE.Group[] = [];
   const rodGuideT: number[] = [];
-  const guidePositions = [0.12, 0.25, 0.38, 0.51, 0.64, 0.76, 0.87, 0.96];
+  const guidePositions = [0.10, 0.22, 0.34, 0.46, 0.58, 0.69, 0.79, 0.88, 0.96];
   guidePositions.forEach((t, i) => {
-    const radius = THREE.MathUtils.lerp(0.016, 0.0055, t);
+    const radius = THREE.MathUtils.lerp(0.019, 0.0060, t);
     const guide = new THREE.Group();
     guide.position.set(0, -radius * 0.82, -0.34 - rodLength * t);
     const outerRing = new THREE.Mesh(
