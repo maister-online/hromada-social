@@ -1756,7 +1756,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* MODERN FISH FINDER — напівпрозора панель поверх локації */}
       {showSonar && (
           <section className="fixed right-3 top-32 z-[60] max-h-[calc(100dvh-9rem)] w-[min(94vw,420px)] overflow-y-auto rounded-2xl border border-cyan-300/30 bg-[#07131d]/75 shadow-[0_0_35px_rgba(8,145,178,0.16)] backdrop-blur-xl">
-            <header className="flex items-center justify-between border-b border-cyan-300/15 bg-[#0a1b28] px-4 py-3">
+            <header className="flex items-center justify-between border-b border-cyan-300/15 bg-[#0a1b28]/65 px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 p-2 text-cyan-300"><Radar className="h-5 w-5" /></div>
                 <div>
