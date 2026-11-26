@@ -135,48 +135,83 @@ class PolissiaAudioEngine {
     noise.start();
   }
 
+  // Quiet air/line swish during the cast, not a synthetic rising tone.
   public playCast(): void {
     if (this.muted || !this.ctx) return;
     const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
+    const len = Math.floor(this.ctx.sampleRate * 0.24);
+    const buffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      const envelope = Math.sin(Math.PI * t) * Math.pow(1 - t * 0.35, 1.4);
+      samples[i] = (Math.random() * 2 - 1) * envelope;
+    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1050, now);
+    filter.frequency.exponentialRampToValueAtTime(480, now + 0.23);
+    filter.Q.value = 0.55;
     const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(520, now + 0.16);
-    osc.frequency.exponentialRampToValueAtTime(180, now + 0.28);
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.11, now + 0.06);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    osc.connect(gain);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.055, now + 0.045);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    source.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.32);
+    source.start(now);
   }
 
+  // Natural float entry: a soft water impact, a short splash tail and tiny bubbles.
   public playSplash(intensity = 1.0): void {
     if (this.muted || !this.ctx) return;
     const now = this.ctx.currentTime;
-    const len = Math.floor(this.ctx.sampleRate * 0.28);
+    const level = Math.min(1.35, Math.max(0.15, intensity));
+    const len = Math.floor(this.ctx.sampleRate * 0.42);
     const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const ch = buf.getChannelData(0);
+    let low = 0;
     for (let i = 0; i < len; i++) {
-      const env = Math.pow(1 - i / len, 1.8);
-      ch[i] = (Math.random() * 2 - 1) * env * 0.55;
+      const t = i / len;
+      const white = Math.random() * 2 - 1;
+      low = (low + 0.075 * white) / 1.075;
+      const envelope = Math.pow(1 - t, 2.6);
+      ch[i] = (white * 0.24 + low * 2.8) * envelope;
     }
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
-
     const filt = this.ctx.createBiquadFilter();
     filt.type = 'lowpass';
-    filt.frequency.setValueAtTime(1400 * intensity, now);
-    filt.frequency.exponentialRampToValueAtTime(320, now + 0.26);
-
-    const g = this.ctx.createGain();
-    g.gain.value = 0.18 * Math.min(1.5, intensity);
+    filt.frequency.setValueAtTime(2100, now);
+    filt.frequency.exponentialRampToValueAtTime(420, now + 0.38);
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.12 * level, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
     src.connect(filt);
-    filt.connect(g);
-    g.connect(this.ctx.destination);
+    filt.connect(gain);
+    gain.connect(this.ctx.destination);
     src.start(now);
+
+    // A muted hollow plop under the water noise, with no electronic pitch sweep.
+    const plop = this.ctx.createOscillator();
+    const plopGain = this.ctx.createGain();
+    plop.type = 'sine';
+    plop.frequency.setValueAtTime(185 + Math.random() * 35, now);
+    plop.frequency.exponentialRampToValueAtTime(78, now + 0.13);
+    plopGain.gain.setValueAtTime(0.0001, now);
+    plopGain.gain.linearRampToValueAtTime(0.045 * level, now + 0.006);
+    plopGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    plop.connect(plopGain);
+    plopGain.connect(this.ctx.destination);
+    plop.start(now);
+    plop.stop(now + 0.17);
+  }
+
+  public playWaterEntry(intensity = 0.8): void {
+    this.playSplash(intensity);
   }
 
   // A quiet natural water plip instead of an electronic notification bell.
