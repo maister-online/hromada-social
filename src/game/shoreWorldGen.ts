@@ -138,7 +138,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   buttCap.position.set(0, 0, 0.14);
   root.add(buttCap);
 
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.021, 0.36, 32), corkMat);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.018, 0.36, 32), corkMat);
   grip.rotation.x = Math.PI / 2;
   grip.position.set(0, 0, -0.06);
   root.add(grip);
@@ -357,7 +357,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     const segGroup = new THREE.Group();
     segGroup.position.set(0, 0, i === 0 ? -0.34 : -segLen);
 
-    const rBot = 0.014 * Math.pow(0.76, i);
+    const rBot = 0.011 * Math.pow(0.76, i);
     const rTop = 0.014 * Math.pow(0.76, i + 1);
     const segMesh = new THREE.Mesh(
       new THREE.CylinderGeometry(rTop, rBot, segLen, 32, 1, false),
@@ -380,7 +380,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     }
 
     const guideZ = -segLen * 0.88;
-    const ringRadius = Math.max(0.007, 0.023 - i * 0.0037);
+    const ringRadius = Math.max(0.006, 0.019 - i * 0.003);
     const guide = new THREE.Group();
     guide.position.set(0, -ringRadius * 0.82, guideZ);
     const outerRing = new THREE.Mesh(
@@ -458,8 +458,8 @@ export function buildBobberRig(isAnomalyGlow: boolean, floatDef?: FloatDef): Bob
   const isNightGlow = Boolean(floatDef?.nightGlow || isAnomalyGlow);
   const isElectronic = Boolean(floatDef?.electronic);
 
-  const radius = style === 'catfish' || style === 'livebait' ? 0.12 : style === 'pencil' || style === 'goose' ? 0.048 : 0.085;
-  const yScale = style === 'ball' ? 1.0 : style === 'pencil' || style === 'goose' ? 2.6 : 1.55;
+  const radius = style === 'catfish' || style === 'livebait' ? 0.075 : style === 'pencil' || style === 'goose' ? 0.038 : 0.055;
+  const yScale = style === 'ball' ? 1.0 : style === 'pencil' || style === 'goose' ? 2.9 : 1.85;
 
   const bodyGeo = new THREE.SphereGeometry(radius, 12, 10);
   bodyGeo.scale(1, yScale, 1);
@@ -477,9 +477,9 @@ export function buildBobberRig(isAnomalyGlow: boolean, floatDef?: FloatDef): Bob
   );
   group.add(cap);
 
-  const antennaH = style === 'waggler' || style === 'pencil' ? 0.38 : 0.28;
+  const antennaH = style === 'waggler' || style === 'pencil' ? 0.32 : 0.23;
   const tipMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.013, 0.018, antennaH, 8),
+    new THREE.CylinderGeometry(0.009, 0.012, antennaH, 8),
     new THREE.MeshStandardMaterial({
       color: tipHex,
       emissive: isNightGlow || isElectronic ? tipHex : 0xf59e0b,
@@ -491,7 +491,7 @@ export function buildBobberRig(isAnomalyGlow: boolean, floatDef?: FloatDef): Bob
   group.add(tipMesh);
 
   const keel = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.009, 0.005, 0.24, 6),
+    new THREE.CylinderGeometry(0.006, 0.004, 0.24, 6),
     new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })
   );
   keel.position.y = -radius * yScale * 0.95 - 0.06;
