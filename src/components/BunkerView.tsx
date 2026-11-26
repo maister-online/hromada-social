@@ -320,8 +320,8 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             <span className={`font-mono-num font-semibold ${gameState.radiation > 30 ? 'text-rose-400' : 'text-emerald-300'}`}>{Math.round(gameState.radiation)} мЗв</span>
           </div>
           <div className="rounded-md border border-violet-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
-            <span className="text-slate-400">ПСИХІКА </span>
-            <span className={`font-mono-num font-semibold ${gameState.hunger <= 30 ? 'text-rose-400' : gameState.sanity <= 60 ? 'text-amber-300' : 'text-violet-300'}`}>{Math.round(gameState.sanity)}%</span>
+            <span className="text-slate-400">ГОЛОД </span>
+            <span className={`font-mono-num font-semibold ${gameState.hunger <= 30 ? 'text-rose-400' : gameState.hunger <= 60 ? 'text-amber-300' : 'text-emerald-300'}`}>{Math.round(gameState.sanity)}%</span>
           </div>
         </div>
       </header>
@@ -431,7 +431,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 </div>
               </div>
 
-              {/* TARAS: CATCH SELLING, FOOD FOR SANITY, RAD CLEAR, REST & FIELD QUESTS */}
+              {/* TARAS: CATCH SELLING, FOOD FOR HUNGER, RAD CLEAR, REST & FIELD QUESTS */}
               {activeNpc === 'taras' && (
                 <div className="space-y-5">
                   <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
@@ -566,7 +566,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         </div>
                       )}
 
-                      {/* Taras Food Supply for Sanity Restoration */}
+                      {/* Taras Food Supply for Hunger */}
                       <div className="pt-4 border-t border-white/10 space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
@@ -574,7 +574,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             Продовольчий склад Тараса (відновлення ситості)
                           </div>
                           <span className="font-mono-num text-xs text-indigo-300">
-                            Ваша розсудливість: {Math.round(gameState.sanity)}%
+                            Рівень ситості: {Math.round(gameState.sanity)}%
                           </span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -686,7 +686,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         </div>
                       </div>
                       <p className="text-xs text-slate-400">
-                        Сон на спальниках у бункері знімає психологічне напруження після викидів (+55% ситості при зміні часу доби) або повністю відновлює розсудливість до 100%.
+                        Сон на спальниках у бункері знімає психологічне напруження після викидів (+55% ситості при зміні часу доби) або повністю відновлює ситість до 100%.
                       </p>
                       <div className="flex flex-wrap items-center gap-3">
                         <button
@@ -695,7 +695,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           className="btn-tactile btn-primary-emerald min-h-[46px] inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold cursor-pointer"
                         >
                           <BedDouble className="w-4 h-4" />
-                          Відпочити в бункері (100% розсудливості · +2.5 год)
+                          Відпочити в бункері (100% ситості · +2.5 год)
                         </button>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
