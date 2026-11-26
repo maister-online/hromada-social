@@ -90,15 +90,15 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Neutral graphite-grey finish across every rod tier.
-  const blankColor = 0x858b91;
+  const blankColor = 0x9ba1a7;
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x686f75,
+    color: 0x858b91,
     roughness: 0.96,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x42484e,
+    color: 0x626970,
     roughness: 1,
     metalness: 0,
   });
