@@ -164,50 +164,75 @@ class PolissiaAudioEngine {
     source.start(now);
   }
 
-  // Natural float entry: a soft water impact, a short splash tail and tiny bubbles.
+  // Layered water-entry sound: soft impact, bright splash, hollow water body and droplets.
   public playSplash(intensity = 1.0): void {
     if (this.muted || !this.ctx) return;
     const now = this.ctx.currentTime;
-    const level = Math.min(1.35, Math.max(0.15, intensity));
-    const len = Math.floor(this.ctx.sampleRate * 0.42);
-    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-    const ch = buf.getChannelData(0);
-    let low = 0;
-    for (let i = 0; i < len; i++) {
-      const t = i / len;
-      const white = Math.random() * 2 - 1;
-      low = (low + 0.075 * white) / 1.075;
-      const envelope = Math.pow(1 - t, 2.6);
-      ch[i] = (white * 0.24 + low * 2.8) * envelope;
-    }
-    const src = this.ctx.createBufferSource();
-    src.buffer = buf;
-    const filt = this.ctx.createBiquadFilter();
-    filt.type = 'lowpass';
-    filt.frequency.setValueAtTime(2100, now);
-    filt.frequency.exponentialRampToValueAtTime(420, now + 0.38);
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.12 * level, now + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-    src.connect(filt);
-    filt.connect(gain);
-    gain.connect(this.ctx.destination);
-    src.start(now);
+    const level = Math.min(1.25, Math.max(0.15, intensity));
 
-    // A muted hollow plop under the water noise, with no electronic pitch sweep.
-    const plop = this.ctx.createOscillator();
-    const plopGain = this.ctx.createGain();
-    plop.type = 'sine';
-    plop.frequency.setValueAtTime(185 + Math.random() * 35, now);
-    plop.frequency.exponentialRampToValueAtTime(78, now + 0.13);
-    plopGain.gain.setValueAtTime(0.0001, now);
-    plopGain.gain.linearRampToValueAtTime(0.045 * level, now + 0.006);
-    plopGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
-    plop.connect(plopGain);
-    plopGain.connect(this.ctx.destination);
-    plop.start(now);
-    plop.stop(now + 0.17);
+    const makeNoise = (duration: number, color: 'white' | 'brown' = 'white') => {
+      const length = Math.max(1, Math.floor(this.ctx!.sampleRate * duration));
+      const buffer = this.ctx!.createBuffer(1, length, this.ctx!.sampleRate);
+      const data = buffer.getChannelData(0);
+      let low = 0;
+      for (let i = 0; i < length; i++) {
+        const white = Math.random() * 2 - 1;
+        low = (low + 0.11 * white) / 1.11;
+        data[i] = color === 'brown' ? low * 3.1 : white;
+      }
+      return buffer;
+    };
+
+    // Main splash: broad water slap with a fast attack and soft falling tail.
+    const impact = this.ctx.createBufferSource();
+    impact.buffer = makeNoise(0.34, 'brown');
+    const impactFilter = this.ctx.createBiquadFilter();
+    impactFilter.type = 'lowpass';
+    impactFilter.frequency.setValueAtTime(1900, now);
+    impactFilter.frequency.exponentialRampToValueAtTime(520, now + 0.32);
+    const impactGain = this.ctx.createGain();
+    impactGain.gain.setValueAtTime(0.0001, now);
+    impactGain.gain.linearRampToValueAtTime(0.19 * level, now + 0.009);
+    impactGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+    impact.connect(impactFilter);
+    impactFilter.connect(impactGain);
+    impactGain.connect(this.ctx.destination);
+    impact.start(now);
+
+    // Fine surface spray, brighter and shorter than the body of the splash.
+    const spray = this.ctx.createBufferSource();
+    spray.buffer = makeNoise(0.24);
+    const sprayFilter = this.ctx.createBiquadFilter();
+    sprayFilter.type = 'highpass';
+    sprayFilter.frequency.setValueAtTime(1250, now);
+    sprayFilter.Q.value = 0.55;
+    const sprayGain = this.ctx.createGain();
+    sprayGain.gain.setValueAtTime(0.0001, now);
+    sprayGain.gain.linearRampToValueAtTime(0.075 * level, now + 0.004);
+    sprayGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    spray.connect(sprayFilter);
+    sprayFilter.connect(sprayGain);
+    sprayGain.connect(this.ctx.destination);
+    spray.start(now);
+
+    // Three tiny irregular droplets give the entry a natural, non-electronic tail.
+    for (let i = 0; i < 3; i++) {
+      const delay = 0.045 + i * 0.052 + Math.random() * 0.025;
+      const drop = this.ctx.createBufferSource();
+      drop.buffer = makeNoise(0.055);
+      const dropFilter = this.ctx.createBiquadFilter();
+      dropFilter.type = 'bandpass';
+      dropFilter.frequency.setValueAtTime(1500 + Math.random() * 900, now + delay);
+      dropFilter.Q.value = 0.8;
+      const dropGain = this.ctx.createGain();
+      dropGain.gain.setValueAtTime(0.0001, now + delay);
+      dropGain.gain.linearRampToValueAtTime(0.025 * level, now + delay + 0.003);
+      dropGain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.052);
+      drop.connect(dropFilter);
+      dropFilter.connect(dropGain);
+      dropGain.connect(this.ctx.destination);
+      drop.start(now + delay);
+    }
   }
 
   public playWaterEntry(intensity = 0.8): void {
