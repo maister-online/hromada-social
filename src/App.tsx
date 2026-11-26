@@ -200,8 +200,8 @@ export default function App() {
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
-  // Музика використовується лише для вступного відео.
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(false);
+  // Фонова музика за замовчуванням увімкнена, але звучить тільки в бункері.
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [showBestiary, setShowBestiary] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
@@ -225,13 +225,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen === 'TITLE') return;
-    // Щойно гравець переходить у гру, гарантовано вмикаємо саме ігровий BGM.
-    audioEngine.init();
-    audioEngine.setMusicEnabled(true);
-    audioEngine.startBackgroundMusic();
-    setMusicEnabled(true);
-  }, [screen]);
+    if (screen === 'BUNKER' && musicEnabled) {
+      audioEngine.init();
+      audioEngine.setMusicEnabled(true);
+      audioEngine.startBackgroundMusic();
+      return;
+    }
+    // На водоймі, карті та титульному екрані фонова музика не звучить.
+    audioEngine.setMusicEnabled(false);
+  }, [screen, musicEnabled]);
 
   useEffect(() => {
     if (screen === 'TITLE') return;
@@ -255,7 +257,8 @@ export default function App() {
     audioEngine.init();
     setMusicEnabled((prev) => {
       const next = !prev;
-      audioEngine.setMusicEnabled(next);
+      // Перемикач керує фоновою музикою, але дозволяє її лише в бункері.
+      audioEngine.setMusicEnabled(screen === 'BUNKER' && next);
       try {
         localStorage.setItem('polissia_music_enabled', String(next));
       } catch {
