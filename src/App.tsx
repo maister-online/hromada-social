@@ -201,6 +201,7 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [showGamePresentation, setShowGamePresentation] = useState(false);
   const [showRiverIntro, setShowRiverIntro] = useState(false);
+  const [showBunkerIntro, setShowBunkerIntro] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -368,6 +369,8 @@ export default function App() {
         showToast('Ви прибули до Рокитного.');
       } else if (target.isBunker) {
         setShowRiverIntro(false);
+        // Проморолик запускається лише при вході в бункер саме з карти.
+        setShowBunkerIntro(screen === 'MAP' || showBunkerMap);
         setScreen('BUNKER');
         showToast('Ласкаво просимо до Бункер Рокитне.');
       } else {
@@ -378,7 +381,7 @@ export default function App() {
         }
       }
     },
-    [showToast]
+    [showToast, screen, showBunkerMap]
   );
 
   const handleSelectBait = useCallback((baitId: string) => {
@@ -1757,6 +1760,8 @@ export default function App() {
       {screen === 'BUNKER' && (
         <BunkerView
           gameState={gameState}
+          playIntro={showBunkerIntro}
+          onIntroEnded={() => setShowBunkerIntro(false)}
           onOpenMap={() => setShowBunkerMap(true)}
           muted={muted}
           musicEnabled={musicEnabled}
