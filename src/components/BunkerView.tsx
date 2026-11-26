@@ -321,7 +321,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
           </div>
           <div className="rounded-md border border-violet-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
             <span className="text-slate-400">ПСИХІКА </span>
-            <span className={`font-mono-num font-semibold ${gameState.sanity <= 30 ? 'text-rose-400' : gameState.sanity <= 60 ? 'text-amber-300' : 'text-violet-300'}`}>{Math.round(gameState.sanity)}%</span>
+            <span className={`font-mono-num font-semibold ${gameState.hunger <= 30 ? 'text-rose-400' : gameState.sanity <= 60 ? 'text-amber-300' : 'text-violet-300'}`}>{Math.round(gameState.sanity)}%</span>
           </div>
         </div>
       </header>
@@ -571,7 +571,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
                             <Coffee className="w-4 h-4 text-emerald-300" />
-                            Продовольчий склад Тараса (відновлення розсудливості)
+                            Продовольчий склад Тараса (відновлення ситості)
                           </div>
                           <span className="font-mono-num text-xs text-indigo-300">
                             Ваша розсудливість: {Math.round(gameState.sanity)}%
@@ -671,7 +671,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           Перепочинок у бункері та вибір часу виходу
                         </div>
                         <div className="flex items-center gap-2 text-xs font-mono-num">
-                          <span className="text-slate-400">Розсудливість:</span>
+                          <span className="text-slate-400">Голод:</span>
                           <span
                             className={
                               gameState.sanity <= 30
@@ -686,7 +686,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                         </div>
                       </div>
                       <p className="text-xs text-slate-400">
-                        Сон на спальниках у бункері знімає психологічне напруження після викидів (+55% розсудливості при зміні часу доби) або повністю відновлює розсудливість до 100%.
+                        Сон на спальниках у бункері знімає психологічне напруження після викидів (+55% ситості при зміні часу доби) або повністю відновлює розсудливість до 100%.
                       </p>
                       <div className="flex flex-wrap items-center gap-3">
                         <button
