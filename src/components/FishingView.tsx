@@ -494,17 +494,17 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => getWaterSpotInfo(location, aimYaw, castDistM, maxCastM),
     [aimYaw, castDistM, location, maxCastM]
   );
-  // Базовий ехолот показує тільки дно й глибину; рибні відбитки доступні лише з POLISSIA SONAR PRO.
+  // Реалістична шкала 2D-сонара: поверхня вгорі, рельєф дна внизу.
   const hasProSonar = gameState.equippedGearIds.includes('gear_sonar_module');
   const sonarMaxDepth = Math.max(sonarRange, location.depthRangeM[1] + 0.8);
-  const sonarBottomY = 12 + (currentWaterSpot.depthM / sonarMaxDepth) * 92;
+  const sonarBottomY = Math.max(62, Math.min(105, 18 + (currentWaterSpot.depthM / sonarMaxDepth) * 84));
   const sonarProfile = useMemo(() => {
     return Array.from({ length: 21 }, (_, index) => {
       const distM = 3 + (index / 20) * Math.max(8, maxCastM - 3);
       const spot = getWaterSpotInfo(location, aimYaw, distM, maxCastM);
       return {
-        x: index * 16,
-        y: 12 + (spot.depthM / sonarMaxDepth) * 92,
+        x: index * 12,
+        y: Math.max(56, Math.min(105, 18 + (spot.depthM / sonarMaxDepth) * 84)),
       };
     });
   }, [aimYaw, location, maxCastM, sonarMaxDepth]);
@@ -512,7 +512,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => sonarProfile.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' '),
     [sonarProfile]
   );
-  const sonarBottomAreaD = `${sonarBottomLineD} L320 142 L0 142 Z`;
+  const sonarBottomAreaD = `${sonarBottomLineD} L240 120 L0 120 Z`;
   const sonarEchoes = useMemo(() => {
     if (!hasProSonar) return [];
     const pool = getLocationFishPool(location);
@@ -528,12 +528,12 @@ export const FishingView: React.FC<FishingViewProps> = ({
         0.28 + (phaseValue % 55) / 100;
       const depthM = Math.max(0.25, currentWaterSpot.depthM * depthFactor);
       return {
-        x: 28 + ((index * 59 + sonarScan * 23 + 17) % 300),
-        y: 26 + (depthM / sonarMaxDepth) * 150,
+        x: 18 + ((index * 47 + sonarScan * 17 + 13) % 190),
+        y: 18 + (depthM / Math.max(0.5, currentWaterSpot.depthM)) * Math.max(12, sonarBottomY - 30),
         strength: 0.38 + (phaseValue % 58) / 100,
       };
     });
-  }, [currentWaterSpot.depthM, hasProSonar, location, sonarMaxDepth, sonarScan]);
+  }, [currentWaterSpot.depthM, hasProSonar, location, sonarBottomY, sonarScan]);
 
   const effectiveFishingDepthM = useMemo(() => {
     const maxSafe = Math.max(0.4, Number((currentWaterSpot.depthM - 0.1).toFixed(1)));
@@ -1719,7 +1719,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         </div>
       )}
 
-      {/* ГОРИЗОНТАЛЬНИЙ ЕХОЛОТ — компактно у верхньому куті; розмір дисплея налаштовується */}
+      {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div className="pointer-events-none fixed right-2 top-2 z-[60] w-[168px] select-none sm:right-3 sm:top-3 sm:w-[190px]">
           <div className="relative aspect-[16/9] w-full">
@@ -1729,40 +1729,73 @@ export const FishingView: React.FC<FishingViewProps> = ({
               className="absolute inset-0 h-full w-full object-fill drop-shadow-[0_5px_12px_rgba(0,0,0,0.55)]"
               draggable={false}
             />
-            <button type="button" onClick={() => setShowSonarAdjust((value) => !value)} aria-label="Налаштувати розмір дисплея" title="Налаштувати розмір екрана" className="pointer-events-auto absolute right-[3%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-300/60 bg-black/80 text-[11px] font-bold text-white shadow">↗</button>
-            <button type="button" onClick={() => setShowSonar(false)} aria-label="Вимкнути ехолот" className="pointer-events-auto absolute right-[16%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-400/60 bg-black/75 text-slate-100 shadow"><span className="text-[10px] leading-none">⏻</span></button>
+            <button type="button" onClick={() => setShowSonarAdjust((value) => !value)} aria-label="Налаштувати розмір дисплея" title="Налаштувати розмір екрана" className="pointer-events-auto absolute right-[3%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-300/60 bg-black/85 text-[11px] font-bold text-white shadow">↗</button>
+            <button type="button" onClick={() => setShowSonar(false)} aria-label="Вимкнути ехолот" className="pointer-events-auto absolute right-[16%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-400/60 bg-black/80 text-slate-100 shadow"><span className="text-[10px] leading-none">⏻</span></button>
             <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[4px] border border-black/90 bg-[#031018] shadow-[inset_0_0_9px_rgba(0,0,0,0.95)]"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[3px] border border-[#101820] bg-[#06131d] shadow-[inset_0_0_12px_rgba(0,0,0,0.95)]"
               style={{ width: `${sonarScreenWidth}%`, height: `${sonarScreenHeight}%` }}
             >
-              <svg viewBox="0 0 240 120" preserveAspectRatio="none" className="block h-full w-full" role="img" aria-label="Ехолот: поплавок, волосінь, гачок, глибина та дно">
+              <svg viewBox="0 0 240 120" preserveAspectRatio="none" className="block h-full w-full" role="img" aria-label="Кольоровий ехолот: поплавок, глибина, риб'ячі відбиття та контур дна">
                 <defs>
-                  <linearGradient id="fishfinderWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0b3946"/><stop offset="100%" stopColor="#03131c"/></linearGradient>
-                  <linearGradient id="fishfinderBed" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c19a56"/><stop offset="100%" stopColor="#604321"/></linearGradient>
-                  <filter id="fishfinderGlow"><feGaussianBlur stdDeviation="2.2"/></filter>
+                  <linearGradient id="sonarWaterColumn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#092b43"/><stop offset="52%" stopColor="#061d31"/><stop offset="100%" stopColor="#071522"/>
+                  </linearGradient>
+                  <linearGradient id="sonarBottomFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#244d45"/><stop offset="28%" stopColor="#18352f"/><stop offset="100%" stopColor="#101d1c"/>
+                  </linearGradient>
+                  <linearGradient id="sonarBottomReturn" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#38a9a0"/><stop offset="35%" stopColor="#a8d85a"/><stop offset="65%" stopColor="#e9a34a"/><stop offset="100%" stopColor="#42b7aa"/>
+                  </linearGradient>
+                  <filter id="sonarSoftGlow"><feGaussianBlur stdDeviation="2"/></filter>
+                  <pattern id="sonarNoise" width="13" height="9" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="3" r=".65" fill="#8bd8d2" opacity=".22"/><circle cx="9" cy="7" r=".5" fill="#4b9cb7" opacity=".24"/>
+                  </pattern>
                 </defs>
-                <rect width="240" height="120" fill="url(#fishfinderWater)"/>
-                {Array.from({length:4},(_,i)=><g key={`ff-grid-${i}`}><line x1="0" y1={20+i*25} x2="240" y2={20+i*25} stroke="#4b9aa2" strokeOpacity=".28" strokeDasharray="2 4"/><text x="3" y={17+i*25} fontSize="7" fill="#a2d4d2">{(sonarMaxDepth*i/4).toFixed(0)}м</text></g>)}
-                <path d={`M0 ${Math.max(34,Math.min(100,sonarBottomY))} Q55 ${Math.max(28,Math.min(94,sonarBottomY-5))} 120 ${Math.max(34,Math.min(100,sonarBottomY))} T240 ${Math.max(34,Math.min(100,sonarBottomY+2))} L240 120 L0 120 Z`} fill="url(#fishfinderBed)" opacity=".94"/>
-                <path d={`M0 ${Math.max(34,Math.min(100,sonarBottomY))} Q55 ${Math.max(28,Math.min(94,sonarBottomY-5))} 120 ${Math.max(34,Math.min(100,sonarBottomY))} T240 ${Math.max(34,Math.min(100,sonarBottomY+2))}`} fill="none" stroke="#ffd27b" strokeWidth="2"/>
-                {hasProSonar && sonarEchoes.map((echo,index)=><g key={`ff-fish-${index}`}><ellipse cx={echo.x*0.75} cy={echo.y*0.45} rx={5+echo.strength*5} ry="2.5" fill="#53f1e8" opacity=".35" filter="url(#fishfinderGlow)"/><path d={`M${echo.x*0.75-7} ${echo.y*0.45} q7 -5 14 0 q-7 5 -14 0`} fill="none" stroke="#77fff0" strokeWidth="1.5"/></g>)}
-                <line x1="120" y1="13" x2="120" y2={Math.min(103,13+(effectiveFishingDepthM/sonarMaxDepth)*82)} stroke="#f4f7ed" strokeWidth="1.3" strokeDasharray="3 2"/>
-                <ellipse cx="120" cy="14" rx="5" ry="6" fill="#ff5b4d" stroke="#fff0d5" strokeWidth="1.2"/>
-                <path d={`M120 ${Math.min(103,13+(effectiveFishingDepthM/sonarMaxDepth)*82)} q-5 5 0 9 q5 -5 0 -9`} fill="none" stroke="#ffe2a1" strokeWidth="2"/>
-                <circle cx="120" cy={Math.min(103,13+(effectiveFishingDepthM/sonarMaxDepth)*82)+4} r="2.2" fill="#fff2c7"/>
-                <text x="236" y="10" textAnchor="end" fontSize="8" fill="#b6e9df">ГЛИБ. {currentWaterSpot.depthM.toFixed(1)}м</text>
-                <text x="236" y="116" textAnchor="end" fontSize="7" fill="#ffe0a3">ДО ДНА: {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
+                <rect width="240" height="120" fill="url(#sonarWaterColumn)"/>
+                <rect width="240" height="120" fill="url(#sonarNoise)" opacity=".65"/>
+                {Array.from({length:5},(_,i)=><g key={`sonar-grid-${i}`}>
+                  <line x1="0" y1={18+i*20} x2="240" y2={18+i*20} stroke="#7bb6c6" strokeOpacity=".22" strokeDasharray="2 4"/>
+                  <text x="4" y={15+i*20} fontSize="7" fill="#a6c9d5">{(sonarMaxDepth*i/5).toFixed(0)}</text>
+                </g>)}
+                <text x="5" y="8" fontSize="6" fill="#b7dce5" letterSpacing=".5">POLISSIA · 200 kHz</text>
+                <text x="235" y="9" textAnchor="end" fontSize="8" fontWeight="bold" fill="#e5f6ff">{currentWaterSpot.depthM.toFixed(1)} м</text>
+
+                {/* Рельєф дна займає нижню частину дисплея */}
+                <path d={sonarBottomAreaD} fill="url(#sonarBottomFill)"/>
+                <path d={sonarBottomLineD} fill="none" stroke="#c9ef82" strokeWidth="5" opacity=".18" filter="url(#sonarSoftGlow)"/>
+                <path d={sonarBottomLineD} fill="none" stroke="url(#sonarBottomReturn)" strokeWidth="2.8" strokeLinejoin="round"/>
+                <path d={sonarBottomLineD} fill="none" stroke="#f3d18a" strokeWidth=".65" opacity=".9" strokeLinejoin="round"/>
+                <path d={`${sonarBottomLineD} L240 120 L0 120 Z`} fill="none" stroke="#0a1117" strokeWidth="1.1"/>
+
+                {/* Слабкі донні/рослинні відбиття, риба — дугами */}
+                <path d={`M18 ${Math.min(sonarBottomY-10,74)} q12 -7 24 0 M84 ${Math.min(sonarBottomY-12,66)} q10 -5 20 0 M166 ${Math.min(sonarBottomY-10,76)} q12 -7 24 0`} fill="none" stroke="#4aa99a" strokeWidth="1.2" opacity=".48"/>
+                {hasProSonar && sonarEchoes.map((echo,index)=><g key={`sonar-echo-${index}`} opacity={0.65+echo.strength*.35}>
+                  <path d={`M${echo.x-9} ${echo.y+2} Q${echo.x} ${echo.y-7-echo.strength*3} ${echo.x+9} ${echo.y+2}`} fill="none" stroke="#a7e8e7" strokeWidth="2.2" strokeLinecap="round"/>
+                  <path d={`M${echo.x-7} ${echo.y+2} Q${echo.x} ${echo.y-4} ${echo.x+7} ${echo.y+2}`} fill="none" stroke="#e6f7db" strokeWidth=".8" strokeLinecap="round"/>
+                </g>)}
+
+                {/* Поплавок на поверхні та волосінь до гачка — глибина відповідає налаштуванню */}
+                <line x1="120" y1="18" x2="120" y2={Math.min(sonarBottomY-7,18+(effectiveFishingDepthM/Math.max(.5,currentWaterSpot.depthM))*(sonarBottomY-28))} stroke="#d7edf2" strokeWidth="1.1" strokeDasharray="2 2" opacity=".9"/>
+                <path d="M116 13 L120 8 L124 13 L123 19 L117 19 Z" fill="#f4f7f7" stroke="#17232a" strokeWidth=".8"/>
+                <path d="M117 14 L123 14 L122 18 L118 18 Z" fill="#e84f43"/>
+                <circle cx="120" cy="11" r="1.5" fill="#ffffff"/>
+                <circle cx="120" cy={Math.min(sonarBottomY-7,18+(effectiveFishingDepthM/Math.max(.5,currentWaterSpot.depthM))*(sonarBottomY-28))} r="2.1" fill="#f0d18b" stroke="#18242b" strokeWidth=".8"/>
+                <path d={`M120 ${Math.min(sonarBottomY-7,18+(effectiveFishingDepthM/Math.max(.5,currentWaterSpot.depthM))*(sonarBottomY-28))+1} q-4 4 0 7 q4 -3 0 -7`} fill="none" stroke="#f3d7a2" strokeWidth="1.1"/>
+                <text x="126" y="24" fontSize="6.5" fill="#ffcf83">ПОПЛАВОК</text>
+                <text x="126" y="33" fontSize="6" fill="#d7eaf0">{effectiveFishingDepthM.toFixed(1)} м</text>
+                <text x="5" y="116" fontSize="6" fill="#b8d4d4">ДНО</text>
+                <text x="235" y="116" textAnchor="end" fontSize="6" fill="#d4e7d5">ДО ДНА {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
               </svg>
-              <div className="pointer-events-auto absolute right-[1%] top-[12%] bottom-[15%] flex items-center">
-                <input aria-label="Глибина гачка" title="Перетягніть, щоб змінити глибину гачка" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-amber-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
+              <div className="pointer-events-auto absolute right-[1%] top-[17%] bottom-[13%] flex items-center">
+                <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
               </div>
             </div>
             {showSonarAdjust && (
               <div className="pointer-events-auto absolute left-0 right-0 top-full z-40 mt-1 rounded-lg border border-slate-500/70 bg-slate-950/95 p-2 text-[9px] text-slate-100 shadow-xl">
                 <div className="mb-1 flex items-center justify-between"><span>Ширина екрана</span><span className="font-mono">{sonarScreenWidth}%</span></div>
-                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="h-3 w-full accent-amber-300"/>
+                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
                 <div className="mb-1 mt-1 flex items-center justify-between"><span>Висота екрана</span><span className="font-mono">{sonarScreenHeight}%</span></div>
-                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="h-3 w-full accent-amber-300"/>
+                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
                 <button type="button" onClick={()=>{setSonarScreenWidth(76);setSonarScreenHeight(58);}} className="mt-1 w-full rounded bg-slate-700 px-2 py-1 font-semibold">Скинути розмір</button>
               </div>
             )}
