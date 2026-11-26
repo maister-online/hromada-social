@@ -791,7 +791,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
         };
 
         audioEngine.playCatch(sp.isMutant);
-        setCaughtTab('photo');
         setCaughtResult(fishRecord);
         setPhase('CAUGHT');
         setStatusMsg(`Впіймано: ${sp.name} (${fin.weightKg} кг)!`);
