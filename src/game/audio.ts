@@ -76,6 +76,7 @@ class PolissiaAudioEngine {
     }
     this.syncBgmPlayback();
     if (this.waterEntryAudio) this.waterEntryAudio.muted = m;
+    if (this.hookSetAudio) this.hookSetAudio.muted = m;
   }
 
   public isMuted(): boolean {
