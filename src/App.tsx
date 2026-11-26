@@ -141,6 +141,46 @@ function loadSavedGame(): SaveState | null {
     if (!parsed || !parsed.equippedRodId) return null;
     const { sanity: _legacySanity, ...saved } = parsed;
     const base = createFreshSave();
+
+    // Drop progress for quests that no longer exist in the current game version.
+    const questById = new Map(QUESTS.map((quest) => [quest.id, quest]));
+    const questProgress = Object.fromEntries(
+      Object.entries(parsed.questProgress ?? {}).flatMap(([questId, progress]) => {
+        const quest = questById.get(questId);
+        if (!quest || typeof progress !== 'number' || !Number.isFinite(progress) || progress <= 0) {
+          return [];
+        }
+        return [[questId, Math.min(progress, quest.targetCount)]];
+      })
+    );
+    const completedQuestIds = [...new Set(
+      (parsed.completedQuestIds ?? []).filter((questId) => questById.has(questId))
+    )];
+
+    // Old saved tackle presets must not bring deleted catalog items back into the game.
+    const savedTackleSets = (parsed.savedTackleSets ?? [])
+      .filter((set) =>
+        RODS.some((item) => item.id === set.equippedRodId) &&
+        REELS.some((item) => item.id === set.equippedReelId) &&
+        LINES.some((item) => item.id === set.equippedLineId) &&
+        BAIT_MAP[set.equippedBaitId] &&
+        FLOATS.some((item) => item.id === set.equippedFloatId) &&
+        HOOKS.some((item) => item.id === set.equippedHookId) &&
+        SINKERS.some((item) => item.id === set.equippedSinkerId) &&
+        FEEDERS.some((item) => item.id === set.equippedFeederId) &&
+        BOTTOM_RIGS.some((item) => item.id === set.equippedBottomRigId) &&
+        FLAVORING_MAP[set.equippedFlavoringId]
+      )
+      .map((set) => ({
+        ...set,
+        equippedAccessoryIds: (set.equippedAccessoryIds ?? []).filter((id) =>
+          ACCESSORIES.some((item) => item.id === id)
+        ),
+        equippedGearIds: (set.equippedGearIds ?? []).filter((id) =>
+          GEAR_ITEMS.some((item) => item.id === id)
+        ),
+      }));
+
     return {
       ...base,
       ...saved,
@@ -152,13 +192,21 @@ function loadSavedGame(): SaveState | null {
       ownedHookIds: parsed.ownedHookIds?.length ? parsed.ownedHookIds : base.ownedHookIds,
       ownedSinkerIds: parsed.ownedSinkerIds?.length ? parsed.ownedSinkerIds : base.ownedSinkerIds,
       ownedFeederIds: parsed.ownedFeederIds?.length ? parsed.ownedFeederIds : base.ownedFeederIds,
-      ownedAccessoryIds: parsed.ownedAccessoryIds ?? [],
+      ownedAccessoryIds: (parsed.ownedAccessoryIds ?? []).filter((id) =>
+        ACCESSORIES.some((item) => item.id === id)
+      ),
       ownedBottomRigIds: parsed.ownedBottomRigIds?.length
-        ? parsed.ownedBottomRigIds
+        ? parsed.ownedBottomRigIds.filter((id) => BOTTOM_RIGS.some((item) => item.id === id))
         : base.ownedBottomRigIds,
-      ownedGearIds: (parsed.ownedGearIds ?? []).filter((id) => !['gear_chair', 'gear_flashlight', 'gear_thermos'].includes(id)),
-      equippedAccessoryIds: parsed.equippedAccessoryIds ?? [],
-      equippedGearIds: (parsed.equippedGearIds ?? []).filter((id) => !['gear_chair', 'gear_flashlight', 'gear_thermos'].includes(id)),
+      ownedGearIds: (parsed.ownedGearIds ?? []).filter((id) =>
+        GEAR_ITEMS.some((item) => item.id === id)
+      ),
+      equippedAccessoryIds: (parsed.equippedAccessoryIds ?? []).filter((id) =>
+        ACCESSORIES.some((item) => item.id === id)
+      ),
+      equippedGearIds: (parsed.equippedGearIds ?? []).filter((id) =>
+        GEAR_ITEMS.some((item) => item.id === id)
+      ),
       baitInventory: { ...base.baitInventory, ...(parsed.baitInventory ?? {}) },
       flavoringInventory: {
         ...base.flavoringInventory,
@@ -184,12 +232,14 @@ function loadSavedGame(): SaveState | null {
       discovered: parsed.discovered ?? {},
       personalRecords: parsed.personalRecords ?? {},
       fishingJournal: parsed.fishingJournal ?? [],
-      questProgress: parsed.questProgress ?? {},
-      completedQuestIds: parsed.completedQuestIds ?? [],
-      visitedLocationIds: parsed.visitedLocationIds ?? ['rokitne_bunker'],
+      questProgress,
+      completedQuestIds,
+      visitedLocationIds: (parsed.visitedLocationIds ?? ['rokitne_bunker']).filter((id) =>
+        Boolean(LOCATIONS[id as LocationId])
+      ),
       haggleDay: parsed.haggleDay ?? 0,
       haggleBonusPct: parsed.haggleBonusPct ?? 0,
-      savedTackleSets: parsed.savedTackleSets ?? [],
+      savedTackleSets,
     };
   } catch {
     return null;
