@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   Anchor,
   BookMarked,
-  Box,
   Check,
   ChevronLeft,
   ChevronRight,
