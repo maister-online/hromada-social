@@ -1663,14 +1663,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
           className="fixed inset-0 z-[300] flex items-start justify-center overflow-y-auto bg-[#020604]/80 p-3 pt-14 backdrop-blur-sm"
           onClick={() => setShowLocationMenu(false)}
         >
-          <button
-            type="button"
-            onClick={() => setShowLocationMenu(false)}
-            className="fixed right-3 top-3 z-[60] flex h-12 w-12 items-center justify-center rounded-full border border-red-400/50 bg-[#160b0b]/95 text-red-300 shadow-2xl"
-            aria-label="Закрити меню"
-          >
-            <X className="h-7 w-7" strokeWidth={2.8} />
-          </button>
           <section
             className="panel-window w-full max-w-xl rounded-2xl border border-emerald-400/25 p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
