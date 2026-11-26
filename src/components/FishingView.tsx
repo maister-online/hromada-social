@@ -1496,11 +1496,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
 
   const antiradQty = gameState.consumableInventory['antirad_ai2'] ?? 0;
   const energyQty = gameState.consumableInventory['energy_stalker'] ?? 0;
-  const sanityFoods = LOOT_ITEMS.filter(
-    (i) =>
-      i.category === 'consumable' &&
-      i.sanityRestore &&
-      (gameState.consumableInventory[i.id] ?? 0) > 0
+  const hungerFoods = LOOT_ITEMS.filter(
+    (i) => i.category === 'consumable' && (i.isFood || i.sanityRestore) && (gameState.consumableInventory[i.id] ?? 0) > 0
   );
 
   const filteredBaits = useMemo(() => {
@@ -1652,7 +1649,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         weather={gameState.weather}
         timeOfDay={gameState.timeOfDay}
         anomalyActivity={location.anomalyActivity}
-        sanity={gameState.sanity}
+        sanity={gameState.hunger}
         isPhotoMode={Boolean(location.backdropPhotoUrl)}
       />
 
@@ -1707,7 +1704,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <button type="button" disabled={phase !== 'IDLE'} onClick={() => { setShowLocationMenu(false); setRigTab('groundbait'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold disabled:opacity-50">Прикормка · {activeGbDef?.name ?? (activeGb ? 'Активна' : 'обрати')}</button>
               {antiradQty > 0 && gameState.radiation > 5 && <button type="button" onClick={() => { onUseConsumable('antirad_ai2'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Антирад ({antiradQty})</button>}
               {energyQty > 0 && !isEnergyActive && <button type="button" onClick={() => { onUseConsumable('energy_stalker'); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">Енергетик ({energyQty})</button>}
-              {gameState.sanity < 85 && sanityFoods.slice(0, 2).map((food) => {
+              {gameState.hunger < 85 && hungerFoods.slice(0, 2).map((food) => {
                 const qty = gameState.consumableInventory[food.id] ?? 0;
                 const label = food.id === 'herbal_tea' ? 'Чай' : food.id === 'canned_stew' ? 'Тушкованка' : 'Шоколад';
                 return <button key={food.id} type="button" onClick={() => { onUseConsumable(food.id); setShowLocationMenu(false); }} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-left text-xs font-semibold">{label} ({qty})</button>;
