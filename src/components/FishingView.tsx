@@ -1728,7 +1728,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
               })}
 
               <button type="button" onClick={() => { setShowLocationMenu(false); setRigTab('rod'); setShowRigDrawer(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Wrench className="mr-2 inline h-4 w-4 text-sky-300" />Екіпіровка</button>
-              <button type="button" onClick={() => { setShowLocationMenu(false); setShowSonar(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Radar className="mr-2 inline h-4 w-4 text-cyan-300" />Ехолот · {hasProSonar ? 'PRO' : 'BASIC'}</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); setShowKeepnet(true); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Package className="mr-2 inline h-4 w-4 text-amber-300" />Садок ({gameState.keepnet.length})</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenInventory(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Shield className="mr-2 inline h-4 w-4 text-sky-300" />Рюкзак</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenJournal(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><BookMarked className="mr-2 inline h-4 w-4 text-teal-300" />Журнал</button>
@@ -1742,10 +1741,21 @@ export const FishingView: React.FC<FishingViewProps> = ({
         </div>
       )}
 
-      {/* MODERN FISH FINDER */}
+      {/* SONAR TOGGLE — доступний безпосередньо на локації */}
+      <button
+        type="button"
+        onClick={() => setShowSonar((value) => !value)}
+        aria-label={showSonar ? 'Вимкнути ехолот' : 'Увімкнути ехолот'}
+        aria-pressed={showSonar}
+        className={`fixed right-3 top-20 z-[61] inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold shadow-lg backdrop-blur-md transition-colors ${showSonar ? 'border-cyan-300/50 bg-cyan-950/65 text-cyan-100' : 'border-white/20 bg-slate-950/45 text-slate-200'}`}
+      >
+        <Radar className="h-4 w-4 text-cyan-300" />
+        ЕХОЛОТ · {showSonar ? 'УВІМК.' : 'ВИМК.'}
+      </button>
+
+      {/* MODERN FISH FINDER — напівпрозора панель поверх локації */}
       {showSonar && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#02070c]/90 p-3 backdrop-blur-sm" onClick={() => setShowSonar(false)}>
-          <section className="w-full max-w-2xl overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#07131d] shadow-[0_0_50px_rgba(8,145,178,0.18)]" onClick={(e) => e.stopPropagation()}>
+          <section className="fixed right-3 top-32 z-[60] max-h-[calc(100dvh-9rem)] w-[min(94vw,420px)] overflow-y-auto rounded-2xl border border-cyan-300/30 bg-[#07131d]/75 shadow-[0_0_35px_rgba(8,145,178,0.16)] backdrop-blur-xl">
             <header className="flex items-center justify-between border-b border-cyan-300/15 bg-[#0a1b28] px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 p-2 text-cyan-300"><Radar className="h-5 w-5" /></div>
@@ -1814,7 +1824,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
               </div>
             )}
           </section>
-        </div>
       )}
 
       {/* CENTER STATUS, FIGHTING, SNAGGED & LANDING NET GAUGES */}
