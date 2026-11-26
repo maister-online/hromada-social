@@ -55,7 +55,7 @@ import {
   SINKER_MAP,
   formatClock,
 } from '../game/data';
-import { getWaterSpotInfo } from '../game/bathymetry';
+import { getLocationCatchPool, getLocationFishPool, getWaterSpotInfo } from '../game/bathymetry';
 import {
   clampCastToWaterBounds,
   getWaterDistBoundsForYaw,
@@ -498,22 +498,38 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => getWaterSpotInfo(location, aimYaw, castDistM, maxCastM),
     [aimYaw, castDistM, location, maxCastM]
   );
-  // The demo starts with a built-in fish finder so players can learn the water immediately.
+  // Базовий ехолот є у гравця від початку; рибні сигнали відкриває куплений та встановлений Pro-модуль.
   const sonarEquipped = true;
-  const sonarMaxDepth = Math.max(sonarRange, currentWaterSpot.depthM + 1);
+  const hasProSonar = gameState.equippedGearIds.includes('gear_sonar_module');
+  const sonarMaxDepth = Math.max(sonarRange, location.depthRangeM[1] + 0.8);
   const sonarBottomY = 26 + (currentWaterSpot.depthM / sonarMaxDepth) * 150;
+  const sonarProfile = useMemo(() => {
+    return Array.from({ length: 21 }, (_, index) => {
+      const distM = 3 + (index / 20) * Math.max(8, maxCastM - 3);
+      const spot = getWaterSpotInfo(location, aimYaw, distM, maxCastM);
+      return {
+        x: index * 18,
+        y: 26 + (spot.depthM / sonarMaxDepth) * 150,
+      };
+    });
+  }, [aimYaw, location, maxCastM, sonarMaxDepth]);
+  const sonarBottomLineD = useMemo(
+    () => sonarProfile.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' '),
+    [sonarProfile]
+  );
+  const sonarBottomAreaD = `${sonarBottomLineD} L360 210 L0 210 Z`;
   const sonarEchoes = useMemo(() => {
-    const pool = location.speciesIds
-      .map((id) => FISH_MAP[id])
-      .filter((species) => species && (!species.faunaKind || species.faunaKind === 'fish' || species.faunaKind === 'mutant'));
-    const count = Math.min(6, Math.max(2, Math.ceil(pool.length / 4)));
+    if (!hasProSonar) return [];
+    const pool = getLocationFishPool(location);
+    if (!pool.length) return [];
+    const count = Math.min(5, Math.max(1, Math.ceil(pool.length / 7)));
     return Array.from({ length: count }, (_, index) => {
-      const species = pool[(index * 3 + sonarScan) % Math.max(1, pool.length)];
+      const species = pool[(index * 3 + sonarScan) % pool.length];
       const phaseValue = (index * 37 + sonarScan * 19 + location.anomalyActivity) % 100;
       const depthFactor =
-        species?.preferredDepth === 'surface' ? 0.2 :
-        species?.preferredDepth === 'bottom' ? 0.86 :
-        species?.preferredDepth === 'mid' ? 0.55 :
+        species.preferredDepth === 'surface' ? 0.2 :
+        species.preferredDepth === 'bottom' ? 0.86 :
+        species.preferredDepth === 'mid' ? 0.55 :
         0.28 + (phaseValue % 55) / 100;
       const depthM = Math.max(0.25, currentWaterSpot.depthM * depthFactor);
       return {
@@ -522,7 +538,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         strength: 0.38 + (phaseValue % 58) / 100,
       };
     });
-  }, [currentWaterSpot.depthM, location.anomalyActivity, location.speciesIds, sonarMaxDepth, sonarScan]);
+  }, [currentWaterSpot.depthM, hasProSonar, location, sonarMaxDepth, sonarScan]);
 
   const effectiveFishingDepthM = useMemo(() => {
     const maxSafe = Math.max(0.4, Number((currentWaterSpot.depthM - 0.1).toFixed(1)));
@@ -567,19 +583,27 @@ export const FishingView: React.FC<FishingViewProps> = ({
             ? 'bottom'
             : 'mid';
 
-    const lootChance =
+    const baseLootChance =
       depthLayer === 'bottom'
-        ? isDeepSpot
-          ? 0.22
-          : 0.16
-        : depthLayer === 'mid'
-          ? 0.05
-          : 0.01;
-    const lootPool = LOOT_ITEMS.filter(
-      (item) => item.minAnomalyReq <= location.anomalyActivity + 12
+        ? isDeepSpot ? 0.075 : 0.028
+        : depthLayer === 'mid' ? 0.009 : 0.002;
+    const lootChance = Math.min(
+      0.14,
+      baseLootChance * (location.waterType === 'anomaly_lake' ? 1.7 : location.anomalyActivity >= 55 ? 1.25 : 1)
     );
+    const anomalyLootIds = new Set([
+      'loot_sunken_detector', 'loot_isotope_case', 'loot_blue_tear',
+      'loot_safe', 'loot_chest', 'loot_radio', 'loot_documents', 'loot_artifact_moon',
+    ]);
+    const lootPool = LOOT_ITEMS.filter((item) => {
+      if (item.minAnomalyReq > location.anomalyActivity) return false;
+      if (anomalyLootIds.has(item.id) && location.waterType !== 'anomaly_lake' && location.anomalyActivity < 60) return false;
+      if (item.id === 'loot_amber' && !['river', 'swamp'].includes(location.waterType)) return false;
+      if (item.id === 'loot_amber' && spot.depthNorm > 0.58) return false;
+      return true;
+    });
     if (lootPool.length > 0 && Math.random() < lootChance) {
-      const rarityWeight = { common: 10, uncommon: 5, rare: 2, legendary: 0.55 } as const;
+      const rarityWeight = { common: 12, uncommon: 4, rare: 1.1, legendary: 0.12 } as const;
       const totalLootWeight = lootPool.reduce((sum, item) => sum + rarityWeight[item.rarity], 0);
       let lootRoll = Math.random() * totalLootWeight;
       let chosenLoot = lootPool[lootPool.length - 1];
@@ -604,7 +628,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     const isNight = h >= 20.5 || h <= 5.0;
     const isDusk = (h >= 17 && h < 20.5) || (h > 5.0 && h <= 8.0);
 
-    const pool = location.speciesIds.map((id) => FISH_MAP[id]).filter(Boolean);
+    const pool = getLocationCatchPool(location);
     const candidates = pool.length > 0 ? pool : [FISH_SPECIES[0]];
     const weighted: FishSpeciesDef[] = [];
 
@@ -634,19 +658,33 @@ export const FishingView: React.FC<FishingViewProps> = ({
         }
       }
 
-      if (isDeepSpot && (sp.maxWeightKg >= 5 || sp.rarity === 'rare' || sp.rarity === 'legendary')) {
-        w += 3;
-      } else if (isShallowSpot && sp.maxWeightKg <= 4.5 && !sp.isMutant) {
-        w += 3;
+      if (isDeepSpot) {
+        if (sp.preferredDepth === 'bottom' || sp.maxWeightKg >= 4.5) w += 4;
+        if (sp.preferredDepth === 'surface' && sp.maxWeightKg < 2) w = Math.max(1, Math.round(w * 0.58));
+      } else if (isShallowSpot) {
+        if (sp.preferredDepth === 'surface' || sp.maxWeightKg <= 2.2) w += 4;
+        if (sp.preferredDepth === 'bottom' && sp.maxWeightKg >= 4.5) w = Math.max(1, Math.round(w * 0.55));
       }
 
       if (sp.isMutant) {
+        const anomalyBaseChance =
+          location.waterType === 'anomaly_lake' ? 0.3 :
+          location.waterType === 'swamp' ? 0.08 :
+          location.anomalyActivity >= 40 ? 0.035 : 0;
+        const mutantChance = Math.min(
+          0.72,
+          anomalyBaseChance +
+            (gameState.weather === 'anomaly_surge' ? 0.18 : 0) +
+            bait.mutantBonus * 0.1 +
+            gbMutant * 0.12
+        );
+        if (Math.random() > mutantChance) continue;
         const mutMult =
-          1 +
-          bait.mutantBonus * 3 +
-          gbMutant * 3 +
-          (isDeepSpot ? 0.35 : 0) +
-          (gameState.weather === 'anomaly_surge' ? 0.9 : 0);
+          0.7 +
+          bait.mutantBonus * 1.2 +
+          gbMutant * 1.2 +
+          (isDeepSpot ? 0.18 : 0) +
+          (gameState.weather === 'anomaly_surge' ? 0.55 : 0);
         w = Math.max(1, Math.round(w * mutMult));
       }
       for (let i = 0; i < w; i++) weighted.push(sp);
@@ -1712,8 +1750,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <div className="flex items-center gap-3">
                 <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 p-2 text-cyan-300"><Radar className="h-5 w-5" /></div>
                 <div>
-                  <div className="text-sm font-black tracking-[0.18em] text-cyan-100">POLISSIA SONAR PRO</div>
-                  <div className="text-[10px] uppercase tracking-widest text-cyan-500">Digital CHIRP · Fish finder</div>
+                  <div className="text-sm font-black tracking-[0.18em] text-cyan-100">{hasProSonar ? 'POLISSIA SONAR PRO' : 'POLISSIA SONAR BASIC'}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-cyan-500">{hasProSonar ? 'Digital CHIRP · Fish finder' : 'Depth profile · Basic sonar'}</div>
                 </div>
               </div>
               <button type="button" onClick={() => setShowSonar(false)} className="rounded-lg border border-white/10 p-2 text-slate-300"><X className="h-5 w-5" /></button>
@@ -1740,9 +1778,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
                       </g>
                     ))}
                     {[60,120,180,240,300].map((x) => <line key={`sonar-v-${x}`} x1={x} y1="18" x2={x} y2="190" stroke="#15516a" strokeOpacity="0.28" strokeDasharray="2 6" />)}
-                    <path d={`M0 ${sonarBottomY} Q55 ${sonarBottomY - 7} 105 ${sonarBottomY + 1} T210 ${sonarBottomY - 4} T360 ${sonarBottomY + 2} L360 210 L0 210 Z`} fill="url(#sonarBottom)" />
-                    <path d={`M0 ${sonarBottomY} Q55 ${sonarBottomY - 7} 105 ${sonarBottomY + 1} T210 ${sonarBottomY - 4} T360 ${sonarBottomY + 2}`} fill="none" stroke="#e7b65b" strokeWidth="2" />
-                    {sonarEchoes.map((echo, index) => (
+                    <path d={sonarBottomAreaD} fill="url(#sonarBottom)" />
+                    <path d={sonarBottomLineD} fill="none" stroke="#e7b65b" strokeWidth="2.2" strokeLinejoin="round" />
+                    {hasProSonar && sonarEchoes.map((echo, index) => (
                       <g key={`echo-${index}`} opacity={0.55 + echo.strength * 0.45}>
                         <path d={`M${echo.x - 12} ${echo.y + 3} Q${echo.x} ${echo.y - 7 - echo.strength * 5} ${echo.x + 12} ${echo.y + 3}`} fill="none" stroke={echo.strength > 0.78 ? '#fbbf24' : '#45e6f5'} strokeWidth={1.5 + echo.strength} strokeLinecap="round" />
                         <ellipse cx={echo.x} cy={echo.y + 4} rx={4 + echo.strength * 5} ry="2.5" fill={echo.strength > 0.78 ? '#fbbf24' : '#45e6f5'} opacity="0.8" />
@@ -1755,16 +1793,16 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Глибина</div><div className="font-mono-num text-lg font-bold text-cyan-200">{currentWaterSpot.depthM.toFixed(1)} м</div></div>
-                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Сигнали</div><div className="font-mono-num text-lg font-bold text-amber-300">{sonarEchoes.length}</div></div>
-                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Дно</div><div className="truncate text-sm font-bold text-amber-200">{currentWaterSpot.zoneLabel}</div></div>
+                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">{hasProSonar ? 'Сигнали риби' : 'Рельєф'}</div><div className="font-mono-num text-lg font-bold text-amber-300">{hasProSonar ? sonarEchoes.length : currentWaterSpot.zoneLabel}</div></div>
+                  <div className="rounded-lg border border-cyan-300/15 bg-cyan-950/25 p-2"><div className="text-[9px] uppercase text-slate-400">Тип дна</div><div className="truncate text-sm font-bold text-amber-200">{currentWaterSpot.bottomLabel}</div></div>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
-                    {[5,10,20].map((range) => <button key={range} type="button" onClick={() => setSonarRange(range)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${sonarRange === range ? 'border-cyan-300/60 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-black/20 text-slate-400'}`}>{range} м</button>)}
+                    {[5,10,...(hasProSonar ? [20] : [])].map((range) => <button key={range} type="button" onClick={() => setSonarRange(range)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${sonarRange === range ? 'border-cyan-300/60 bg-cyan-400/15 text-cyan-100' : 'border-white/10 bg-black/20 text-slate-400'}`}>{range} м</button>)}
                   </div>
                   <button type="button" onClick={() => setSonarScan((value) => value + 1)} className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-cyan-300/40 bg-cyan-500/15 px-4 text-xs font-bold text-cyan-100"><Radar className="h-4 w-4" />ОНОВИТИ СКАН</button>
                 </div>
-                <p className="text-[10px] leading-relaxed text-slate-500">Ехолот показує орієнтовні рибні відбитки та форму дна в зоні поточного прицілювання. Це підказка для вибору глибини й місця закиду, а не гарантія клювання.</p>
+                <p className="text-[10px] leading-relaxed text-slate-500">{hasProSonar ? 'Pro-ехолот показує приблизні рибні відбитки, їхню глибину та рельєф дна. Сигнал не гарантує клювання.' : 'Базовий ехолот безкоштовний: показує глибину, мілини, бровки та ями, але не виявляє рибу. Для рибних сигналів придбай і встанови «Ехолот портативний Pro» у спорядженні.'}</p>
               </div>
             ) : (
               <div className="space-y-3 p-5">
