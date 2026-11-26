@@ -87,8 +87,6 @@ export class ShoreFishingScene {
   private fishingLine!: THREE.Line;
   private linePositions = new Float32Array(12 * 3); // 12-point catenary line
 
-  // Weather particles (rain / anomaly spores)
-  private weatherParticles!: THREE.Points;
   // Ambient wildlife: lightweight procedural birds and occasional fish jumps.
   private ambientBirds: Array<{ group: THREE.Group; leftWing: THREE.Mesh; rightWing: THREE.Mesh; phase: number; speed: number; radius: number }> = [];
   private jumpingFish!: THREE.Group;
@@ -97,7 +95,6 @@ export class ShoreFishingScene {
   private fishJumpX = 0;
   private fishJumpZ = -24;
   private nextFishJump = 8;
-  private weatherPos!: Float32Array;
   private currentLocId: string;
   private currentRodKey: string;
   private currentFloatId: string;
@@ -161,7 +158,7 @@ export class ShoreFishingScene {
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
-    this.fogExp2 = new THREE.FogExp2(0x182520, 0.011);
+    this.fogExp2 = new THREE.FogExp2(0x182520, 0.0045);
     this.scene.fog = this.isPhotoMode ? null : this.fogExp2;
 
     const aspect =
@@ -184,7 +181,6 @@ export class ShoreFishingScene {
     this.rebuildEnvironment(initial.location);
     this.rebuildRod(initial.rodType, initial.rodLevelIndex);
     this.setupBobberAndLine(initial.location);
-    this.setupWeatherParticles();
     this.setupAmbientWildlife();
 
     if (!this.isSoftwareGl) {
@@ -446,7 +442,7 @@ export class ShoreFishingScene {
         uDeepColor: { value: new THREE.Color(loc.waterColorDeep) },
         uShallowColor: { value: new THREE.Color(loc.waterColorShallow) },
         uFogColor: { value: new THREE.Color(loc.fogColor) },
-        uFogDensity: { value: 0.011 },
+        uFogDensity: { value: 0.0045 },
         uGlowColor: { value: new THREE.Color(loc.glowColor) },
         uAnomalyGlow: {
           value: loc.waterType === 'anomaly_lake' ? 0.85 : loc.waterType === 'swamp' ? 0.35 : 0.05,
@@ -755,30 +751,6 @@ export class ShoreFishingScene {
     }
   }
 
-  private setupWeatherParticles(): void {
-    const count = 460;
-    this.weatherPos = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      this.weatherPos[i * 3] = (Math.random() - 0.5) * 48;
-      this.weatherPos[i * 3 + 1] = 0.5 + Math.random() * 15;
-      this.weatherPos[i * 3 + 2] = 2 - Math.random() * 52;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(this.weatherPos, 3));
-    this.weatherParticles = new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        color: 0xbae6fd,
-        size: 0.14,
-        transparent: true,
-        opacity: 0.65,
-        depthWrite: false,
-      })
-    );
-    this.weatherParticles.frustumCulled = false;
-    this.scene.add(this.weatherParticles);
-  }
-
   private updateAtmosphere(elapsed: number): void {
     const tod = this.sync.timeOfDay;
     const sunAngle = ((tod - 6) / 24) * Math.PI * 2;
@@ -837,12 +809,13 @@ export class ShoreFishingScene {
       loc.waterType === 'anomaly_lake' ? 0.85 : loc.waterType === 'swamp' ? 0.35 : 0.05;
     this.waterMat.uniforms.uAnomalyGlow.value = baseAnomalyGlow;
 
+    // Keep atmospheric depth without washing the whole image into a grey blur.
     const fogDensity =
-      0.0085 +
-      nightF * 0.0045 +
-      (isFog ? 0.017 : 0) +
-      (isRain ? 0.006 : 0) +
-      (loc.waterType === 'swamp' ? 0.006 : 0);
+      0.0045 +
+      nightF * 0.0015 +
+      (isFog ? 0.004 : 0) +
+      (isRain ? 0.002 : 0) +
+      (loc.waterType === 'swamp' ? 0.0015 : 0);
 
     this.waterMat.uniforms.uFogDensity.value = fogDensity;
     if (this.scene.fog instanceof THREE.FogExp2) {
@@ -1128,40 +1101,7 @@ export class ShoreFishingScene {
       attr.needsUpdate = true;
     }
 
-    // Update Weather / Anomaly Spores in 3D space
-    const isRain = this.sync.weather === 'rain';
-    const isFog = this.sync.weather === 'fog';
-    const pMat = this.weatherParticles.material as THREE.PointsMaterial;
-    // Keep only natural rain and fog particles; remove floating anomaly spores.
-    this.weatherParticles.visible = isRain || isFog;
 
-    if (this.weatherParticles.visible) {
-      pMat.color.setHex(isRain ? 0xcbd5e1 : 0xd1fae5);
-      pMat.size = isRain ? 0.13 : isFog ? 0.22 : 0.15;
-      pMat.opacity = isFog ? 0.28 : 0.62;
-      const pAttr = this.weatherParticles.geometry.attributes.position as THREE.BufferAttribute;
-      const count = this.weatherPos.length / 3;
-      for (let i = 0; i < count; i++) {
-        if (isRain) {
-          this.weatherPos[i * 3 + 1] -= dt * 22;
-          this.weatherPos[i * 3] -= dt * 3.1;
-          if (this.weatherPos[i * 3 + 1] < 0) {
-            this.weatherPos[i * 3 + 1] = 15;
-            this.weatherPos[i * 3] = (Math.random() - 0.5) * 48;
-          }
-        } else if (isFog) {
-          this.weatherPos[i * 3] += dt * (0.8 + (i % 3) * 0.25);
-          this.weatherPos[i * 3 + 1] += Math.sin(elapsed * 0.8 + i) * dt * 0.18;
-          if (this.weatherPos[i * 3] > 24) this.weatherPos[i * 3] = -24;
-        } else {
-          this.weatherPos[i * 3 + 1] +=
-            0.1 * dt + Math.sin(elapsed * 1.8 + i) * dt * 0.45;
-          this.weatherPos[i * 3] += Math.cos(elapsed * 1.1 + i) * dt * 0.4;
-          if (this.weatherPos[i * 3 + 1] > 15) this.weatherPos[i * 3 + 1] = 0.5;
-        }
-      }
-      pAttr.needsUpdate = true;
-    }
   }
 
   private tick = (): void => {
