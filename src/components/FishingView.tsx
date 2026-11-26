@@ -126,7 +126,7 @@ interface FishingViewProps {
   onCatchFish: (fish: CaughtFish, released: boolean) => void;
   onFindLoot: (item: LootItemDef, entry: FoundLootEntry) => void;
   onUseConsumable: (itemId: string) => void;
-  onClockAndRadTick: (deltaHours: number, radDelta: number, sanityDelta?: number) => void;
+  onClockAndRadTick: (deltaHours: number, radDelta: number) => void;
   onSelectRod: (rodId: string) => void;
   onSelectReel: (reelId: string) => void;
   onSelectLine: (lineId: string) => void;
@@ -898,30 +898,19 @@ export const FishingView: React.FC<FishingViewProps> = ({
       const radDiff = Math.max(0, location.radiationLevel - effectiveRadRes);
       const radGain = radDiff > 0 ? radDiff * 0.45 : -0.15;
 
-      const sanityFactor = Math.max(0.4, 1 - Math.min(0.6, rigStats.gearSanityShieldBonus));
-      let sanityDelta = 0;
       let extraRad = 0;
-      const isNightAnomaly =
-        location.anomalyActivity >= 75 &&
-        (gameState.timeOfDay >= 20 || gameState.timeOfDay < 5);
-
       if (gameState.weather === 'anomaly_surge') {
-        sanityDelta = -(0.65 + (location.anomalyActivity / 100) * 0.5) * sanityFactor;
         blowoutPulseCounterRef.current += 1;
         if (blowoutPulseCounterRef.current >= 32) {
           blowoutPulseCounterRef.current = 0;
-          sanityDelta -= 4.5 * sanityFactor;
           extraRad = 0.8;
-          setStatusMsg('Аномальний викид! Потужна хвиля тисне на розсудливість!');
+          setStatusMsg('Аномальний викид! Радіаційний фон різко зріс!');
         }
       } else {
         blowoutPulseCounterRef.current = 0;
-        if (isNightAnomaly) {
-          sanityDelta = -0.12 * sanityFactor;
-        }
       }
 
-      onClockAndRadTick(0.025, radGain + extraRad, sanityDelta);
+      onClockAndRadTick(0.025, radGain + extraRad);
     }, 500);
     return () => window.clearInterval(id);
   }, [
@@ -1709,7 +1698,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <div><div className="text-slate-400">Бурштин</div><div className="font-mono-num font-semibold text-orange-300">◆ {gameState.amberShards ?? 0}</div></div>
               <div><div className="text-slate-400">Садок</div><div className="font-mono-num font-semibold text-slate-100">{keepnetWeight.toFixed(1)} / {keepnetCap} кг</div></div>
               <div><div className="text-slate-400">Радіація</div><div className="font-mono-num text-slate-100">{Math.round(gameState.radiation)} мЗв</div></div>
-              <div><div className="text-slate-400">Розсудливість</div><div className="font-mono-num text-slate-100">{Math.round(gameState.sanity)}%</div></div>
+              <div><div className="text-slate-400">Голод</div><div className="font-mono-num text-amber-200">{Math.round(gameState.hunger)}%</div></div>
               <div><div className="text-slate-400">Вудка</div><div className="truncate text-slate-100">{Math.round(rodDurability)}%</div></div>
             </div>
 
