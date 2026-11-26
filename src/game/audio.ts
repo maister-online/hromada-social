@@ -259,42 +259,22 @@ class PolissiaAudioEngine {
     this.playSplash(0.3);
   }
 
-  // Short line/rod "twang" when the angler sets the hook.
+  // Natural rope/line tension creak from SFXMint (CC0 1.0), not a synthesized electronic tone.
+  private hookSetAudio: HTMLAudioElement | null = null;
+
   public playHookSet(): void {
-    if (this.muted || !this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const body = this.ctx.createGain();
-    const noise = this.ctx.createBufferSource();
-    const length = Math.floor(this.ctx.sampleRate * 0.11);
-    const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
-    const samples = buffer.getChannelData(0);
-    for (let i = 0; i < length; i++) {
-      samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    if (this.muted || typeof Audio === 'undefined') return;
+    if (!this.hookSetAudio) {
+      this.hookSetAudio = new Audio('https://sfxmint.com/dl/rope-tension-02.mp3');
+      this.hookSetAudio.preload = 'auto';
+      this.hookSetAudio.volume = 0.16;
     }
-    noise.buffer = buffer;
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1250, now);
-    filter.Q.value = 1.1;
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(185, now);
-    osc.frequency.exponentialRampToValueAtTime(92, now + 0.12);
-    body.gain.setValueAtTime(0.0001, now);
-    body.gain.linearRampToValueAtTime(0.09, now + 0.012);
-    body.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-    const snapGain = this.ctx.createGain();
-    snapGain.gain.setValueAtTime(0.0001, now);
-    snapGain.gain.linearRampToValueAtTime(0.045, now + 0.006);
-    snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-    osc.connect(body);
-    body.connect(this.ctx.destination);
-    noise.connect(filter);
-    filter.connect(snapGain);
-    snapGain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.15);
-    noise.start(now);
+    this.hookSetAudio.muted = this.muted;
+    this.hookSetAudio.volume = 0.16;
+    this.hookSetAudio.currentTime = 0;
+    this.hookSetAudio.play().catch(() => {
+      // Retry on the next user interaction if the browser blocks external audio.
+    });
   }
 
   // Soft, irregular reel/drag clicks with filtered noise, not a repeating square-wave beep.
