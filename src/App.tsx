@@ -196,6 +196,8 @@ export default function App() {
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [showGamePresentation, setShowGamePresentation] = useState(false);
+  const [showRiverIntro, setShowRiverIntro] = useState(false);
+  const riverIntroVideoRef = useRef<HTMLVideoElement | null>(null);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -223,6 +225,15 @@ export default function App() {
     audioEngine.setMusicEnabled(false);
     return audioEngine.installUnlockListener();
   }, []);
+
+  useEffect(() => {
+    if (!showRiverIntro) return;
+    const video = riverIntroVideoRef.current;
+    if (!video) return;
+    video.currentTime = 0;
+    void video.play().catch(() => setShowRiverIntro(false));
+    return () => video.pause();
+  }, [showRiverIntro]);
 
   useEffect(() => {
     if (screen === 'TITLE') return;
@@ -326,10 +337,12 @@ export default function App() {
       }));
 
       if (target.isBunker) {
+        setShowRiverIntro(false);
         setScreen('BUNKER');
         showToast('Ласкаво просимо до Бункер Рокитне.');
       } else {
         setScreen('FISHING');
+        setShowRiverIntro(locId === 'rokitne');
         if (isNew) {
           showToast(`Відкрито локацію: ${target.name}!`);
         }
@@ -1534,6 +1547,25 @@ export default function App() {
     <div
       className="relative w-screen h-screen overflow-hidden bg-[#060a08]"
     >
+      <video
+        ref={riverIntroVideoRef}
+        className={showRiverIntro ? "fixed inset-0 z-[110] h-full w-full object-cover bg-black" : "hidden"}
+        muted
+        playsInline
+        preload="auto"
+        onEnded={() => setShowRiverIntro(false)}
+        onError={() => setShowRiverIntro(false)}
+        src="/hromada-social/assets/aistudio/river_fishing_intro.mp4"
+      />
+      {showRiverIntro && (
+        <button
+          type="button"
+          onClick={() => setShowRiverIntro(false)}
+          className="fixed bottom-6 right-5 z-[120] rounded-xl border border-white/30 bg-black/65 px-5 py-3 text-sm font-bold text-white backdrop-blur"
+        >
+          Пропустити
+        </button>
+      )}
       <video
         ref={presentationVideoRef}
         className={showGamePresentation ? "fixed inset-0 z-[100] h-full w-full object-cover bg-black" : "hidden"}
