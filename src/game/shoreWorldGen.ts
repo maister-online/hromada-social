@@ -89,16 +89,16 @@ export interface FishingRodRig {
 export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): FishingRodRig {
   const root = new THREE.Group();
 
-  const blankColors = [0x6b4c2e, 0x1e293b, 0x3f1d1d, 0x0f766e];
-  const blankColor = blankColors[Math.min(rodLevelIndex, blankColors.length - 1)];
+  // Neutral graphite-grey finish across every rod tier.
+  const blankColor = 0x858b91;
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0xb98b5b,
+    color: 0x686f75,
     roughness: 0.96,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x765338,
+    color: 0x42484e,
     roughness: 1,
     metalness: 0,
   });
@@ -319,6 +319,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   thumbNail.scale.set(1.3, 0.45, 1.5);
   thumbNail.position.set(0.091, 0.052, -0.105);
   handGroup.add(thumbNail);
+  handGroup.visible = false;
   root.add(handGroup);
 
   // The second hand steadies the reel seat, like a real two-handed cast.
@@ -339,6 +340,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   supportThumb.rotation.set(Math.PI / 2, 0, -0.75);
   supportThumb.position.set(0.06, 0.025, 0.035);
   supportHand.add(supportThumb);
+  supportHand.visible = false;
   root.add(supportHand);
 
   // One continuous tapered blank: the rod bends as a single elastic piece,
