@@ -1216,15 +1216,6 @@ export const GEAR_ITEMS_CATALOG: GearItemDef[] = [
     effectLabel: '+12% ефективності фідера · +2 м закид',
   },
   {
-    id: 'gear_chair',
-    name: 'Рибальський стілець',
-    gearGroup: 'camp',
-    price: 437,
-    maxDurability: 100,
-    description: 'Складане крісло з підлокітниками для комфортного очікування клювання.',
-    effectLabel: 'Польове сидіння для тривалих рибальських сесій',
-  },
-  {
     id: 'gear_umbrella',
     name: 'Рибальська парасоля',
     gearGroup: 'camp',
@@ -1277,15 +1268,6 @@ export const GEAR_ITEMS_CATALOG: GearItemDef[] = [
     radResistBonus: 0.35,
     description: 'Повний водонепроникний комбінезон: дозволяє заходити глибоко у воду з підсаком.',
     effectLabel: '+8 м закиду · +15% витягування підсаком · +0.35 радзахисту',
-  },
-  {
-    id: 'gear_flashlight',
-    name: 'Ліхтарик тактичний',
-    gearGroup: 'light',
-    price: 218,
-    maxDurability: 100,
-    description: 'Яскравий промінь розганяє моторошну нічну темряву над водою.',
-    effectLabel: 'Освітлення берега в темну пору',
   },
   {
     id: 'gear_headlamp',
@@ -1358,15 +1340,6 @@ export const GEAR_ITEMS_CATALOG: GearItemDef[] = [
     keepnetBonusKg: 10,
     description: 'Міцний водостійкий рюкзак для додаткової риби, знахідок і снастей.',
     effectLabel: '+10 кг до місткості спорядження й садка',
-  },
-  {
-    id: 'gear_thermos',
-    name: 'Термос сталевий 1.5 л',
-    gearGroup: 'camp',
-    price: 299,
-    maxDurability: 100,
-    description: 'Зберігає напій теплим під час тривалих рибальських виїздів.',
-    effectLabel: 'Термос для гарячих напоїв',
   },
   {
     id: 'gear_boat',
