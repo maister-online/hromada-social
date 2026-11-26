@@ -145,7 +145,6 @@ function loadSavedGame(): SaveState | null {
       ...base,
       ...parsed,
       weather: parsed.weather === 'fog' || parsed.weather === 'rain' ? parsed.weather : 'clear',
-      weather: parsed.weather === 'fog' || parsed.weather === 'rain' ? parsed.weather : 'clear',
       ownedRodIds: parsed.ownedRodIds?.length ? parsed.ownedRodIds : base.ownedRodIds,
       ownedReelIds: parsed.ownedReelIds?.length ? parsed.ownedReelIds : base.ownedReelIds,
       ownedLineIds: parsed.ownedLineIds?.length ? parsed.ownedLineIds : base.ownedLineIds,
