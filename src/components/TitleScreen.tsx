@@ -26,7 +26,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       <img
         src={`${import.meta.env.BASE_URL}${encodeURIComponent('Надпис_Дике_Полісся_українською_1c88db2c_2K.jpg')}`}
         alt="Заставка гри «Дике Полісся»"
-        className="absolute inset-0 w-full h-full object-cover object-center"
+        className="fixed inset-0 z-0 h-[100dvh] w-screen object-cover object-center bg-black"
         draggable={false}
       />
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
