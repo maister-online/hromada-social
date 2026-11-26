@@ -1842,75 +1842,50 @@ export const FishingView: React.FC<FishingViewProps> = ({
         </div>
       </div>
 
-      {/* IMMERSIVE RETRIEVE HUD — live line distance and fish fight */}
-      {phase === 'FIGHTING' && (
-        <div className="pointer-events-none fixed left-1/2 bottom-[122px] z-30 w-[min(350px,calc(100vw-28px))] -translate-x-1/2 overflow-hidden rounded-2xl border border-cyan-300/25 bg-[#06131b]/85 px-3 py-2 shadow-[0_8px_35px_rgba(0,0,0,.55)] backdrop-blur-md">
-          <div className="mb-1.5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-amber-300 shadow-[0_0_10px_#fbbf24]" />
-              <span className="text-[10px] font-black uppercase tracking-[.18em] text-cyan-100">Виважування</span>
-            </div>
-            <div className="font-mono text-lg font-black tabular-nums leading-none text-white">{fishDistM.toFixed(1)} <span className="text-[10px] font-bold text-cyan-200">м</span></div>
-          </div>
-          <svg viewBox="0 0 320 66" className="block h-[62px] w-full" role="img" aria-label={`Риба на відстані ${fishDistM.toFixed(1)} метрів від берега`}>
-            <defs>
-              <linearGradient id="fightWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0e7490" stopOpacity=".32"/><stop offset="1" stopColor="#082f49" stopOpacity=".78"/></linearGradient>
-              <linearGradient id="fightLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#f8fafc"/><stop offset="1" stopColor="#67e8f9"/></linearGradient>
-            </defs>
-            <path d="M12 35 Q72 27 126 36 T308 33 L308 57 L12 57Z" fill="url(#fightWater)" />
-            <path d="M12 35 Q72 27 126 36 T308 33" fill="none" stroke="#38bdf8" strokeOpacity=".55" strokeWidth="1.2" />
-            <path d="M12 12 L12 57 L34 57 L34 25Z" fill="#365344" opacity=".9" />
-            <path d="M13 13 L23 8 L28 18 L34 12" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" />
-            <path d={`M25 20 Q${Math.max(34, (fishDistM / Math.max(1, maxCastM)) * 290)} 3 ${Math.max(35, 28 + (fishDistM / Math.max(1, maxCastM)) * 270)} 27`} fill="none" stroke="url(#fightLine)" strokeWidth="1.4" strokeDasharray="3 2" />
-            <g transform={`translate(${Math.max(35, Math.min(294, 28 + (fishDistM / Math.max(1, maxCastM)) * 270))} 29)`}>
-              <path d="M-12 0 Q-5 -8 5 -3 L12 0 L5 4 Q-5 8 -12 0Z" fill="#fbbf24" stroke="#fff7cc" strokeWidth=".8" />
-              <path d="M-11 0 L-17 -5 L-17 5Z" fill="#f59e0b" />
-              <circle cx="6" cy="-1" r="1" fill="#111827" />
-              <path d="M-2 5 Q-7 10 -10 6" fill="none" stroke="#fbbf24" strokeWidth="1.2" />
-            </g>
-            <g fill="#bae6fd" fontSize="8" fontFamily="monospace"><text x="12" y="64">БЕРЕГ</text><text x="308" y="64" textAnchor="end">ДАЛІ ВІД БЕРЕГА</text></g>
-            <path d="M28 51 H300" stroke="#7dd3fc" strokeOpacity=".24" strokeWidth="1" strokeDasharray="2 4" />
-            <path d={`M${Math.max(35, Math.min(294, 28 + (fishDistM / Math.max(1, maxCastM)) * 270))} 46 V54`} stroke="#fbbf24" strokeWidth="1.5" />
-          </svg>
-          <div className="mt-1 flex items-center justify-between gap-3">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Натяг волосіні</span>
-            <span className={`font-mono text-[10px] font-black tabular-nums ${tensionRatio > .85 ? 'text-rose-300' : tensionRatio > .55 ? 'text-amber-200' : 'text-emerald-200'}`}>{Math.round(tensionRatio * 100)}%</span>
-          </div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-950/90 ring-1 ring-white/10">
-            <div className={`h-full rounded-full transition-[width] duration-100 ${tensionRatio > .85 ? 'bg-gradient-to-r from-amber-400 to-rose-500' : tensionRatio > .55 ? 'bg-gradient-to-r from-emerald-400 to-amber-400' : 'bg-gradient-to-r from-cyan-400 to-emerald-400'}`} style={{ width: `${Math.min(100, tensionRatio * 100)}%` }} />
-          </div>
-        </div>
-      )}
-
       {/* COMPACT RIGHT-SIDE FISHING TENSION METER */}
       {phase === 'FIGHTING' && (
         <div
-          className="pointer-events-none fixed right-2 sm:right-3 top-1/2 -translate-y-1/2 z-30 panel-field rounded-lg px-1.5 py-2 flex flex-col items-center gap-1.5"
-          aria-label={`Навантаження на снасть: ${Math.round(tensionRatio * 100)} відсотків`}
+          className="pointer-events-none fixed right-2 sm:right-3 top-1/2 -translate-y-1/2 z-30 rounded-xl border border-cyan-300/20 bg-[#06131b]/80 px-1.5 py-2 shadow-lg backdrop-blur-sm flex items-stretch gap-2"
+          aria-label={`Риба на відстані ${fishDistM.toFixed(1)} метрів. Натяг волосіні ${Math.round(tensionRatio * 100)} відсотків`}
         >
-          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-300 [writing-mode:vertical-rl] rotate-180">Натяг</span>
-          <div className="relative h-32 w-2.5 rounded-full bg-slate-950/90 border border-white/20 overflow-hidden flex items-end">
-            <div
-              className={`w-full transition-all duration-75 ${
-                tensionRatio > 0.85
-                  ? 'bg-rose-500'
-                  : tensionRatio > 0.55
-                    ? 'bg-amber-400'
-                    : 'bg-emerald-400'
-              }`}
-              style={{ height: `${Math.min(100, tensionRatio * 100)}%` }}
-            />
-            <div className="absolute inset-x-0 top-[15%] border-t border-white/45" />
-            <div className="absolute inset-x-0 top-[45%] border-t border-white/35" />
-            <div className="absolute inset-x-0 top-[70%] border-t border-white/35" />
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[7px] font-bold uppercase tracking-wider text-cyan-200 [writing-mode:vertical-rl] rotate-180">Дистанція</span>
+            <span className="font-mono-num text-[9px] font-black text-white">{fishDistM.toFixed(1)}м</span>
+            <div className="relative h-32 w-3 rounded-full border border-cyan-200/25 bg-slate-950/90 overflow-hidden">
+              <div className="absolute inset-x-0 bottom-0 h-px bg-emerald-300/70" />
+              <div className="absolute left-0 right-0 h-1 rounded-full bg-amber-300 shadow-[0_0_8px_#fbbf24] transition-[bottom] duration-100" style={{ bottom: `${Math.max(0, Math.min(100, (fishDistM / Math.max(1, maxCastM)) * 100))}%` }} />
+              <div className="absolute inset-x-0 top-1/4 border-t border-white/15" />
+              <div className="absolute inset-x-0 top-1/2 border-t border-white/15" />
+              <div className="absolute inset-x-0 top-3/4 border-t border-white/15" />
+            </div>
+            <span className="text-[7px] text-slate-400">БЕРЕГ</span>
           </div>
-          <span className={`font-mono-num text-[10px] font-bold ${
-            tensionRatio > 0.85
-              ? 'text-rose-400'
-              : tensionRatio > 0.55
-                ? 'text-amber-300'
-                : 'text-emerald-300'
-          }`}>{Math.round(tensionRatio * 100)}%</span>
+          <div className="w-px bg-white/10" />
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[7px] font-bold uppercase tracking-wider text-slate-300 [writing-mode:vertical-rl] rotate-180">Натяг</span>
+            <div className="relative h-32 w-2.5 rounded-full bg-slate-950/90 border border-white/20 overflow-hidden flex items-end">
+              <div
+                className={`w-full transition-all duration-75 ${
+                  tensionRatio > 0.85
+                    ? 'bg-rose-500'
+                    : tensionRatio > 0.55
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-400'
+                }`}
+                style={{ height: `${Math.min(100, tensionRatio * 100)}%` }}
+              />
+              <div className="absolute inset-x-0 top-[15%] border-t border-white/45" />
+              <div className="absolute inset-x-0 top-[45%] border-t border-white/35" />
+              <div className="absolute inset-x-0 top-[70%] border-t border-white/35" />
+            </div>
+            <span className={`font-mono-num text-[10px] font-bold ${
+              tensionRatio > 0.85
+                ? 'text-rose-400'
+                : tensionRatio > 0.55
+                  ? 'text-amber-300'
+                  : 'text-emerald-300'
+            }`}>{Math.round(tensionRatio * 100)}%</span>
+          </div>
         </div>
       )}
 
