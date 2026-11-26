@@ -89,50 +89,50 @@ export interface FishingRodRig {
 export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): FishingRodRig {
   const root = new THREE.Group();
 
-  // Neutral graphite-grey finish across every rod tier.
-  const blankColor = 0x30372f;
+  // Worn black-carbon carp blank: near-black graphite with a restrained satin clearcoat.
+  const blankColor = 0x111714;
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x414536,
-    roughness: 0.96,
+    color: 0x242a25,
+    roughness: 0.94,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x20251d,
+    color: 0x111612,
     roughness: 1,
     metalness: 0,
   });
   const evaMat = new THREE.MeshStandardMaterial({
-    color: 0x252b24,
-    roughness: 0.72,
+    color: 0x171d1a,
+    roughness: 0.66,
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0x515b53,
-    roughness: 0.34,
+    color: 0x454d49,
+    roughness: 0.4,
     metalness: 0.82,
   });
   const ceramicMat = new THREE.MeshPhysicalMaterial({
-    color: 0x171d20,
-    roughness: 0.2,
+    color: 0x0b1112,
+    roughness: 0.24,
     metalness: 0.18,
     clearcoat: 0.8,
   });
   const threadMat = new THREE.MeshStandardMaterial({
-    color: 0x252b2e,
-    roughness: 0.42,
+    color: 0x303a34,
+    roughness: 0.48,
     metalness: 0.28,
   });
   const blankMat = new THREE.MeshPhysicalMaterial({
     color: blankColor,
-    roughness: rodType === 'float' ? 0.48 : 0.42,
-    metalness: rodLevelIndex >= 3 ? 0.24 : 0.16,
-    clearcoat: 0.55,
-    clearcoatRoughness: 0.32,
+    roughness: 0.34,
+    metalness: 0.28,
+    clearcoat: 0.82,
+    clearcoatRoughness: 0.22,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x252b26,
-    roughness: 0.28,
+    color: 0x151c19,
+    roughness: 0.32,
     metalness: 0.82,
   });
 
@@ -148,12 +148,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   root.add(grip);
   // Uneven olive field tape wrapped around the handle, like repaired Zone gear.
   const tapeMat = new THREE.MeshStandardMaterial({
-    color: 0x55543d,
+    color: 0x343c2d,
     roughness: 0.98,
     metalness: 0,
   });
   const darkTapeMat = new THREE.MeshStandardMaterial({
-    color: 0x292f25,
+    color: 0x1b211c,
     roughness: 1,
     metalness: 0,
   });
@@ -366,14 +366,14 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
 
   // One continuous tapered blank: the rod bends as a single elastic piece,
   // not as five visibly hinged sections.
-  const rodLength = rodType === 'float' ? 2.82 : 2.46;
+  const rodLength = rodType === 'float' ? 2.82 : 2.72;
   const longitudinalSegments = 96;
   const radialSegments = 16;
   const rodPositions = new Float32Array((longitudinalSegments + 1) * (radialSegments + 1) * 3);
   const rodIndices: number[] = [];
   for (let row = 0; row <= longitudinalSegments; row++) {
     const t = row / longitudinalSegments;
-    const radius = THREE.MathUtils.lerp(0.0175, 0.0026, Math.pow(t, 0.88));
+    const radius = THREE.MathUtils.lerp(0.0205, 0.0025, Math.pow(t, 0.88));
     const z = -0.34 - rodLength * t;
     for (let side = 0; side <= radialSegments; side++) {
       const a = (side / radialSegments) * Math.PI * 2;
@@ -414,7 +414,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const rodGuideT: number[] = [];
   const guidePositions = [0.10, 0.22, 0.34, 0.46, 0.58, 0.69, 0.79, 0.88, 0.96];
   guidePositions.forEach((t, i) => {
-    const radius = THREE.MathUtils.lerp(0.019, 0.0060, t);
+    const radius = THREE.MathUtils.lerp(0.022, 0.0062, t);
     const guide = new THREE.Group();
     guide.position.set(0, -radius * 0.82, -0.34 - rodLength * t);
     const outerRing = new THREE.Mesh(
@@ -448,17 +448,17 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Subdued olive-drab thread wraps and steel collars give the blank a rugged
   // field-repaired, STALKER-style look without bright gaming-style decoration.
   const fieldWrapMat = new THREE.MeshStandardMaterial({
-    color: 0x51513a,
-    roughness: 0.82,
+    color: 0x454a35,
+    roughness: 0.92,
     metalness: 0.08,
   });
   const wornSteelMat = new THREE.MeshStandardMaterial({
-    color: 0x596057,
-    roughness: 0.48,
+    color: 0x414943,
+    roughness: 0.56,
     metalness: 0.72,
   });
   for (const t of [0.035, 0.075, 0.13, 0.30, 0.52, 0.73, 0.91]) {
-    const radius = THREE.MathUtils.lerp(0.0175, 0.0026, Math.pow(t, 0.88));
+    const radius = THREE.MathUtils.lerp(0.0205, 0.0025, Math.pow(t, 0.88));
     const wrap = new THREE.Mesh(
       new THREE.TorusGeometry(radius + 0.0007, Math.max(0.0008, radius * 0.075), 5, 20),
       fieldWrapMat
