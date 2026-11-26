@@ -433,8 +433,32 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [rigTab, setRigTab] = useState<RigTab>('rod');
   const [showSonar, setShowSonar] = useState(true);
   const [showSonarAdjust, setShowSonarAdjust] = useState(false);
-  const [sonarScreenWidth, setSonarScreenWidth] = useState(76);
-  const [sonarScreenHeight, setSonarScreenHeight] = useState(58);
+  const [sonarScreenWidth, setSonarScreenWidth] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
+      return Number.isFinite(saved.width) ? Math.min(94, Math.max(45, saved.width)) : 76;
+    } catch {
+      return 76;
+    }
+  });
+  const [sonarScreenHeight, setSonarScreenHeight] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
+      return Number.isFinite(saved.height) ? Math.min(88, Math.max(30, saved.height)) : 58;
+    } catch {
+      return 58;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'wilde-polissia-sonar-window',
+        JSON.stringify({ width: sonarScreenWidth, height: sonarScreenHeight })
+      );
+    } catch {
+      // Keep the current sizes for this session if browser storage is unavailable.
+    }
+  }, [sonarScreenWidth, sonarScreenHeight]);
   const [sonarRange, setSonarRange] = useState(10);
   const [sonarScan, setSonarScan] = useState(0);
   const [reticlePos, setReticlePos] = useState<{
