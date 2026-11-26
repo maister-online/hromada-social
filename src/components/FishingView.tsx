@@ -497,14 +497,15 @@ export const FishingView: React.FC<FishingViewProps> = ({
   // Реалістична шкала 2D-сонара: поверхня вгорі, рельєф дна внизу.
   const hasProSonar = gameState.equippedGearIds.includes('gear_sonar_module');
   const sonarMaxDepth = Math.max(sonarRange, location.depthRangeM[1] + 0.8);
-  const sonarBottomY = Math.max(62, Math.min(105, 18 + (currentWaterSpot.depthM / sonarMaxDepth) * 84));
+  // Масштаб наближений: рельєф дна займає лише нижні 10–15% дисплея.
+  const sonarBottomY = 91 + (currentWaterSpot.depthM / sonarMaxDepth) * 10;
   const sonarProfile = useMemo(() => {
     return Array.from({ length: 21 }, (_, index) => {
       const distM = 3 + (index / 20) * Math.max(8, maxCastM - 3);
       const spot = getWaterSpotInfo(location, aimYaw, distM, maxCastM);
       return {
         x: index * 12,
-        y: Math.max(56, Math.min(105, 18 + (spot.depthM / sonarMaxDepth) * 84)),
+        y: 91 + (spot.depthM / sonarMaxDepth) * 10,
       };
     });
   }, [aimYaw, location, maxCastM, sonarMaxDepth]);
@@ -1754,11 +1755,13 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <rect width="240" height="120" fill="url(#sonarWaterColumn)"/>
                 <rect width="240" height="120" fill="url(#sonarNoise)" opacity=".65"/>
                 {Array.from({length:5},(_,i)=><g key={`sonar-grid-${i}`}>
-                  <line x1="0" y1={18+i*20} x2="240" y2={18+i*20} stroke="#7bb6c6" strokeOpacity=".22" strokeDasharray="2 4"/>
-                  <text x="4" y={15+i*20} fontSize="7" fill="#a6c9d5">{(sonarMaxDepth*i/5).toFixed(0)}</text>
+                  <line x1="0" y1={22+i*17} x2="240" y2={22+i*17} stroke="#9ac9dc" strokeOpacity=".28" strokeDasharray="3 4"/>
+                  <rect x="1" y={13+i*17} width="22" height="12" rx="2" fill="#020b13" fillOpacity=".82"/>
+                  <text x="4" y={22+i*17} fontSize="9" fontWeight="bold" fill="#f1fbff" stroke="#07131d" strokeWidth=".7" paintOrder="stroke">{(sonarMaxDepth*i/5).toFixed(0)}м</text>
                 </g>)}
-                <text x="5" y="8" fontSize="6" fill="#b7dce5" letterSpacing=".5">POLISSIA · 200 kHz</text>
-                <text x="235" y="9" textAnchor="end" fontSize="8" fontWeight="bold" fill="#e5f6ff">{currentWaterSpot.depthM.toFixed(1)} м</text>
+                <text x="27" y="11" fontSize="8" fontWeight="bold" fill="#d8f1ff" letterSpacing=".4" stroke="#06131d" strokeWidth="1.5" paintOrder="stroke">POLISSIA · SONAR</text>
+                <rect x="190" y="2" width="48" height="15" rx="3" fill="#020b13" fillOpacity=".9"/>
+                <text x="234" y="13" textAnchor="end" fontSize="11" fontWeight="bold" fill="#ffffff" stroke="#06131d" strokeWidth=".7" paintOrder="stroke">{currentWaterSpot.depthM.toFixed(1)} м</text>
 
                 {/* Рельєф дна займає нижню частину дисплея */}
                 <path d={sonarBottomAreaD} fill="url(#sonarBottomFill)"/>
@@ -1781,10 +1784,14 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <circle cx="120" cy="11" r="1.5" fill="#ffffff"/>
                 <circle cx="120" cy={Math.min(sonarBottomY-7,18+(effectiveFishingDepthM/Math.max(.5,currentWaterSpot.depthM))*(sonarBottomY-28))} r="2.1" fill="#f0d18b" stroke="#18242b" strokeWidth=".8"/>
                 <path d={`M120 ${Math.min(sonarBottomY-7,18+(effectiveFishingDepthM/Math.max(.5,currentWaterSpot.depthM))*(sonarBottomY-28))+1} q-4 4 0 7 q4 -3 0 -7`} fill="none" stroke="#f3d7a2" strokeWidth="1.1"/>
-                <text x="126" y="24" fontSize="6.5" fill="#ffcf83">ПОПЛАВОК</text>
-                <text x="126" y="33" fontSize="6" fill="#d7eaf0">{effectiveFishingDepthM.toFixed(1)} м</text>
-                <text x="5" y="116" fontSize="6" fill="#b8d4d4">ДНО</text>
-                <text x="235" y="116" textAnchor="end" fontSize="6" fill="#d4e7d5">ДО ДНА {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
+                <rect x="126" y="18" width="67" height="13" rx="3" fill="#03101a" fillOpacity=".9"/>
+                <text x="130" y="27" fontSize="8.5" fontWeight="bold" fill="#fff0c5" stroke="#03101a" strokeWidth=".6" paintOrder="stroke">ПОПЛАВОК</text>
+                <rect x="126" y="32" width="40" height="12" rx="3" fill="#03101a" fillOpacity=".88"/>
+                <text x="130" y="41" fontSize="8.5" fontWeight="bold" fill="#ffffff" stroke="#03101a" strokeWidth=".6" paintOrder="stroke">{effectiveFishingDepthM.toFixed(1)} м</text>
+                <rect x="2" y="106" width="35" height="12" rx="2" fill="#020b13" fillOpacity=".92"/>
+                <text x="5" y="115" fontSize="9" fontWeight="bold" fill="#e9f8db">ДНО</text>
+                <rect x="151" y="106" width="87" height="12" rx="2" fill="#020b13" fillOpacity=".92"/>
+                <text x="234" y="115" textAnchor="end" fontSize="8.5" fontWeight="bold" fill="#ffffff" stroke="#020b13" strokeWidth=".6" paintOrder="stroke">ДО ДНА {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
               </svg>
               <div className="pointer-events-auto absolute right-[1%] top-[17%] bottom-[13%] flex items-center">
                 <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
