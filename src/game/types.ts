@@ -439,7 +439,8 @@ export interface SaveState {
   xp: number;
   level: number;
   radiation: number; // 0..100
-  sanity: number; // 0..100
+  sanity: number; // legacy compatibility only
+  hunger: number; // 0..100, 100 = full
   stamina: number; // 0..100
   energyBoostUntilMs: number;
   currentLocationId: LocationId;
