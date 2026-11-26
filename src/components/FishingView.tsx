@@ -18,7 +18,6 @@ import {
   Warehouse,
   Wrench,
   X,
-  Zap,
 } from 'lucide-react';
 import { audioEngine } from '../game/audio';
 import {
@@ -81,7 +80,6 @@ const WEATHER_INFO: Record<
   clear: { label: 'Ясно', colorClass: 'text-amber-300', Icon: Sun },
   fog: { label: 'Густий туман', colorClass: 'text-teal-200', Icon: CloudFog },
   rain: { label: 'Дощ / Мряка', colorClass: 'text-sky-300', Icon: CloudRain },
-  anomaly_surge: { label: 'Аномальний викид', colorClass: 'text-cyan-300', Icon: Zap },
 };
 
 const FAUNA_KIND_LABEL: Record<FaunaKind, string> = {
@@ -668,7 +666,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
         const mutantChance = Math.min(
           0.72,
           anomalyBaseChance +
-            (gameState.weather === 'anomaly_surge' ? 0.18 : 0) +
             bait.mutantBonus * 0.1 +
             gbMutant * 0.12
         );
@@ -678,7 +675,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
           bait.mutantBonus * 1.2 +
           gbMutant * 1.2 +
           (isDeepSpot ? 0.18 : 0) +
-          (gameState.weather === 'anomaly_surge' ? 0.55 : 0);
+          0;
         w = Math.max(1, Math.round(w * mutMult));
       }
       for (let i = 0; i < w; i++) weighted.push(sp);
@@ -874,8 +871,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     tensionRatio,
   ]);
 
-  const blowoutPulseCounterRef = useRef(0);
-
   // Game clock + radiation + sanity tick
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -892,19 +887,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       const radDiff = Math.max(0, location.radiationLevel - effectiveRadRes);
       const radGain = radDiff > 0 ? radDiff * 0.45 : -0.15;
 
-      let extraRad = 0;
-      if (gameState.weather === 'anomaly_surge') {
-        blowoutPulseCounterRef.current += 1;
-        if (blowoutPulseCounterRef.current >= 32) {
-          blowoutPulseCounterRef.current = 0;
-          extraRad = 0.8;
-          setStatusMsg('Аномальний викид! Радіаційний фон різко зріс!');
-        }
-      } else {
-        blowoutPulseCounterRef.current = 0;
-      }
-
-      onClockAndRadTick(0.025, radGain + extraRad);
+      onClockAndRadTick(0.025, radGain);
     }, 500);
     return () => window.clearInterval(id);
   }, [
@@ -912,7 +895,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     caughtResult,
     gameState.radSuitLevel,
     gameState.timeOfDay,
-    gameState.weather,
     isModalOpen,
     location.anomalyActivity,
     location.radiationLevel,
