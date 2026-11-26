@@ -438,7 +438,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [baitFilter, setBaitFilter] = useState<BaitFilterTab>('all');
   const [showRigDrawer, setShowRigDrawer] = useState(false);
   const [rigTab, setRigTab] = useState<RigTab>('rod');
-  const [showSonar, setShowSonar] = useState(false);
+  const [showSonar, setShowSonar] = useState(true);
   const [sonarRange, setSonarRange] = useState(10);
   const [sonarScan, setSonarScan] = useState(0);
   const [reticlePos, setReticlePos] = useState<{
@@ -498,9 +498,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => getWaterSpotInfo(location, aimYaw, castDistM, maxCastM),
     [aimYaw, castDistM, location, maxCastM]
   );
-  // Базовий ехолот є у гравця від початку; рибні сигнали відкриває куплений та встановлений Pro-модуль.
-  const sonarEquipped = true;
-  const hasProSonar = gameState.equippedGearIds.includes('gear_sonar_module');
+  // Вбудований ехолот одразу показує рельєф дна, глибину та рибні відбитки.
   const sonarMaxDepth = Math.max(sonarRange, location.depthRangeM[1] + 0.8);
   const sonarBottomY = 26 + (currentWaterSpot.depthM / sonarMaxDepth) * 150;
   const sonarProfile = useMemo(() => {
@@ -1233,6 +1231,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       setAimYaw(clampedYaw);
       setCastDistM(dist);
       setActiveCastSpot({ yaw: clampedYaw, distM: dist });
+      setSonarScan((value) => value + 1);
       fishDistRef.current = dist;
       setFishDistM(dist);
 
@@ -1790,7 +1789,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                     {[60,120,180,240,300].map((x) => <line key={`sonar-v-${x}`} x1={x} y1="18" x2={x} y2="190" stroke="#15516a" strokeOpacity="0.28" strokeDasharray="2 6" />)}
                     <path d={sonarBottomAreaD} fill="url(#sonarBottom)" />
                     <path d={sonarBottomLineD} fill="none" stroke="#e7b65b" strokeWidth="2.2" strokeLinejoin="round" />
-                    {hasProSonar && sonarEchoes.map((echo, index) => (
+                    {sonarEchoes.map((echo, index) => (
                       <g key={`echo-${index}`} opacity={0.55 + echo.strength * 0.45}>
                         <path d={`M${echo.x - 12} ${echo.y + 3} Q${echo.x} ${echo.y - 7 - echo.strength * 5} ${echo.x + 12} ${echo.y + 3}`} fill="none" stroke={echo.strength > 0.78 ? '#fbbf24' : '#45e6f5'} strokeWidth={1.5 + echo.strength} strokeLinecap="round" />
                         <ellipse cx={echo.x} cy={echo.y + 4} rx={4 + echo.strength * 5} ry="2.5" fill={echo.strength > 0.78 ? '#fbbf24' : '#45e6f5'} opacity="0.8" />
