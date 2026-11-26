@@ -208,7 +208,6 @@ export default function App() {
   const mapMusicRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
   // Фонова музика за замовчуванням увімкнена, але звучить тільки в бункері.
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [showBestiary, setShowBestiary] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
@@ -232,7 +231,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen === 'BUNKER' && !showBunkerMap && musicEnabled) {
+    if (screen === 'BUNKER' && !showBunkerMap) {
       audioEngine.init();
       audioEngine.setMusicEnabled(true);
       audioEngine.startBackgroundMusic();
@@ -240,7 +239,7 @@ export default function App() {
     }
     // Музика бункера вимикається на водоймі та під час відкритої карти.
     audioEngine.setMusicEnabled(false);
-  }, [screen, showBunkerMap, musicEnabled]);
+  }, [screen, showBunkerMap]);
 
   useEffect(() => {
     const isMapOpen = screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap);
@@ -253,7 +252,7 @@ export default function App() {
     }
 
     const audio = mapMusicRef.current;
-    if (isMapOpen && musicEnabled && !muted) {
+    if (isMapOpen && !muted) {
       audio.volume = 0.42;
       audio.loop = true;
       void audio.play().catch(() => {
@@ -267,7 +266,7 @@ export default function App() {
     return () => {
       audio.pause();
     };
-  }, [screen, showBunkerMap, musicEnabled, muted]);
+  }, [screen, showBunkerMap, muted]);
 
   useEffect(() => () => {
     mapMusicRef.current?.pause();
@@ -291,22 +290,6 @@ export default function App() {
       return next;
     });
   }, []);
-
-  const handleToggleMusic = useCallback(() => {
-    audioEngine.init();
-    setMusicEnabled((prev) => {
-      const next = !prev;
-      // Перемикач керує фоновою музикою, але дозволяє її лише в бункері.
-      audioEngine.setMusicEnabled(screen === 'BUNKER' && !showBunkerMap && next);
-      try {
-        localStorage.setItem('polissia_music_enabled', String(next));
-      } catch {
-        // Ignore storage error
-      }
-      showToast(next ? 'Музику увімкнено' : 'Музику вимкнено');
-      return next;
-    });
-  }, [showToast, screen, showBunkerMap]);
 
   const finishGamePresentation = useCallback(() => {
     const audio = presentationAudioRef.current;
