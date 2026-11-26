@@ -178,7 +178,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   });
 
   const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const pinchRef = useRef<{ startDist: number; startZoom: number } | null>(null);
+  const pinchRef = useRef<{ startDist: number; startZoom: number; startPanX: number; startPanY: number } | null>(null);
 
   // Масштаб карти зберігається окремо від прогресу гри та відновлюється після завантаження.
   useEffect(() => {
@@ -189,12 +189,25 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     }
   }, [zoom]);
 
-  // Масштабуємо тільки від центру екрана: карта не зсувається за пальцем.
+  // Обмежуємо переміщення краями збільшеної карти, щоб не з'являлися порожні поля.
+  const clampPan = useCallback((x: number, y: number, z: number) => {
+    const rect = stageRef.current?.getBoundingClientRect();
+    const width = rect?.width ?? window.innerWidth;
+    const height = rect?.height ?? window.innerHeight;
+    const maxX = Math.max(0, (width * (z - 1)) / 2);
+    const maxY = Math.max(0, (height * (z - 1)) / 2);
+    return {
+      x: Math.max(-maxX, Math.min(maxX, x)),
+      y: Math.max(-maxY, Math.min(maxY, y)),
+    };
+  }, []);
+
+  // Масштаб змінюється від центру. При 100% карта завжди повертається у фіксоване положення.
   const applyZoomAtPoint = useCallback((nextZoom: number) => {
     const z = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(nextZoom.toFixed(3))));
     setZoom(z);
-    setPan({ x: 0, y: 0 });
-  }, []);
+    setPan((current) => z <= 1 ? { x: 0, y: 0 } : clampPan(current.x * z / zoomRef.current, current.y * z / zoomRef.current, z));
+  }, [clampPan]);
 
 
 
@@ -240,11 +253,12 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* pointer may already be captured by a marker */ }
 
     if (pointersRef.current.size === 2) {
       const pts = Array.from(pointersRef.current.values());
       const dist = Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
-      pinchRef.current = { startDist: dist, startZoom: zoomRef.current };
+      pinchRef.current = { startDist: dist, startZoom: zoomRef.current, startPanX: panRef.current.x, startPanY: panRef.current.y };
       dragStateRef.current.active = false;
       setIsInteracting(true);
       return;
@@ -277,13 +291,23 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         MIN_ZOOM,
         Math.min(MAX_ZOOM, p.startZoom * (dist / p.startDist))
       );
-      // Pinch змінює лише масштаб; центр карти не рухається.
+      // Зберігаємо оглянуту ділянку під час зміни масштабу.
       setZoom(Number(nextZoom.toFixed(3)));
-      setPan({ x: 0, y: 0 });
+      setPan(clampPan(p.startPanX * nextZoom / p.startZoom, p.startPanY * nextZoom / p.startZoom, nextZoom));
       return;
     }
 
-    // Одним пальцем карту не перетягуємо — торкання залишаються для вибору локацій.
+    // Одним пальцем можна рухати карту лише після збільшення. На 100% вона зафіксована.
+    if (pointersRef.current.size === 1 && dragStateRef.current.active && zoomRef.current > 1.001) {
+      const point = pointersRef.current.get(e.pointerId);
+      if (!point) return;
+      const dx = point.x - dragStateRef.current.startX;
+      const dy = point.y - dragStateRef.current.startY;
+      if (Math.abs(dx) + Math.abs(dy) > 5) dragStateRef.current.moved = true;
+      if (dragStateRef.current.moved) {
+        setPan(clampPan(dragStateRef.current.origPanX + dx, dragStateRef.current.origPanY + dy, zoomRef.current));
+      }
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
