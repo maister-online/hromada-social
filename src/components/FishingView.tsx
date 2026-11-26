@@ -1558,7 +1558,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             caughtLoot ||
             showKeepnet ||
             showBaitDrawer ||
-            showRigDrawer ||
+            showRigDrawer
           ) {
             return;
           }
@@ -1591,8 +1591,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             caughtLoot ||
             showKeepnet ||
             showBaitDrawer ||
-            showRigDrawer ||
-            showSonar
+            showRigDrawer
           ) {
             return;
           }
