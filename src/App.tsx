@@ -1726,9 +1726,9 @@ export default function App() {
           onIntroEnded={() => setShowBunkerIntro(false)}
           onOpenMap={() => setShowBunkerMap(true)}
           muted={muted}
-          musicEnabled={musicEnabled}
+
           onToggleMute={handleToggleMute}
-          onToggleMusic={handleToggleMusic}
+
           onOpenJournal={() => setShowJournal(true)}
           onSellFish={handleSellFish}
           onSellAll={handleSellAll}
