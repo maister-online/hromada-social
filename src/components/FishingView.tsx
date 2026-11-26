@@ -471,8 +471,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const handleSonarDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!sonarDragRef.current) return;
     const start = sonarDragRef.current;
-    setSonarLeft(Math.max(8, Math.min(window.innerWidth - Math.min(190, window.innerWidth - 16) - 8, start.left + event.clientX - start.pointerX)));
-    setSonarTop(Math.max(28, Math.min(window.innerHeight - 190, start.top + event.clientY - start.pointerY)));
+    setSonarLeft(Math.max(8, Math.min(window.innerWidth - Math.min(135, window.innerWidth - 16) - 8, start.left + event.clientX - start.pointerX)));
+    setSonarTop(Math.max(28, Math.min(window.innerHeight - 135, start.top + event.clientY - start.pointerY)));
   };
   const stopSonarDrag = () => { sonarDragRef.current = null; };
   const [sonarRange, setSonarRange] = useState(10);
@@ -1763,7 +1763,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[200] w-[min(190px,calc(100vw-16px))] select-none"
+          className="pointer-events-none fixed z-[200] w-[min(135px,calc(100vw-16px))] select-none"
           style={{ left: sonarLeft, top: sonarTop, touchAction: 'none' }}
         >
           <div className="relative aspect-[16/9] w-full">
