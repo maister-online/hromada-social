@@ -304,10 +304,6 @@ export default function App() {
   }, [finishGamePresentation]);
 
   const handleContinue = useCallback(() => {
-    audioEngine.init();
-    audioEngine.setMusicEnabled(true);
-    audioEngine.startBackgroundMusic();
-    setMusicEnabled(true);
     const loc = stateRef.current.currentLocationId;
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : 'FISHING');
   }, []);
