@@ -53,7 +53,7 @@ import {
 const SAVE_KEY = 'polissia_fishing_save_v1';
 const MAP_BGM_TRACK_URL = `${import.meta.env.BASE_URL}assets/${encodeURIComponent('Музика на карту_2026_11_26_10_12_26.mp3')}`;
 
-const WEATHER_CYCLE: WeatherType[] = ['clear', 'fog', 'rain', 'anomaly_surge'];
+const WEATHER_CYCLE: WeatherType[] = ['clear', 'fog', 'rain'];
 
 function calcLevel(xp: number): number {
   return Math.floor(xp / 250) + 1;
@@ -144,6 +144,7 @@ function loadSavedGame(): SaveState | null {
     return {
       ...base,
       ...parsed,
+      weather: parsed.weather === 'fog' || parsed.weather === 'rain' ? parsed.weather : 'clear',
       ownedRodIds: parsed.ownedRodIds?.length ? parsed.ownedRodIds : base.ownedRodIds,
       ownedReelIds: parsed.ownedReelIds?.length ? parsed.ownedReelIds : base.ownedReelIds,
       ownedLineIds: parsed.ownedLineIds?.length ? parsed.ownedLineIds : base.ownedLineIds,
@@ -818,7 +819,6 @@ export default function App() {
           clear: 'Ясна погода',
           fog: 'Над водою спускається густий туман',
           rain: 'Починається поліський дощ',
-          anomaly_surge: 'Увага: аномальний викид! Перевірте дозиметр і захист.',
         };
         showToast(wNames[shiftedWeather]);
       }
@@ -1548,7 +1548,6 @@ export default function App() {
         clear: 'Ясно',
         fog: 'Густий туман',
         rain: 'Мряка / Дощ',
-        anomaly_surge: 'Аномальний викид',
       };
       showToast(`Зміна погоди на Поліссі: ${wLabels[nextWeather]}`);
       setGameState((prev) => ({
