@@ -87,7 +87,7 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
 
     const splashes: WaterSplash[] = [];
 
-    const sporeCount = weather === 'fog' ? 16 : isDuskOrNight || highAnomalySpot ? 20 : 8;
+    const sporeCount = weather === 'fog' ? 0 : isDuskOrNight || highAnomalySpot ? 20 : 8;
 
     const spores: AnomalySpore[] = Array.from({ length: sporeCount }, () => {
       const r = Math.random();
@@ -240,36 +240,6 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
           }}
         />
       )}
-
-      {/* FOG: multi-layered animated drifting volumetric mist (works on both 3D & Tomashgorod photo) */}
-      {weather === 'fog' && (
-        <>
-          <div
-            className="absolute inset-0"
-            style={{
-              background: isPhotoMode
-                ? 'linear-gradient(180deg, rgba(203, 219, 215, 0.26) 0%, rgba(169, 193, 187, 0.34) 48%, rgba(24, 38, 34, 0.22) 100%)'
-                : 'linear-gradient(180deg, rgba(168, 190, 185, 0.18) 0%, rgba(148, 174, 168, 0.28) 52%, rgba(15, 28, 24, 0.18) 100%)',
-            }}
-          />
-          <div
-            className="animate-fog-a absolute -inset-x-[15%] top-[8%] h-[58%] opacity-75"
-            style={{
-              background:
-                'radial-gradient(ellipse 46% 36% at 28% 52%, rgba(214, 232, 226, 0.34), transparent 72%), radial-gradient(ellipse 48% 38% at 74% 44%, rgba(196, 220, 214, 0.30), transparent 74%)',
-            }}
-          />
-          <div
-            className="animate-fog-b absolute -inset-x-[18%] bottom-[4%] h-[52%] opacity-80"
-            style={{
-              background:
-                'radial-gradient(ellipse 52% 40% at 38% 55%, rgba(206, 226, 220, 0.32), transparent 72%), radial-gradient(ellipse 44% 34% at 80% 60%, rgba(186, 212, 206, 0.28), transparent 70%)',
-            }}
-          />
-        </>
-      )}
-
-
 
       {/* CLEAR: subtle warm sun/twilight atmospheric glow */}
       {weather === 'clear' && (
