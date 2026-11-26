@@ -94,7 +94,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {characterId === 'baryga' && (
         <g>
-          {/* Hooded stalker jacket & gas mask (Єльцин) */}
+          {/* Hooded stalker jacket & gas mask (Baryga) */}
           <path d="M16 120 C20 82, 36 74, 60 74 C84 74, 100 82, 104 120 Z" fill="#292822" />
           <path d="M29 56 C29 18, 91 18, 91 56 L93 88 L27 88 Z" fill="#36342b" />
           {/* Gas mask shell */}
