@@ -786,7 +786,6 @@ export class ShoreFishingScene {
     const loc = this.sync.location;
     const isRain = this.sync.weather === 'rain';
     const isFog = this.sync.weather === 'fog';
-    const isSurge = this.sync.weather === 'anomaly_surge';
 
     const sunDirX = Math.cos(sunAngle) * 0.75;
     const sunDirY = Math.max(0.18, Math.abs(sunH) * 0.85);
@@ -818,7 +817,7 @@ export class ShoreFishingScene {
     this.skyMat.uniforms.uTime.value = elapsed;
     this.skyMat.uniforms.uNight.value = nightF;
     this.skyMat.uniforms.uAnomaly.value =
-      loc.anomalyActivity / 100 + (isSurge ? 0.5 : 0);
+      loc.anomalyActivity / 100;
 
     this.waterMat.uniforms.uTime.value = elapsed;
     this.waterMat.uniforms.uSkyHorizon.value.copy(_cHor);
@@ -832,9 +831,7 @@ export class ShoreFishingScene {
 
     const baseAnomalyGlow =
       loc.waterType === 'anomaly_lake' ? 0.85 : loc.waterType === 'swamp' ? 0.35 : 0.05;
-    this.waterMat.uniforms.uAnomalyGlow.value = isSurge
-      ? Math.max(baseAnomalyGlow, 0.58 + Math.sin(elapsed * 2.4) * 0.28)
-      : baseAnomalyGlow;
+    this.waterMat.uniforms.uAnomalyGlow.value = baseAnomalyGlow;
 
     const fogDensity =
       0.0085 +
@@ -852,8 +849,8 @@ export class ShoreFishingScene {
     this.hemiLight.intensity = THREE.MathUtils.lerp(0.32, 0.92, dayF) * (isRain ? 0.8 : 1.0);
     this.envRig.lanternLight.intensity = THREE.MathUtils.lerp(6, 28, nightF);
 
-    // Subtle reed wind sway (stronger in rain / anomaly surge)
-    const windMult = isRain ? 2.1 : isSurge ? 1.65 : 1.0;
+    // Subtle reed wind sway, stronger during rain
+    const windMult = isRain ? 2.1 : 1.0;
     this.envRig.reedMesh.rotation.z = Math.sin(elapsed * 1.4 * windMult) * 0.025 * windMult;
   }
 
@@ -1105,9 +1102,7 @@ export class ShoreFishingScene {
     // Update Weather / Anomaly Spores in 3D space
     const isRain = this.sync.weather === 'rain';
     const isFog = this.sync.weather === 'fog';
-    const isSurge = this.sync.weather === 'anomaly_surge';
     const isAnomaly =
-      isSurge ||
       location.radiationLevel >= 1 ||
       this.sync.timeOfDay >= 19 ||
       this.sync.timeOfDay <= 5.5;
@@ -1120,12 +1115,12 @@ export class ShoreFishingScene {
           ? 0xcbd5e1
           : isFog
             ? 0xd1fae5
-            : isSurge || location.radiationLevel >= 2
+            : location.radiationLevel >= 2
               ? 0x22d3ee
               : 0xa3e635
       );
-      pMat.size = isRain ? 0.13 : isSurge ? 0.2 : isFog ? 0.22 : 0.15;
-      pMat.opacity = isSurge ? 0.8 : isFog ? 0.28 : 0.62;
+      pMat.size = isRain ? 0.13 : isFog ? 0.22 : 0.15;
+      pMat.opacity = isFog ? 0.28 : 0.62;
       const pAttr = this.weatherParticles.geometry.attributes.position as THREE.BufferAttribute;
       const count = this.weatherPos.length / 3;
       for (let i = 0; i < count; i++) {
@@ -1141,10 +1136,9 @@ export class ShoreFishingScene {
           this.weatherPos[i * 3 + 1] += Math.sin(elapsed * 0.8 + i) * dt * 0.18;
           if (this.weatherPos[i * 3] > 24) this.weatherPos[i * 3] = -24;
         } else {
-          const speedBoost = isSurge ? 1.85 : 1.0;
           this.weatherPos[i * 3 + 1] +=
-            (isSurge ? 0.55 : 0.1) * dt + Math.sin(elapsed * 1.8 + i) * dt * 0.45 * speedBoost;
-          this.weatherPos[i * 3] += Math.cos(elapsed * 1.1 + i) * dt * 0.4 * speedBoost;
+            0.1 * dt + Math.sin(elapsed * 1.8 + i) * dt * 0.45;
+          this.weatherPos[i * 3] += Math.cos(elapsed * 1.1 + i) * dt * 0.4;
           if (this.weatherPos[i * 3 + 1] > 15) this.weatherPos[i * 3 + 1] = 0.5;
         }
       }
