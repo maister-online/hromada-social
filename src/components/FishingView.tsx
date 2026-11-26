@@ -72,7 +72,6 @@ import {
   SaveState,
   WeatherType,
 } from '../game/types';
-import { Fauna3DPreview } from './Fauna3DPreview';
 import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
 import { CatalogPhoto } from './CatalogPhoto';
