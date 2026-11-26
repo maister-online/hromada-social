@@ -8,6 +8,7 @@ class PolissiaAudioEngine {
   private ambientGain: GainNode | null = null;
   private ambientRunning = false;
   private bgmAudio: HTMLAudioElement | null = null;
+  private waterEntryAudio: HTMLAudioElement | null = null;
   private gestureHooked = false;
 
   public init(): void {
@@ -74,6 +75,7 @@ class PolissiaAudioEngine {
       this.ambientGain.gain.setTargetAtTime(m ? 0 : 0.04, this.ctx.currentTime, 0.15);
     }
     this.syncBgmPlayback();
+    if (this.waterEntryAudio) this.waterEntryAudio.muted = m;
   }
 
   public isMuted(): boolean {
@@ -235,8 +237,20 @@ class PolissiaAudioEngine {
     }
   }
 
-  public playWaterEntry(intensity = 0.8): void {
-    this.playSplash(intensity);
+  // Quiet real pond-entry water plop from SFXMint (CC0 1.0).
+  public playWaterEntry(_intensity = 0.8): void {
+    if (this.muted || typeof Audio === 'undefined') return;
+    if (!this.waterEntryAudio) {
+      this.waterEntryAudio = new Audio('https://sfxmint.com/dl/water-plop-03.mp3');
+      this.waterEntryAudio.preload = 'auto';
+      this.waterEntryAudio.volume = 0.08;
+    }
+    this.waterEntryAudio.muted = this.muted;
+    this.waterEntryAudio.volume = 0.08;
+    this.waterEntryAudio.currentTime = 0;
+    this.waterEntryAudio.play().catch(() => {
+      // Browser may defer external audio until the next user gesture.
+    });
   }
 
   // A quiet natural water plip instead of an electronic notification bell.
