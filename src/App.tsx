@@ -196,6 +196,7 @@ export default function App() {
   const [gameState, setGameState] = useState<SaveState>(() => existingSave ?? createFreshSave());
   const [screen, setScreen] = useState<ScreenMode>('TITLE');
   const [showGamePresentation, setShowGamePresentation] = useState(false);
+  const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
   const [muted, setMuted] = useState(false);
@@ -1556,11 +1557,49 @@ export default function App() {
               hasSave={existingSave !== null}
               discoveredCount={Object.keys(gameState.discovered).length}
               totalSpeciesCount={FISH_SPECIES.length}
-              onNewGame={handleNewGame}
+              onNewGame={() => setShowNewGameConfirm(true)}
               onContinue={handleContinue}
               onOpenBestiary={() => setShowBestiary(true)}
             />
           </div>
+          {showNewGameConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="new-game-confirm-title"
+                className="w-full max-w-sm rounded-2xl border border-emerald-300/30 bg-[#101b16] p-5 text-center shadow-2xl"
+              >
+                <h2 id="new-game-confirm-title" className="mb-3 text-xl font-bold text-white">
+                  Почати нову гру?
+                </h2>
+                <p className="mb-6 text-sm leading-relaxed text-white/75">
+                  {existingSave
+                    ? "Поточний прогрес буде замінено новою грою. Ви втратите збережені досягнення, рибу та спорядження."
+                    : "Розпочати нову пригоду в аномальному Поліссі?"}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewGameConfirm(false)}
+                    className="min-h-[48px] flex-1 rounded-xl border border-white/20 bg-white/10 px-4 font-semibold text-white"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewGameConfirm(false);
+                      handleNewGame();
+                    }}
+                    className="min-h-[48px] flex-1 rounded-xl bg-emerald-700 px-4 font-bold text-white"
+                  >
+                    Почати
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
