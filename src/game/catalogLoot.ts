@@ -27,7 +27,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 1.4,
     accentColor: '#b45309',
     iconKey: 'scrap',
-    description: 'Важкий уламок старого мосту або баржі. Єльцин забирає його на переплавку за готівку.',
+    description: 'Важкий уламок старого мосту або баржі. Барига забирає його на переплавку за готівку.',
   },
   {
     id: 'loot_gold_chain',
@@ -40,7 +40,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.09,
     accentColor: '#fbbf24',
     iconKey: 'gold_chain',
-    description: 'Загублений кимось у кар’єрі важкий золотий ланцюжок. Справжня знахідка на ринку Єльцина!',
+    description: 'Загублений кимось у кар’єрі важкий золотий ланцюжок. Справжня знахідка на ринку Баригаа!',
   },
   {
     id: 'loot_old_weapon',
@@ -53,7 +53,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 1.25,
     accentColor: '#94a3b8',
     iconKey: 'weapon',
-    description: 'Замулений старий пістолет із прибережної ями. Єльцин знає, кому збути такі деталі.',
+    description: 'Замулений старий пістолет із прибережної ями. Барига знає, кому збути такі деталі.',
   },
   {
     id: 'loot_pocket_watch',
@@ -170,7 +170,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.9,
     accentColor: '#22d3ee',
     iconKey: 'crystal',
-    description: 'Аномальний кристал, що формується на глибині кар’єрів і розломів Полісся. Єльцин платить за нього щедро.',
+    description: 'Аномальний кристал, що формується на глибині кар’єрів і розломів Полісся. Барига платить за нього щедро.',
   },
 
   // === НОВІ 21 ПРЕДМЕТ ЗІ СПИСКУ 25 ЗНАХІДОК (з урахуванням Монет, Годинника, Золотого ланцюжка і Артефактів вище) ===
@@ -185,7 +185,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.85,
     accentColor: '#78350f',
     iconKey: 'boot',
-    description: 'Промоклий шкіряний черевик зі шнурком. У Єльцина й гума йде в діло на латки.',
+    description: 'Промоклий шкіряний черевик зі шнурком. У Баригаа й гума йде в діло на латки.',
   },
   {
     id: 'loot_bottle',
@@ -289,7 +289,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.22,
     accentColor: '#38bdf8',
     iconKey: 'phone',
-    description: 'Кнопковий броньований телефон із картою пам’яті — Єльцин цінує електронні плати.',
+    description: 'Кнопковий броньований телефон із картою пам’яті — Барига цінує електронні плати.',
   },
   {
     id: 'loot_knife',
@@ -328,7 +328,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 2.1,
     accentColor: '#2dd4bf',
     iconKey: 'net',
-    description: 'Заплутана браконьєрська сітка, витягнута з фарватеру — плюс кармі й пару гривень від Єльцина.',
+    description: 'Заплутана браконьєрська сітка, витягнута з фарватеру — плюс кармі й пару гривень від Баригаа.',
   },
   {
     id: 'loot_old_rod',
@@ -445,7 +445,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.35,
     accentColor: '#fef08a',
     iconKey: 'documents',
-    description: 'Водонепроникний тубус із таємними картами глибин «Щит-04» — Єльцин і Величко дорого це цінують.',
+    description: 'Водонепроникний тубус із таємними картами глибин «Щит-04» — Барига і Величко дорого це цінують.',
   },
   {
     id: 'loot_artifact_moon',
@@ -501,9 +501,9 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.45,
     accentColor: '#34d399',
     iconKey: 'tea',
-    description: 'Гарячий відвар м’яти, чебрецю й лісового меду з Рокитного. Заспокоює нерви після аномальних спалахів.',
-    effectLabel: '+28% розсудливості',
-    sanityRestore: 28,
+    description: 'Гарячий відвар м’яти, чебрецю й лісового меду з Рокитного. Допомагає втамувати голод у дорозі.',
+    effectLabel: '+28% ситості',
+    hungerRestore: 28,
     isFood: true,
   },
   {
@@ -517,15 +517,15 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.6,
     accentColor: '#f59e0b',
     iconKey: 'canned_food',
-    description: 'Ситний гарячий пайок Тараса Гнатовича зі свіжим хлібом. Повертає ясність думок і сили на березі.',
-    effectLabel: '+45% розсудливості · +сили',
-    sanityRestore: 45,
+    description: 'Ситний гарячий пайок Тараса Гнатовича зі свіжим хлібом. Добре втамовує голод і відновлює сили.',
+    effectLabel: '+45% ситості · +сили',
+    hungerRestore: 45,
     staminaRestore: true,
     isFood: true,
   },
   {
     id: 'dark_chocolate',
-    name: 'Шоколад «Ясний розум»',
+    name: 'Шоколад «Поліський»',
     category: 'consumable',
     rarity: 'uncommon',
     sellValue: 48,
@@ -534,9 +534,9 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.15,
     accentColor: '#a78bfa',
     iconKey: 'chocolate',
-    description: 'Плитка міцного чорного шоколаду з карпатським горіхом і м’ятою. Допомагає відновити сили після сильного стресу.',
-    effectLabel: '+65% розсудливості',
-    sanityRestore: 65,
+    description: 'Плитка чорного шоколаду з карпатським горіхом і м’ятою. Швидко втамовує голод у дорозі.',
+    effectLabel: '+65% ситості',
+    hungerRestore: 65,
     isFood: true,
   },
 ];
