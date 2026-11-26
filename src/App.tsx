@@ -1651,7 +1651,6 @@ export default function App() {
           visitedLocationIds={gameState.visitedLocationIds}
           activeGroundbaitLocs={activeGroundbaitLocs}
           muted={muted}
-          musicEnabled={musicEnabled}
           onSelectDestination={handleSelectDestination}
           onOpenHome={() => setScreen('HOME')}
           onOpenInventory={() => setShowInventory(true)}
@@ -1659,7 +1658,6 @@ export default function App() {
           onOpenBestiary={() => setShowBestiary(true)}
           onOpenJournal={() => setShowJournal(true)}
           onToggleMute={handleToggleMute}
-          onToggleMusic={handleToggleMusic}
         />
       )}
 
@@ -1669,10 +1667,8 @@ export default function App() {
           location={currentLoc}
           gameState={gameState}
           muted={muted}
-          musicEnabled={musicEnabled}
           isModalOpen={showInventory || showQuests || showBestiary || showJournal}
           onToggleMute={handleToggleMute}
-          onToggleMusic={handleToggleMusic}
           onSelectBait={handleSelectBait}
           onConsumeBait={handleConsumeBait}
           onLineSnap={handleLineSnap}
@@ -1754,11 +1750,9 @@ export default function App() {
           hunger={gameState.hunger} keepnetCount={gameState.keepnet.length} keepnetWeightKg={keepnetWeight}
           keepnetCapacityKg={keepnetCap} lootCount={gameState.foundLoot.length} readyQuestsCount={readyQuestsCount}
           visitedLocationIds={gameState.visitedLocationIds} activeGroundbaitLocs={activeGroundbaitLocs}
-          muted={muted} musicEnabled={musicEnabled} onSelectDestination={handleSelectDestination}
           onOpenHome={() => { setShowBunkerMap(false); setScreen('HOME'); }}
           onOpenInventory={() => setShowInventory(true)} onOpenQuests={() => setShowQuests(true)}
           onOpenBestiary={() => setShowBestiary(true)} onOpenJournal={() => setShowJournal(true)}
-          onToggleMute={handleToggleMute} onToggleMusic={handleToggleMusic}
         />
       )}
 
