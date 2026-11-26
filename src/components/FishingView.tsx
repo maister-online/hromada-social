@@ -501,14 +501,14 @@ export const FishingView: React.FC<FishingViewProps> = ({
   // Базовий ехолот показує тільки дно й глибину; рибні відбитки доступні лише з POLISSIA SONAR PRO.
   const hasProSonar = gameState.equippedGearIds.includes('gear_sonar_module');
   const sonarMaxDepth = Math.max(sonarRange, location.depthRangeM[1] + 0.8);
-  const sonarBottomY = 26 + (currentWaterSpot.depthM / sonarMaxDepth) * 150;
+  const sonarBottomY = 12 + (currentWaterSpot.depthM / sonarMaxDepth) * 92;
   const sonarProfile = useMemo(() => {
     return Array.from({ length: 21 }, (_, index) => {
       const distM = 3 + (index / 20) * Math.max(8, maxCastM - 3);
       const spot = getWaterSpotInfo(location, aimYaw, distM, maxCastM);
       return {
-        x: index * 18,
-        y: 26 + (spot.depthM / sonarMaxDepth) * 150,
+        x: index * 16,
+        y: 12 + (spot.depthM / sonarMaxDepth) * 92,
       };
     });
   }, [aimYaw, location, maxCastM, sonarMaxDepth]);
@@ -516,7 +516,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
     () => sonarProfile.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' '),
     [sonarProfile]
   );
-  const sonarBottomAreaD = `${sonarBottomLineD} L360 210 L0 210 Z`;
+  const sonarBottomAreaD = `${sonarBottomLineD} L320 142 L0 142 Z`;
   const sonarEchoes = useMemo(() => {
     if (!hasProSonar) return [];
     const pool = getLocationFishPool(location);
@@ -1756,7 +1756,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 {[64,128,192,256].map(x=><line key={`ff-v-${x}`} x1={x} y1="0" x2={x} y2="142" stroke="#4b9aa2" strokeOpacity=".12" strokeDasharray="2 5"/>)}
                 <path d={sonarBottomAreaD} fill="url(#fishfinderBed)" opacity=".9"/>
                 <path d={sonarBottomLineD} fill="none" stroke="#ffd27b" strokeWidth="2.5" strokeLinejoin="round"/>
-                {hasProSonar && sonarEchoes.map((echo,index)=><g key={`ff-fish-${index}`}><ellipse cx={echo.x*0.89} cy={echo.y*0.67} rx={7+echo.strength*7} ry="3.5" fill="#53f1e8" opacity=".32" filter="url(#fishfinderGlow)"/><path d={`M${echo.x*0.89-10} ${echo.y*0.67} Q${echo.x*0.89} ${echo.y*0.67-7} ${echo.x*0.89+10} ${echo.y*0.67}`} fill="none" stroke="#77fff0" strokeWidth="2" strokeLinecap="round"/></g>)}
+                {hasProSonar && sonarEchoes.map((echo,index)=><g key={`ff-fish-${index}`}><ellipse cx={echo.x*0.97} cy={echo.y*0.72} rx={7+echo.strength*7} ry="3.5" fill="#53f1e8" opacity=".32" filter="url(#fishfinderGlow)"/><path d={`M${echo.x*0.89-10} ${echo.y*0.67} Q${echo.x*0.89} ${echo.y*0.67-7} ${echo.x*0.89+10} ${echo.y*0.67}`} fill="none" stroke="#77fff0" strokeWidth="2" strokeLinecap="round"/></g>)}
                 <path d={`M${18+((sonarScan*31)%284)} 0 V${Math.min(136,sonarBottomY)}`} stroke="#6cf7e8" strokeWidth="1.3" opacity=".75"/>
                 <text x="304" y="12" textAnchor="end" fontSize="9" fill="#b6e9df">{currentWaterSpot.depthM.toFixed(1)}m</text>
               </svg>
