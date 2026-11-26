@@ -434,13 +434,14 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             <button
               type="button"
               onClick={() => { if (!dragStateRef.current.moved) onOpenHome(); }}
-              style={{ left: '48.7%', top: '48.4%', transform: `translate(-50%, -50%) scale(${0.72 / Math.max(1, Math.pow(zoom, 0.52))})`, touchAction: 'none' }}
-              className="absolute z-20 min-w-[40px] min-h-[36px] flex flex-col items-center justify-center gap-0 rounded-md border border-amber-300/50 bg-[#171208]/90 px-1.5 text-amber-100 shadow-lg shadow-black/50"
+              style={{ left: '48.7%', top: '48.4%', transform: `translate(-50%, -50%) scale(${1 / Math.max(1, Math.pow(zoom, 0.52))})`, touchAction: 'none' }}
+              className="absolute min-w-[48px] min-h-[48px] flex flex-col items-center justify-center gap-0.5 bg-transparent cursor-pointer group z-10 hover:z-20"
               aria-label="Відкрити дім"
               title="Мій дім"
             >
-              <House className="h-3 w-3" />
-              <span className="text-[8px] font-extrabold tracking-wide">ДІМ</span>
+              <span className="relative flex items-center justify-center">
+                <span className="w-3.5 h-3.5 rounded-full border-2 shadow-[0_0_8px_rgba(0,0,0,0.95)] transition-transform bg-amber-400 border-amber-100 group-hover:scale-115" />
+              </span>
             </button>
 
             {/* Cartographic Settlement Markers (no boxed windows — authentic map points + direct settlement text) */}
