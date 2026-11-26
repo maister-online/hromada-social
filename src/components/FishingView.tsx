@@ -919,7 +919,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       } else if (curPhase === 'CASTING') {
         waitTimerRef.current -= dt;
         if (waitTimerRef.current <= 0) {
-          audioEngine.playSplash(0.8);
+          audioEngine.playWaterEntry(0.8);
           sceneRef.current?.triggerWaterSplash(1.0);
           setPhase('WAITING');
           const gbSpeed = activeGbDef ? 1 + activeGbDef.biteRateBoost : 1;
