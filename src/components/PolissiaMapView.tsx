@@ -33,7 +33,6 @@ interface PolissiaMapViewProps {
   visitedLocationIds: LocationId[];
   activeGroundbaitLocs: LocationId[];
   muted: boolean;
-  musicEnabled: boolean;
   onSelectDestination: (locId: LocationId) => void;
   onOpenHome: () => void;
   compact?: boolean;
@@ -43,7 +42,6 @@ interface PolissiaMapViewProps {
   onOpenBestiary: () => void;
   onOpenJournal: () => void;
   onToggleMute: () => void;
-  onToggleMusic: () => void;
 }
 
 
@@ -75,7 +73,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   visitedLocationIds,
   activeGroundbaitLocs,
   muted,
-  musicEnabled,
   onSelectDestination,
   onOpenHome,
   compact = false,
@@ -85,7 +82,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   onOpenBestiary,
   onOpenJournal,
   onToggleMute,
-  onToggleMusic,
 }) => {
   const [selectedId, setSelectedId] = useState<LocationId>(
     currentLocationId === 'rokitne_bunker' || currentLocationId === 'rokitne_city' ? 'tomashgorod' : currentLocationId
