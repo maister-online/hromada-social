@@ -210,7 +210,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
               Рюкзак, інвентар і спорядження
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {keepnetDef.name}
+              {keepnetDef.name} · Голод {Math.round(gameState.hunger)}%
               {keepnetBonusKg > 0 ? ` (+${keepnetBonusKg} кг спорядження)` : ''} ·{' '}
               <span className="font-mono-num text-amber-300">
                 {keepnetWeight.toFixed(1)}/{totalKeepnetCap} кг
@@ -901,8 +901,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                       {Math.round(gameState.radiation)} мЗв
                     </span>
                     <span className="text-slate-600 mx-2">·</span>
-                    Розсудливість:{' '}
-                    <span className="text-indigo-300">{Math.round(gameState.sanity)}%</span>
+                    Голод:{' '}
+                    <span className={gameState.hunger < 25 ? 'text-rose-400' : 'text-amber-300'}>{Math.round(gameState.hunger)}%</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
