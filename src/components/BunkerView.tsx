@@ -173,7 +173,7 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
     heightPct: 51,
     labelLeftPct: 82.5,
     labelTopPct: 20,
-    displayName: 'Єльцин',
+    displayName: 'Барига',
     shortAction: 'Торговець · Скупка',
   },
 ];
@@ -668,7 +668,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             Маєте знахідки з дна ({gameState.foundLoot.length} шт.)?
                           </h3>
                           <p className="text-xs text-slate-400 mt-0.5">
-                            Копійки, шматки металу, золоті ланцюжки, стару зброю та різне дорого скуповує Єльцин на Підпільному ринку!
+                            Копійки, шматки металу, золоті ланцюжки, стару зброю та різне дорого скуповує Барига на Підпільному ринку!
                           </p>
                         </div>
                         <button
@@ -677,7 +677,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           className="btn-tactile btn-primary-emerald min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"
                         >
                           <Store className="w-4 h-4" />
-                          На Ринок до Єльцина (₴ {totalLootMarketVal})
+                          На Ринок до Бариги (₴ {totalLootMarketVal})
                         </button>
                       </div>
                     </div>
@@ -890,7 +890,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                       }`}
                     >
                       <ScrollText className="w-4 h-4" />
-                      Контракти Єльцина
+                      Контракти Бариги
                     </button>
                   </div>
 
@@ -905,8 +905,8 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           <div className="text-sm font-bold text-slate-100">{dailyDemand.label}</div>
                           <p className="text-[11px] text-slate-400">
                             {bargainedToday
-                              ? `Ви вже поторгувалися сьогодні з Єльциним: додатково +${gameState.haggleBonusPct}% до всієї скупки!`
-                              : 'Можна один раз на день поторгуватися з Єльциним перед продажем.'}
+                              ? `Ви вже поторгувалися сьогодні: додатково +${gameState.haggleBonusPct}% до всієї скупки!`
+                              : 'Можна один раз на день поторгуватися перед продажем.'}
                           </p>
                         </div>
 
@@ -938,7 +938,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             }`}
                           >
                             <Coins className="w-4 h-4" />
-                            Продати все Єльцину (₴ {totalLootMarketVal})
+                            Продати все (₴ {totalLootMarketVal})
                           </button>
                         </div>
                       </div>
@@ -998,7 +998,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                   {barygaTab === 'market' && (
                     <div className="space-y-4">
                       <p className="text-xs text-slate-400">
-                        Єльцин формує оптові та рідкісні набори зі знижкою для бувалих сталкерів:
+                        Барига формує оптові та рідкісні набори зі знижкою для бувалих сталкерів:
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {MARKET_BUNDLES.map((bundle) => {
