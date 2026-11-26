@@ -1792,6 +1792,7 @@ export default function App() {
           keepnetCapacityKg={keepnetCap} lootCount={gameState.foundLoot.length} readyQuestsCount={readyQuestsCount}
           visitedLocationIds={gameState.visitedLocationIds} activeGroundbaitLocs={activeGroundbaitLocs}
           muted={muted} musicEnabled={musicEnabled} onSelectDestination={handleSelectDestination}
+          onOpenHome={() => { setShowBunkerMap(false); setScreen('HOME'); }}
           onOpenInventory={() => setShowInventory(true)} onOpenQuests={() => setShowQuests(true)}
           onOpenBestiary={() => setShowBestiary(true)} onOpenJournal={() => setShowJournal(true)}
           onToggleMute={handleToggleMute} onToggleMusic={handleToggleMusic}
