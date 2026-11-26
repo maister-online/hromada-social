@@ -57,7 +57,6 @@ import {
 } from '../game/data';
 import { CharacterId, FishSpeciesDef, SaveState, WeatherType } from '../game/types';
 import { CharacterPortrait } from './CharacterPortrait';
-import { Fauna3DPreview } from './Fauna3DPreview';
 import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
 import { CatalogPhoto } from './CatalogPhoto';
@@ -2353,12 +2352,12 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 type="button"
                 onClick={() => setInspectSpecies(null)}
                 className="btn-tactile btn-field min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-                aria-label="Закрити 3D огляд"
+                aria-label="Закрити огляд риби"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <Fauna3DPreview species={inspectSpecies} className="w-full h-56" />
+            <div className="w-full h-56 rounded-xl overflow-hidden bg-[#050907]"><FishIllustration species={inspectSpecies} className="w-full h-full" /></div>
             <p className="text-xs text-slate-300 leading-relaxed">{inspectSpecies.description}</p>
           </div>
         </div>
