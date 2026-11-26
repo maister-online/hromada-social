@@ -51,7 +51,6 @@ const WEATHER_LABELS: Record<WeatherType, string> = {
   clear: 'Ясно',
   fog: 'Густий туман',
   rain: 'Мряка / Дощ',
-  anomaly_surge: 'Аномальний викид',
 };
 
 const MIN_ZOOM = 0.85;
