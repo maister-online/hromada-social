@@ -170,6 +170,9 @@ export class ShoreFishingScene {
     this.camera = new THREE.PerspectiveCamera(56, aspect, 0.1, 450);
     this.camera.position.set(0, 2.35, 1.35);
     this.camera.lookAt(0, 1.45, -18);
+    // The first-person rod is parented to the camera; add the camera to the
+    // scene graph so its child rig is included in rendering on all devices.
+    this.scene.add(this.camera);
 
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -592,9 +595,10 @@ export class ShoreFishingScene {
     this.rodRig = buildFishingRodRig(rodType, rodLevelIndex);
     // First-person rig: parent it to the camera so the hands and rod stay
     // visibly in the player's lower-right field of view on portrait screens.
-    this.rodRig.root.position.set(0.14, -0.30, -0.72);
-    this.rodRig.root.rotation.set(0.26, -0.08, -0.05);
-    this.rodRig.root.scale.setScalar(1.08);
+    this.rodRig.root.position.set(0.10, -0.27, -0.52);
+    this.rodRig.root.rotation.set(0.22, -0.06, -0.035);
+    this.rodRig.root.scale.setScalar(1.16);
+    this.rodRig.root.visible = true;
     this.camera.add(this.rodRig.root);
   }
 
@@ -928,7 +932,8 @@ export class ShoreFishingScene {
 
     const breathY = Math.sin(elapsed * 1.9) * 0.012;
     // Camera-local placement keeps the grip and both hands on-screen in first person.
-    this.rodRig.root.position.set(0.14, -0.30 + breathY, -0.72);
+    this.rodRig.root.position.set(0.10, -0.27 + breathY, -0.52);
+    this.rodRig.root.visible = true;
     this.rodRig.root.rotation.x = THREE.MathUtils.damp(this.rodRig.root.rotation.x, basePitch, 10, dt);
     this.rodRig.root.rotation.y = THREE.MathUtils.damp(this.rodRig.root.rotation.y, baseYaw, 10, dt);
 
@@ -951,7 +956,7 @@ export class ShoreFishingScene {
     for (let i = 0; i < rodPosition.count; i++) {
       const base = i * 3;
       const t = THREE.MathUtils.clamp((-basePositions[base + 2] - 0.34) / this.rodRig.rodLength, 0, 1);
-      const curve = Math.pow(t, 2.05);
+      const curve = Math.pow(t, 2.25);
       rodPosition.setXYZ(
         i,
         basePositions[base] + sideBend * curve,
@@ -964,13 +969,13 @@ export class ShoreFishingScene {
     this.rodRig.rodGuideGroups.forEach((guide, index) => {
       const t = this.rodRig.rodGuideT[index];
       const curve = Math.pow(t, 2.05);
-      const radius = THREE.MathUtils.lerp(0.016, 0.0055, t);
+      const radius = THREE.MathUtils.lerp(0.019, 0.0060, t);
       guide.position.set(
         sideBend * curve,
         -radius * 0.82 - bendForce * 1.05 * curve,
         -0.34 - this.rodRig.rodLength * t
       );
-      guide.rotation.x = -Math.atan((2.05 * bendForce * 1.05 * Math.pow(t, 1.05)) / this.rodRig.rodLength);
+      guide.rotation.x = -Math.atan((2.25 * bendForce * 1.05 * Math.pow(t, 1.25)) / this.rodRig.rodLength);
     });
     const tipT = 1;
     this.rodRig.tipMarker.position.set(
@@ -978,7 +983,7 @@ export class ShoreFishingScene {
       -bendForce * 1.05,
       -0.34 - this.rodRig.rodLength
     );
-    this.rodRig.tipMarker.rotation.x = -Math.atan((2.05 * bendForce * 1.05) / this.rodRig.rodLength);
+    this.rodRig.tipMarker.rotation.x = -Math.atan((2.25 * bendForce * 1.05) / this.rodRig.rodLength);
 
     if (isReeling && (phase === 'FIGHTING' || phase === 'WAITING')) {
       this.rodRig.reelHandle.rotation.z += dt * 16;
