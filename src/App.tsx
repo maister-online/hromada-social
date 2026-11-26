@@ -1558,13 +1558,6 @@ export default function App() {
             onError={() => setShowRiverIntro(false)}
             src="https://raw.githubusercontent.com/maister-online/hromada-social/main/public/assets/aistudio/Stalker_goes_fishing_93c283a9.mp4"
           />
-          <button
-            type="button"
-            onClick={() => setShowRiverIntro(false)}
-            className="absolute bottom-6 right-5 rounded-xl border border-white/30 bg-black/65 px-5 py-3 text-sm font-semibold text-white backdrop-blur"
-          >
-            Пропустити
-          </button>
         </div>
       )}
       <audio
