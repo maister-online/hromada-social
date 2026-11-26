@@ -932,29 +932,53 @@ export class ShoreFishingScene {
     this.rodRig.root.rotation.x = THREE.MathUtils.damp(this.rodRig.root.rotation.x, basePitch, 10, dt);
     this.rodRig.root.rotation.y = THREE.MathUtils.damp(this.rodRig.root.rotation.y, baseYaw, 10, dt);
 
-    // Progressive bend across rod segments
+    // Elastic one-piece blank: smooth parabolic deflection, strongest near the tip.
     const bendForce =
       phase === 'FIGHTING' || phase === 'SNAGGED'
-        ? THREE.MathUtils.clamp(0.11 + this.smoothTension * 0.38 + fightLoadPulse * 0.12, 0.08, 0.62)
+        ? THREE.MathUtils.clamp(0.08 + this.smoothTension * 0.58 + fightLoadPulse * 0.16, 0.06, 0.78)
         : phase === 'BITE'
-          ? 0.2 + Math.sin(Math.min(1, phaseAge * 3) * Math.PI) * 0.08
+          ? 0.17 + Math.sin(Math.min(1, phaseAge * 3) * Math.PI) * 0.07
           : phase === 'CHARGING'
-            ? chargeRatio * 0.09
+            ? chargeRatio * 0.075
             : phase === 'CASTING'
-              ? 0.12 + Math.sin(this.castFlightT * Math.PI) * 0.1
+              ? 0.07 + Math.sin(this.castFlightT * Math.PI) * 0.09
               : phase === 'NIBBLE'
-                ? 0.035
-                : 0.012;
-    this.rodRig.segments.forEach((seg, idx) => {
-      const targetSegBend = -bendForce * (0.45 + idx * 0.22);
-      seg.rotation.x = THREE.MathUtils.damp(seg.rotation.x, targetSegBend, 10, dt);
-      seg.rotation.y = THREE.MathUtils.damp(
-        seg.rotation.y,
-        phase === 'FIGHTING' ? this.smoothFishX * 0.03 * (idx + 1) : 0,
-        8,
-        dt
+                ? 0.025
+                : 0.006;
+    const sideBend = phase === 'FIGHTING' ? this.smoothFishX * 0.055 : 0;
+    const rodPosition = this.rodRig.rodBlank.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const basePositions = this.rodRig.rodBasePositions;
+    for (let i = 0; i < rodPosition.count; i++) {
+      const base = i * 3;
+      const t = THREE.MathUtils.clamp((-basePositions[base + 2] - 0.34) / this.rodRig.rodLength, 0, 1);
+      const curve = Math.pow(t, 2.05);
+      rodPosition.setXYZ(
+        i,
+        basePositions[base] + sideBend * curve,
+        basePositions[base + 1] - bendForce * 1.05 * curve,
+        basePositions[base + 2]
       );
+    }
+    rodPosition.needsUpdate = true;
+    this.rodRig.rodBlank.geometry.computeVertexNormals();
+    this.rodRig.rodGuideGroups.forEach((guide, index) => {
+      const t = this.rodRig.rodGuideT[index];
+      const curve = Math.pow(t, 2.05);
+      const radius = THREE.MathUtils.lerp(0.016, 0.0055, t);
+      guide.position.set(
+        sideBend * curve,
+        -radius * 0.82 - bendForce * 1.05 * curve,
+        -0.34 - this.rodRig.rodLength * t
+      );
+      guide.rotation.x = -Math.atan((2.05 * bendForce * 1.05 * Math.pow(t, 1.05)) / this.rodRig.rodLength);
     });
+    const tipT = 1;
+    this.rodRig.tipMarker.position.set(
+      sideBend,
+      -bendForce * 1.05,
+      -0.34 - this.rodRig.rodLength
+    );
+    this.rodRig.tipMarker.rotation.x = -Math.atan((2.05 * bendForce * 1.05) / this.rodRig.rodLength);
 
     if (isReeling && (phase === 'FIGHTING' || phase === 'WAITING')) {
       this.rodRig.reelHandle.rotation.z += dt * 16;
