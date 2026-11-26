@@ -1663,6 +1663,14 @@ export const FishingView: React.FC<FishingViewProps> = ({
           className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#020604]/80 p-3 pt-14 backdrop-blur-sm"
           onClick={() => setShowLocationMenu(false)}
         >
+          <button
+            type="button"
+            onClick={() => setShowLocationMenu(false)}
+            className="fixed right-3 top-3 z-[60] flex h-12 w-12 items-center justify-center rounded-full border border-red-400/50 bg-[#160b0b]/95 text-red-300 shadow-2xl"
+            aria-label="Закрити меню"
+          >
+            <X className="h-7 w-7" strokeWidth={2.8} />
+          </button>
           <section
             className="panel-window w-full max-w-xl rounded-2xl border border-emerald-400/25 p-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -1672,14 +1680,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <h2 className="font-display text-lg font-bold text-slate-100">Меню локації</h2>
                 <p className="truncate text-xs text-slate-400">{location.name} · {weatherMeta.label}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowLocationMenu(false)}
-                className="btn-tactile btn-field inline-flex min-h-[42px] min-w-[42px] items-center justify-center rounded-lg"
-                aria-label="Закрити меню"
-              >
-                <X className="h-5 w-5" />
-              </button>
+
             </div>
 
             <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border border-white/10 bg-black/25 p-3 text-[11px]">
@@ -1794,7 +1795,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <rect x="151" y="106" width="87" height="12" rx="2" fill="#020b13" fillOpacity=".92"/>
                 <text x="234" y="115" textAnchor="end" fontSize="8.5" fontWeight="bold" fill="#ffffff" stroke="#020b13" strokeWidth=".6" paintOrder="stroke">ДО ДНА {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
               </svg>
-              <div className="pointer-events-auto absolute right-[1%] top-[22%] bottom-[8%] z-30 flex items-center">
+              <div className="pointer-events-auto absolute right-[1%] top-[27%] bottom-[3%] z-30 flex items-center">
                 <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
               </div>
             </div>
