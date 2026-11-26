@@ -1763,11 +1763,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[60] w-[min(190px,calc(100vw-16px))] select-none"
-          style={{
-            left: Math.max(4, Math.min(sonarLeft, window.innerWidth - 198)),
-            top: Math.max(28, Math.min(sonarTop, window.innerHeight - 150)),
-          }}
+          className="pointer-events-none fixed z-[90] w-[min(190px,calc(100vw-16px))] select-none"
+          style={{ left: 8, top: 105 }}
         >
           <div className="relative aspect-[16/9] w-full">
             <div
@@ -1787,7 +1784,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               className="absolute inset-0 h-full w-full object-fill drop-shadow-[0_5px_12px_rgba(0,0,0,0.55)]"
               draggable={false}
             />
-            <button type="button" onClick={() => setShowSonarAdjust((value) => !value)} aria-label="Налаштувати розмір ехолота" title="НАЛАШТУВАТИ РОЗМІР ЕХОЛОТА" className="pointer-events-auto absolute right-[3%] top-[3%] z-30 flex h-7 min-w-7 items-center justify-center rounded-md border border-cyan-200 bg-black/95 px-1 text-[13px] font-black text-cyan-100 shadow-lg">⚙</button>
+            
             <button type="button" onClick={() => setShowSonar(false)} aria-label="Вимкнути ехолот" className="pointer-events-auto absolute right-[16%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-400/60 bg-black/80 text-slate-100 shadow"><span className="text-[10px] leading-none">⏻</span></button>
             <div
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[3px] border border-[#101820] bg-[#06131d] shadow-[inset_0_0_12px_rgba(0,0,0,0.95)]"
@@ -1854,9 +1851,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
               </div>
             </div>
-            {showSonarAdjust && (
-              <div className="pointer-events-auto absolute left-0 right-0 top-full z-[70] mt-1 rounded-lg border border-slate-500/70 bg-slate-950/95 p-2 text-[9px] text-slate-100 shadow-xl">
-                <div className="mb-1 flex items-center justify-between"><span>Ширина екрана</span><span className="font-mono">{sonarScreenWidth}%</span></div>
+            {true && (
+              <div className="pointer-events-auto absolute left-0 right-0 top-full z-[100] mt-1 rounded-lg border-2 border-cyan-400 bg-slate-950 p-2 text-[10px] text-slate-100 shadow-2xl">
+                <div className="mb-1 text-center font-black tracking-wide text-cyan-200">⚙ РЕДАГУВАННЯ ЕХОЛОТА</div><div className="mb-1 flex items-center justify-between"><span>Ширина екрана</span><span className="font-mono">{sonarScreenWidth}%</span></div>
                 <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
                 <div className="mb-1 mt-1 flex items-center justify-between"><span>Висота екрана</span><span className="font-mono">{sonarScreenHeight}%</span></div>
                 <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
