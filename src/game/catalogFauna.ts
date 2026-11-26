@@ -2389,7 +2389,7 @@ export const NAMED_MUTANTS: FishSpeciesDef[] = [
     preferredDepth: 'bottom',
     uniqueTrait: 'Б’є короткими розрядами струму вздовж мокрої волосіні.',
     description: 'Ікластий судак, уздовж бокової лінії якого пробігають блакитні іскри.',
-    anomalyNote: 'Найчастіше клює під час грози або аномального викиду.',
+    anomalyNote: 'Найчастіше клює під час грози або вночі.',
   },
   {
     id: 'mutant_blind_bream',
