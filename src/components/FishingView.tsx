@@ -1788,7 +1788,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               onLostPointerCapture={stopSonarDrag}
             >⠿ ПЕРЕМІСТИТИ ЕХОЛОТ</div>
             <img
-              src={`${import.meta.env.BASE_URL}Ехолот_на_весь_екран_52de58a7.jpg`}
+              src={`${import.meta.env.BASE_URL}assets/Ехолот_на_весь_екран_7c768551_2K.jpg`}
               alt="Корпус ехолота"
               className="pointer-events-none absolute inset-0 h-full w-full object-fill drop-shadow-[0_5px_12px_rgba(0,0,0,0.55)]"
               draggable={false}
