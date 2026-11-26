@@ -1244,7 +1244,7 @@ export const GEAR_ITEMS_CATALOG: GearItemDef[] = [
     maxDurability: 100,
     sanityShieldBonus: 0.25,
     radResistBonus: 0.25,
-    description: 'Польовий тент із екранованою підкладкою — можна перечекати навіть слабкий викид.',
+    description: 'Польовий тент із захисною підкладкою — допомагає перечекати негоду.',
     effectLabel: '-25% втрати розсудливості · +0.25 захисту від радіації',
   },
   {
