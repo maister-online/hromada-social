@@ -89,7 +89,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   onToggleMusic,
 }) => {
   const [selectedId, setSelectedId] = useState<LocationId>(
-    currentLocationId === 'rokitne_bunker' ? 'tomashgorod' : currentLocationId
+    currentLocationId === 'rokitne_bunker' || currentLocationId === 'rokitne_city' ? 'tomashgorod' : currentLocationId
   );
   const [mapImgErr, setMapImgErr] = useState(false);
   const [mapEditMode, setMapEditMode] = useState(false);
@@ -382,7 +382,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
 
   const selectedLoc: LocationDef = LOCATIONS[selectedId];
   const allLocations = Object.values(LOCATIONS);
-  const fishingLocations = allLocations.filter((l) => !l.isBunker);
+  const fishingLocations = allLocations.filter((l) => !l.isBunker && !l.isCity);
   const { clock, phaseLabel } = formatClock(timeOfDay);
   const radWarning = selectedLoc.radiationLevel > radSuitLevel;
 
@@ -506,10 +506,13 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             {allLocations.map((loc) => {
               const isSelected = loc.id === selectedId;
               const isBunker = Boolean(loc.isBunker);
+              const isCity = Boolean(loc.isCity);
               const isBaited = activeGroundbaitLocs.includes(loc.id);
               const isRadWarn = loc.radiationLevel > radSuitLevel;
 
-              const dotColor = isBunker
+              const dotColor = isCity
+                ? 'bg-sky-400 border-sky-100'
+                : isBunker
                 ? 'bg-emerald-400 border-emerald-100'
                 : loc.pinTheme === 'anomaly'
                   ? 'bg-cyan-400 border-cyan-100'
@@ -518,7 +521,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                     : 'bg-amber-400 border-amber-100';
 
               const textColor = isSelected
-                ? isBunker
+                ? isCity
+                  ? 'text-sky-300'
+                  : isBunker
                   ? 'text-emerald-300'
                   : 'text-amber-300'
                 : 'text-slate-100 group-hover:text-amber-200';
@@ -550,7 +555,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                     {isSelected && (
                       <span
                         className={`absolute w-7 h-7 rounded-full border-2 ${
-                          isBunker ? 'border-emerald-300' : 'border-amber-300'
+                          isCity ? 'border-sky-300' : isBunker ? 'border-emerald-300' : 'border-amber-300'
                         }`}
                       />
                     )}
@@ -560,9 +565,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                       }`}
                     />
                   </span>
-                  {isBunker && (
-                    <span className="text-[9px] font-medium lowercase leading-none text-emerald-100/90 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
-                      бункер
+                  {(isBunker || isCity) && (
+                    <span className={`text-[9px] font-medium lowercase leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${isCity ? 'text-sky-100/90' : 'text-emerald-100/90'}`}>
+                      {isCity ? 'місто' : 'бункер'}
                     </span>
                   )}
 
@@ -572,7 +577,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                   {isSelected && (
                     <span
                       className={`absolute bottom-[calc(100%+7px)] left-1/2 z-40 -translate-x-1/2 rounded-md border px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide leading-tight whitespace-nowrap shadow-xl backdrop-blur-sm ${
-                        isBunker
+                        isCity
+                          ? 'border-sky-300/60 bg-[#071923]/95 text-sky-100'
+                          : isBunker
                           ? 'border-emerald-300/60 bg-[#061b12]/95 text-emerald-200'
                           : 'border-amber-300/60 bg-[#211607]/95 text-amber-100'
                       }`}
@@ -641,11 +648,11 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               type="button"
               onClick={() => onSelectDestination(selectedLoc.id)}
               className={`btn-tactile min-h-[48px] inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs cursor-pointer ${
-                selectedLoc.isBunker ? 'btn-primary-emerald' : 'btn-primary-amber'
+                selectedLoc.isCity ? 'border-sky-400/50 bg-sky-950/80 text-sky-100' : selectedLoc.isBunker ? 'btn-primary-emerald' : 'btn-primary-amber'
               }`}
             >
-              {selectedLoc.isBunker ? <Warehouse className="w-4 h-4" /> : <Navigation className="w-4 h-4" />}
-              {selectedLoc.name.split('·').slice(1).join('·').trim() || selectedLoc.name} · Відкрити
+              {selectedLoc.isCity ? <House className="w-4 h-4" /> : selectedLoc.isBunker ? <Warehouse className="w-4 h-4" /> : <Navigation className="w-4 h-4" />}
+              {selectedLoc.isCity ? 'Увійти в Рокитне' : selectedLoc.name.split('·').slice(1).join('·').trim() || selectedLoc.name} · Відкрити
             </button>
           </div>
         </div>
@@ -665,7 +672,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-slate-200">
                   <span>Живий вигляд з пірсу</span>
                   <span className="font-mono-num text-amber-300">
-                    Глиб. {selectedLoc.depthRangeM[0]}–{selectedLoc.depthRangeM[1]} м
+                    Глиб. {selectedLoc.isCity ? 'Міські заклади' : `${selectedLoc.depthRangeM[0]}–${selectedLoc.depthRangeM[1]} м`}
                   </span>
                 </div>
               </div>
@@ -674,7 +681,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="text-[11px] font-medium text-emerald-400">
-                  {selectedLoc.waterLabel}
+                  {selectedLoc.isCity ? 'МІСЬКИЙ ХАБ' : selectedLoc.waterLabel}
                 </div>
                 <h2 className="font-display text-lg sm:text-xl font-bold text-slate-100 leading-snug">
                   {selectedLoc.name}
@@ -693,7 +700,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               <div>
                 <span className="text-slate-400 block">Аномальність</span>
                 <span className="font-mono-num font-semibold text-cyan-300">
-                  {selectedLoc.anomalyActivity}%
+                  {selectedLoc.isCity ? '—' : `${selectedLoc.anomalyActivity}%`}
                 </span>
               </div>
               <div>
@@ -701,12 +708,12 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 <span
                   className={`font-semibold ${radWarning ? 'text-rose-400' : 'text-emerald-300'}`}
                 >
-                  {selectedLoc.dangerRating}
+                  {selectedLoc.isCity ? 'Місто' : selectedLoc.dangerRating}
                 </span>
               </div>
               <div className="col-span-2 pt-1 border-t border-white/10">
                 <span className="text-slate-400 block">Порада єгеря</span>
-                <span className="text-amber-200">{selectedLoc.bestTimeHint}</span>
+                <span className="text-amber-200">{selectedLoc.isCity ? 'Ринок · Магазин · Обмінник · Ломбард' : selectedLoc.bestTimeHint}</span>
               </div>
             </div>
 
@@ -726,7 +733,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 selectedLoc.isBunker ? 'btn-primary-emerald' : 'btn-primary-amber'
               }`}
             >
-              {selectedLoc.isBunker ? (
+              {selectedLoc.isCity ? (
+                <><House className="w-4 h-4" /> Увійти в Рокитне</>
+              ) : selectedLoc.isBunker ? (
                 <>
                   <Warehouse className="w-4 h-4" />
                   Увійти в Бункер Рокитне
