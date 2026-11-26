@@ -832,3 +832,40 @@ input, select, textarea {
   color: #e2e8e1 !important;
 }
 /* Keep the game world photographic; this skin applies to interface surfaces only. */
+
+
+/* Smooth cinematic transitions between game scenes and overlays */
+@keyframes app-scene-enter {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.995); filter: saturate(.82); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: saturate(1); }
+}
+@keyframes presentation-crossfade-in {
+  0% { opacity: 0; transform: scale(1.012); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes river-intro-crossfade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* Each newly mounted main screen or modal eases in instead of appearing abruptly. */
+#root > div > :not(video):not(audio) {
+  animation: app-scene-enter 460ms cubic-bezier(.2,.7,.2,1) both;
+  transform-origin: center;
+}
+.presentation-video-enter {
+  opacity: 0;
+  animation: presentation-crossfade-in 1450ms cubic-bezier(.2,.65,.25,1) forwards;
+  will-change: opacity, transform;
+}
+.river-intro-enter {
+  opacity: 0;
+  animation: river-intro-crossfade-in 900ms ease-out forwards;
+  will-change: opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  #root > div > :not(video):not(audio),
+  .presentation-video-enter,
+  .river-intro-enter {
+    animation-duration: 1ms !important;
+  }
+}
