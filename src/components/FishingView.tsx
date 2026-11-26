@@ -1763,31 +1763,40 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[90] w-[min(360px,calc(100vw-16px))] select-none"
-          style={{ left: sonarLeft, top: sonarTop }}
+          className="pointer-events-none fixed z-[200] w-[min(360px,calc(100vw-16px))] select-none"
+          style={{ left: sonarLeft, top: sonarTop, touchAction: 'none' }}
         >
           <div className="relative aspect-[16/9] w-full">
             <div
-              className="pointer-events-auto absolute -top-5 left-0 right-0 flex h-5 touch-none items-center justify-center rounded-t-md border border-slate-500/70 bg-slate-950/95 text-[9px] font-bold tracking-wide text-cyan-100 active:cursor-grabbing cursor-grab"
-              title="Перетягніть, щоб перемістити ехолот"
+              className="pointer-events-auto absolute -top-7 left-0 right-0 z-50 flex h-7 touch-none items-center justify-center rounded-t-md border-2 border-cyan-300 bg-slate-950 text-[10px] font-black tracking-wide text-cyan-100 shadow-lg active:cursor-grabbing cursor-grab"
+              style={{ touchAction: 'none' }}
+              title="Перетягніть за цю смугу, щоб перемістити весь ехолот"
               onPointerDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 event.currentTarget.setPointerCapture(event.pointerId);
                 sonarDragRef.current = { pointerX: event.clientX, pointerY: event.clientY, left: sonarLeft, top: sonarTop };
               }}
-              onPointerMove={handleSonarDragMove}
-              onPointerUp={stopSonarDrag}
+              onPointerMove={(event) => {
+                if (sonarDragRef.current) {
+                  event.preventDefault();
+                  handleSonarDragMove(event);
+                }
+              }}
+              onPointerUp={(event) => { event.preventDefault(); stopSonarDrag(); }}
               onPointerCancel={stopSonarDrag}
+              onLostPointerCapture={stopSonarDrag}
             >⠿ ПЕРЕМІСТИТИ ЕХОЛОТ</div>
             <img
               src={`${import.meta.env.BASE_URL}Ехолот_на_весь_екран_52de58a7.jpg`}
               alt="Корпус ехолота"
-              className="absolute inset-0 h-full w-full object-fill drop-shadow-[0_5px_12px_rgba(0,0,0,0.55)]"
+              className="pointer-events-none absolute inset-0 h-full w-full object-fill drop-shadow-[0_5px_12px_rgba(0,0,0,0.55)]"
               draggable={false}
             />
             
             <button type="button" onClick={() => setShowSonar(false)} aria-label="Вимкнути ехолот" className="pointer-events-auto absolute right-[16%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-400/60 bg-black/80 text-slate-100 shadow"><span className="text-[10px] leading-none">⏻</span></button>
             <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[3px] border border-[#101820] bg-[#06131d] shadow-[inset_0_0_12px_rgba(0,0,0,0.95)]"
+              className="pointer-events-auto absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[3px] border-2 border-cyan-300 bg-[#06131d] shadow-[inset_0_0_12px_rgba(0,0,0,0.95)]"
               style={{ width: `${sonarScreenWidth}%`, height: `${sonarScreenHeight}%` }}
             >
               <svg viewBox="0 0 240 120" preserveAspectRatio="none" className="block h-full w-full" role="img" aria-label="Кольоровий ехолот: поплавок, глибина, риб'ячі відбиття та контур дна">
@@ -1847,16 +1856,16 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <rect x="151" y="106" width="87" height="12" rx="2" fill="#020b13" fillOpacity=".92"/>
                 <text x="234" y="115" textAnchor="end" fontSize="8.5" fontWeight="bold" fill="#ffffff" stroke="#020b13" strokeWidth=".6" paintOrder="stroke">ДО ДНА {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
               </svg>
-              <div className="pointer-events-auto absolute right-[1%] top-[17%] bottom-[13%] flex items-center">
+              <div className="pointer-events-auto absolute right-[1%] top-[17%] bottom-[13%] z-30 flex items-center">
                 <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
               </div>
             </div>
             {true && (
-              <div className="pointer-events-auto absolute left-0 right-0 top-full z-[100] mt-1 rounded-lg border-2 border-cyan-400 bg-slate-950 p-2 text-[10px] text-slate-100 shadow-2xl">
+              <div className="pointer-events-auto absolute left-0 right-0 top-full z-[210] mt-2 rounded-lg border-2 border-cyan-400 bg-slate-950 p-3 text-[11px] text-slate-100 shadow-2xl">
                 <div className="mb-1 text-center font-black tracking-wide text-cyan-200">⚙ РЕДАГУВАННЯ ЕХОЛОТА</div><div className="mb-1 flex items-center justify-between"><span>Ширина екрана</span><span className="font-mono">{sonarScreenWidth}%</span></div>
-                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
+                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }}/
                 <div className="mb-1 mt-1 flex items-center justify-between"><span>Висота екрана</span><span className="font-mono">{sonarScreenHeight}%</span></div>
-                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
+                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }}/
                 <div className="mt-2 grid grid-cols-2 gap-1">
                   <button type="button" onClick={()=>{setSonarScreenWidth(76);setSonarScreenHeight(58);setSonarLeft(8);setSonarTop(8);}} className="rounded bg-slate-700 px-2 py-1.5 font-semibold">Скинути</button>
                   <button type="button" onClick={saveSonarLayout} className="rounded bg-emerald-700 px-2 py-1.5 font-bold text-white">Зберегти</button>
