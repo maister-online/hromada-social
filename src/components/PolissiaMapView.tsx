@@ -92,6 +92,59 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     currentLocationId === 'rokitne_bunker' ? 'tomashgorod' : currentLocationId
   );
   const [mapImgErr, setMapImgErr] = useState(false);
+  const [mapEditMode, setMapEditMode] = useState(false);
+  const [mapPositions, setMapPositions] = useState<Record<string, { x: number; y: number }>>(() => {
+    try {
+      const raw = window.localStorage.getItem('polissia_map_positions_v1');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [editPositions, setEditPositions] = useState<Record<string, { x: number; y: number }> | null>(null);
+  const [draggingMapPoint, setDraggingMapPoint] = useState<string | null>(null);
+  const mapPointPointerRef = useRef<number | null>(null);
+  const getMapPosition = (id: string, defaultX: number, defaultY: number) =>
+    (editPositions ?? mapPositions)[id] ?? { x: defaultX, y: defaultY };
+  const beginMapEdit = () => {
+    setEditPositions({ ...mapPositions });
+    setMapEditMode(true);
+  };
+  const cancelMapEdit = () => {
+    setEditPositions(null);
+    setDraggingMapPoint(null);
+    setMapEditMode(false);
+  };
+  const saveMapEdit = () => {
+    if (!editPositions) return;
+    setMapPositions(editPositions);
+    window.localStorage.setItem('polissia_map_positions_v1', JSON.stringify(editPositions));
+    setEditPositions(null);
+    setDraggingMapPoint(null);
+    setMapEditMode(false);
+  };
+  const moveMapPoint = (e: React.PointerEvent<HTMLElement>, pointId: string) => {
+    if (!mapEditMode || mapPointPointerRef.current !== e.pointerId || !stageRef.current) return;
+    const rect = stageRef.current.getBoundingClientRect();
+    const x = Math.max(1, Math.min(99, ((e.clientX - rect.left - rect.width / 2 - panRef.current.x) / zoomRef.current + rect.width / 2) / rect.width * 100));
+    const y = Math.max(1, Math.min(99, ((e.clientY - rect.top - rect.height / 2 - panRef.current.y) / zoomRef.current + rect.height / 2) / rect.height * 100));
+    setEditPositions((prev) => ({ ...(prev ?? mapPositions), [pointId]: { x, y } }));
+  };
+  const startMapPointDrag = (e: React.PointerEvent<HTMLButtonElement>, pointId: string) => {
+    if (!mapEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    mapPointPointerRef.current = e.pointerId;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDraggingMapPoint(pointId);
+  };
+  const endMapPointDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (mapPointPointerRef.current !== e.pointerId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    mapPointPointerRef.current = null;
+    setDraggingMapPoint(null);
+  };
 
   // Zoom & Pan Engine State
   const [zoom, setZoom] = useState(1);
@@ -433,9 +486,13 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
 
             <button
               type="button"
-              onClick={() => { if (!dragStateRef.current.moved) onOpenHome(); }}
-              style={{ left: '48.7%', top: '48.4%', transform: `translate(-50%, -50%) scale(${1 / Math.max(1, Math.pow(zoom, 0.52))})`, touchAction: 'none' }}
-              className="absolute min-w-[48px] min-h-[48px] flex flex-col items-center justify-center gap-0.5 bg-transparent cursor-pointer group z-10 hover:z-20"
+              onClick={() => { if (!mapEditMode && !dragStateRef.current.moved) onOpenHome(); }}
+              onPointerDown={(e) => startMapPointDrag(e, 'home')}
+              onPointerMove={(e) => moveMapPoint(e, 'home')}
+              onPointerUp={endMapPointDrag}
+              onPointerCancel={endMapPointDrag}
+              style={{ left: `${getMapPosition('home', 48.7, 48.4).x}%`, top: `${getMapPosition('home', 48.7, 48.4).y}%`, transform: `translate(-50%, -50%) scale(${1 / Math.max(1, Math.pow(zoom, 0.52))})`, touchAction: 'none' }}
+              className={`absolute min-w-[48px] min-h-[48px] flex flex-col items-center justify-center gap-0.5 bg-transparent cursor-pointer group z-10 hover:z-20 ${mapEditMode ? 'cursor-move' : ''}`}
               aria-label="Відкрити дім"
               title="Мій дім"
             >
@@ -472,10 +529,14 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 <button
                   key={loc.id}
                   type="button"
-                  onClick={() => { if (!dragStateRef.current.moved) onSelectDestination(loc.id); }}
+                  onClick={() => { if (!mapEditMode && !dragStateRef.current.moved) onSelectDestination(loc.id); }}
+                  onPointerDown={(e) => startMapPointDrag(e, loc.id)}
+                  onPointerMove={(e) => moveMapPoint(e, loc.id)}
+                  onPointerUp={endMapPointDrag}
+                  onPointerCancel={endMapPointDrag}
                   style={{
-                    left: `${loc.mapX}%`,
-                    top: `${loc.mapY}%`,
+                    left: `${getMapPosition(loc.id, loc.mapX, loc.mapY).x}%`,
+                    top: `${getMapPosition(loc.id, loc.mapX, loc.mapY).y}%`,
                     transform: `translate(-50%, -50%) scale(${invScale})`,
                     touchAction: 'none',
                   }}
@@ -525,6 +586,22 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
               );
             })}
 
+          </div>
+
+          <div className="absolute bottom-20 right-4 z-40 flex flex-col items-end gap-2">
+            {!mapEditMode ? (
+              <button type="button" onClick={beginMapEdit} className="btn-tactile min-h-11 rounded-lg border border-sky-400/40 bg-[#07131b]/95 px-4 text-xs font-bold text-sky-100 shadow-xl backdrop-blur-md">
+                Редагувати карту
+              </button>
+            ) : (
+              <div className="flex flex-col items-end gap-2 rounded-lg border border-sky-400/40 bg-[#07131b]/95 p-3 shadow-xl backdrop-blur-md">
+                <span className="text-[11px] font-bold text-sky-100">Перетягуй точки пальцем</span>
+                <div className="flex gap-2">
+                  <button type="button" onClick={cancelMapEdit} className="min-h-10 rounded-md border border-white/20 px-3 text-xs font-semibold text-slate-200">Скасувати</button>
+                  <button type="button" onClick={saveMapEdit} className="min-h-10 rounded-md border border-emerald-400/50 bg-emerald-900/70 px-3 text-xs font-bold text-emerald-100">Зберегти</button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Робочі кнопки масштабу */}
