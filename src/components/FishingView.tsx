@@ -427,7 +427,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     'Торкніться будь-де на водоймі для закиду або утримуйте [ЗАКИНУТИ]'
   );
   const [caughtResult, setCaughtResult] = useState<CaughtFish | null>(null);
-  const [caughtTab, setCaughtTab] = useState<'photo' | '3d'>('photo');
   const [caughtLoot, setCaughtLoot] = useState<{ def: LootItemDef; entry: FoundLootEntry } | null>(
     null
   );
@@ -2752,42 +2751,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCaughtTab('photo')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border ${
-                  caughtTab === 'photo'
-                    ? 'bg-amber-500/20 border-amber-400/60 text-amber-200'
-                    : 'bg-[#08100c] border-white/10 text-slate-400'
-                }`}
-              >
-                Ілюстрація
-              </button>
-              <button
-                type="button"
-                onClick={() => setCaughtTab('3d')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border inline-flex items-center gap-1 ${
-                  caughtTab === '3d'
-                    ? 'bg-teal-500/20 border-teal-400/60 text-teal-200'
-                    : 'bg-[#08100c] border-white/10 text-slate-400'
-                }`}
-              >
-                <Box className="w-3.5 h-3.5" />
-                3D Модель
-              </button>
+            <div className="w-64 h-40 mx-auto bg-[#060a08] border border-white/15 rounded-xl overflow-hidden shadow-lg">
+              <FishIllustration species={caughtSpecies} className="w-full h-full" />
             </div>
-
-            {caughtTab === 'photo' ? (
-              <div className="w-64 h-40 mx-auto bg-[#060a08] border border-white/15 rounded-xl overflow-hidden shadow-lg">
-                <FishIllustration species={caughtSpecies} className="w-full h-full" />
-              </div>
-            ) : (
-              <Fauna3DPreview
-                species={caughtSpecies}
-                className="w-full h-44 mx-auto"
-              />
-            )}
 
             <div>
               <h3 className="font-display text-2xl font-bold text-slate-100">
