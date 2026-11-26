@@ -30,7 +30,6 @@ import {
   ACCESSORIES,
   BAITS,
   BOTTOM_RIGS,
-  BUNKER_PHOTO_URL,
   CHARACTERS,
   FEEDERS,
   FISH_MAP,
@@ -61,6 +60,8 @@ import { Fauna3DPreview } from './Fauna3DPreview';
 import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
 import { CatalogPhoto } from './CatalogPhoto';
+
+const BUNKER_VIDEO_URL = `${import.meta.env.BASE_URL}assets/${encodeURIComponent('Camera_flying_through_open_doors_93526622 (1).mp4')}`;
 
 interface BunkerViewProps {
   gameState: SaveState;
@@ -330,11 +331,15 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       <div className="absolute inset-0 overflow-hidden bg-[#040705] p-0">
         {/* Responsive portrait stage: fills all available screen height and scales down to fit narrow screens */}
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#070b09]">
-          <img
-            src={BUNKER_PHOTO_URL}
-            alt="Інтер’єр Бункера Рокитне з чотирма сталкерами"
+          <video
+            src={BUNKER_VIDEO_URL}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-label="Відеофон локації Бункер Рокитне"
             className="absolute inset-0 block w-screen h-[100dvh] max-w-none object-cover object-center select-none pointer-events-none"
-            draggable={false}
             style={{ width: "100vw", height: "100dvh", objectFit: "cover", objectPosition: "center" }}
           />
 
