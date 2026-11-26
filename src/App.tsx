@@ -67,6 +67,7 @@ function createFreshSave(): SaveState {
     level: 1,
     radiation: 0,
     sanity: 100,
+    hunger: 100,
     stamina: 100,
     energyBoostUntilMs: 0,
     currentLocationId: 'rokitne_bunker',
@@ -170,10 +171,8 @@ function loadSavedGame(): SaveState | null {
         ...(parsed.itemDurability ?? {}),
       },
       foundLoot: parsed.foundLoot ?? [],
-      sanity:
-        typeof parsed.sanity === 'number'
-          ? Math.max(0, Math.min(100, parsed.sanity))
-          : 100,
+      hunger: 100,
+      hunger: typeof parsed.hunger === 'number' ? Math.max(0, Math.min(100, parsed.hunger)) : 100,
       energyBoostUntilMs: parsed.energyBoostUntilMs ?? 0,
       activeGroundbaitByLoc: parsed.activeGroundbaitByLoc ?? {},
       keepnet: parsed.keepnet ?? [],
@@ -711,22 +710,22 @@ export default function App() {
             consumableInventory: { ...prev.consumableInventory, [itemId]: c - 1 },
           };
         });
-      } else if (def?.sanityRestore) {
-        if (cur.sanity >= 100 && !(def.staminaRestore && cur.stamina < 100)) {
-          showToast('Розсудливість вже на максимумі (100%).');
+      } else if (def?.isFood || def?.sanityRestore) {
+        if (cur.hunger >= 98 && !(def.staminaRestore && cur.stamina < 100)) {
+          showToast('Ви не голодні. Збережіть їжу на потім.');
           return;
         }
-        const restoreAmt = def.sanityRestore;
+        const restoreAmt = def.sanityRestore ?? 25;
         audioEngine.playCatch(false);
         showToast(
-          `Вжито «${def.name}» (+${restoreAmt}% розсудливості${def.staminaRestore ? ', відновлено сили' : ''}).`
+          `Вжито «${def.name}»: голод зменшився на ${restoreAmt}%${def.staminaRestore ? ', сили відновлено' : ''}.`
         );
         setGameState((prev) => {
           const c = prev.consumableInventory[itemId] ?? 0;
           if (c <= 0) return prev;
           return {
             ...prev,
-            sanity: Math.min(100, prev.sanity + restoreAmt),
+            hunger: Math.min(100, prev.hunger + restoreAmt),
             stamina: def.staminaRestore ? 100 : prev.stamina,
             consumableInventory: { ...prev.consumableInventory, [itemId]: c - 1 },
           };
@@ -737,7 +736,7 @@ export default function App() {
   );
 
   const handleClockAndRadTick = useCallback(
-    (deltaHours: number, radDelta: number, sanityDelta = 0) => {
+    (deltaHours: number, radDelta: number) => {
       const cur = stateRef.current;
       const nextRadProjected = Math.max(0, Math.min(100, cur.radiation + radDelta));
 
@@ -771,38 +770,12 @@ export default function App() {
         ? WEATHER_CYCLE[weatherSlot % WEATHER_CYCLE.length]
         : cur.weather;
 
-      const blowoutShock =
-        weatherChanged &&
-        shiftedWeather === 'anomaly_surge' &&
-        cur.weather !== 'anomaly_surge'
-          ? -8
-          : 0;
-      const nextSanityProjected = Math.max(
-        0,
-        Math.min(100, cur.sanity + sanityDelta + blowoutShock)
-      );
-
-      if (nextSanityProjected <= 0 && cur.currentLocationId !== 'rokitne_bunker') {
-        const evacCost = Math.min(25, cur.credits);
-        showToast(
-          'Критична втрата розсудливості під час аномалії! Провідники евакуювали вас до Бункер Рокитне.'
-        );
-        setGameState((prev) => ({
-          ...prev,
-          sanity: 35,
-          credits: Math.max(0, prev.credits - evacCost),
-          currentLocationId: 'rokitne_bunker',
-        }));
-        setScreen('BUNKER');
-        return;
-      }
-
       if (weatherChanged && shiftedWeather !== cur.weather) {
         const wNames: Record<WeatherType, string> = {
           clear: 'Ясна погода',
           fog: 'Над водою спускається густий туман',
           rain: 'Починається поліський дощ',
-          anomaly_surge: 'Увага: аномальний викид! Розсудливість під загрозою (-8%)!',
+          anomaly_surge: 'Увага: аномальний викид! Перевірте дозиметр і захист.',
         };
         showToast(wNames[shiftedWeather]);
       }
@@ -821,16 +794,13 @@ export default function App() {
             ? WEATHER_CYCLE[(nextDay * 4 + nQ) % WEATHER_CYCLE.length]
             : prev.weather;
         const nextRad = Math.max(0, Math.min(100, prev.radiation + radDelta));
-        const shock =
-          nextWeather === 'anomaly_surge' && prev.weather !== 'anomaly_surge' ? -8 : 0;
-        const nextSanity = Math.max(0, Math.min(100, prev.sanity + sanityDelta + shock));
         return {
           ...prev,
           day: nextDay,
           timeOfDay: nextTod,
           weather: nextWeather,
           radiation: nextRad,
-          sanity: nextSanity,
+          hunger: Math.max(0, prev.hunger - deltaHours * 1.8),
         };
       });
     },
@@ -1451,7 +1421,7 @@ export default function App() {
       const slot = nextDay * 4 + Math.floor(targetHour / 6);
       const nextWeather = WEATHER_CYCLE[slot % WEATHER_CYCLE.length];
       showToast(
-        `Відпочинок у бункері завершено (+55% розсудливості). Час виходу — ${String(Math.floor(targetHour)).padStart(2, '0')}:${targetHour % 1 === 0.5 ? '30' : '00'}.`
+        `Відпочинок у бункері завершено. Голод і сили відновлено. Час виходу — ${String(Math.floor(targetHour)).padStart(2, '0')}:${targetHour % 1 === 0.5 ? '30' : '00'}.`
       );
       setGameState((prev) => ({
         ...prev,
@@ -1459,7 +1429,7 @@ export default function App() {
         timeOfDay: targetHour,
         weather: nextWeather,
         stamina: 100,
-        sanity: Math.min(100, prev.sanity + 55),
+        hunger: 100,
         radiation: Math.max(0, prev.radiation - 15),
       }));
     },
@@ -1475,7 +1445,7 @@ export default function App() {
       nextDay += 1;
     }
     audioEngine.playCatch(false);
-    showToast('Повноцінний сон у Бункері Рокитне: розсудливість відновлено до 100%!');
+    showToast('Повноцінний сон у Бункері Рокитне: голод і сили відновлено!');
     setGameState((prev) => ({
       ...prev,
       day: nextDay,
@@ -1504,14 +1474,14 @@ export default function App() {
         rain: 'Мряка / Дощ',
         anomaly_surge: 'Аномальний викид',
       };
-      showToast(`Зміна погоди на Поліссі: ${wLabels[nextWeather]} (+35% розсудливості в укритті)`);
+      showToast(`Зміна погоди на Поліссі: ${wLabels[nextWeather]}`);
       setGameState((prev) => ({
         ...prev,
         day: nextDay,
         timeOfDay: nextTod,
         weather: nextWeather,
         stamina: 100,
-        sanity: Math.min(100, prev.sanity + 35),
+        hunger: Math.max(0, prev.hunger - 8),
         radiation: Math.max(0, prev.radiation - 8),
       }));
     },
