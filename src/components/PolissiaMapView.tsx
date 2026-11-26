@@ -565,9 +565,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                       }`}
                     />
                   </span>
-                  {(isBunker || isCity) && (
-                    <span className={`text-[9px] font-medium lowercase leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${isCity ? 'text-sky-100/90' : 'text-emerald-100/90'}`}>
-                      {isCity ? 'місто' : 'бункер'}
+                  {(isBunker || isCity || loc.id === 'rokitne') && (
+                    <span className={`text-[9px] font-medium lowercase leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${isCity ? 'text-sky-100/90' : isBunker ? 'text-emerald-100/90' : 'text-amber-100/90'}`}>
+                      {isCity ? 'місто' : isBunker ? 'бункер' : 'осницьк'}
                     </span>
                   )}
 
