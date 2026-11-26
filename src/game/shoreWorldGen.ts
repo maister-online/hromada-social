@@ -90,15 +90,15 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Neutral graphite-grey finish across every rod tier.
-  const blankColor = 0x9ba1a7;
+  const blankColor = 0x343a40;
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x858b91,
+    color: 0x292f34,
     roughness: 0.96,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x626970,
+    color: 0x171c20,
     roughness: 1,
     metalness: 0,
   });
@@ -108,7 +108,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0x87919a,
+    color: 0x68727a,
     roughness: 0.34,
     metalness: 0.82,
   });
@@ -131,7 +131,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     clearcoatRoughness: 0.12,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x343c42,
+    color: 0x242a2f,
     roughness: 0.28,
     metalness: 0.82,
   });
@@ -423,6 +423,37 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     rodGuideGroups.push(guide);
     rodGuideT.push(t);
   });
+
+  // Subdued olive-drab thread wraps and steel collars give the blank a rugged
+  // field-repaired, STALKER-style look without bright gaming-style decoration.
+  const fieldWrapMat = new THREE.MeshStandardMaterial({
+    color: 0x42483b,
+    roughness: 0.82,
+    metalness: 0.08,
+  });
+  const wornSteelMat = new THREE.MeshStandardMaterial({
+    color: 0x59636a,
+    roughness: 0.48,
+    metalness: 0.72,
+  });
+  for (const t of [0.035, 0.075, 0.13, 0.30, 0.52, 0.73, 0.91]) {
+    const radius = THREE.MathUtils.lerp(0.0175, 0.0026, Math.pow(t, 0.88));
+    const wrap = new THREE.Mesh(
+      new THREE.TorusGeometry(radius + 0.0007, Math.max(0.0008, radius * 0.075), 5, 20),
+      fieldWrapMat
+    );
+    wrap.position.set(0, 0, -0.34 - rodLength * t);
+    root.add(wrap);
+  }
+  for (const t of [0.045, 0.105]) {
+    const radius = THREE.MathUtils.lerp(0.0175, 0.0026, Math.pow(t, 0.88));
+    const collar = new THREE.Mesh(
+      new THREE.TorusGeometry(radius + 0.0011, 0.0014, 6, 24),
+      wornSteelMat
+    );
+    collar.position.set(0, 0, -0.34 - rodLength * t);
+    root.add(collar);
+  }
 
   // Contrasting tip ring makes the fine, flexible end visible against water.
   const tipMarker = new THREE.Object3D();
