@@ -1,10 +1,11 @@
-export type ScreenMode = 'TITLE' | 'MAP' | 'FISHING' | 'BUNKER' | 'HOME';
+export type ScreenMode = 'TITLE' | 'MAP' | 'FISHING' | 'BUNKER' | 'HOME' | 'CITY';
 
 export type WaterType = 'river' | 'lake' | 'swamp' | 'anomaly_lake';
 
 export type WeatherType = 'clear' | 'fog' | 'rain' | 'anomaly_surge';
 
 export type LocationId =
+  | 'rokitne_city'
   | 'rokitne_bunker'
   | 'rokitne'
   | 'tomashgorod'
@@ -57,6 +58,7 @@ export interface LocationDef {
   name: string;
   regionLabel: string;
   isBunker?: boolean;
+  isCity?: boolean;
   backdropPhotoUrl?: string;
   depthRangeM: [number, number];
   waterType: WaterType;
