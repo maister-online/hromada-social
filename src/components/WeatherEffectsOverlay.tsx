@@ -5,7 +5,6 @@ interface WeatherEffectsOverlayProps {
   weather: WeatherType;
   timeOfDay: number;
   anomalyActivity: number;
-  sanity?: number;
   isPhotoMode?: boolean;
 }
 
@@ -40,7 +39,6 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
   weather,
   timeOfDay,
   anomalyActivity,
-  sanity = 100,
   isPhotoMode = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -281,20 +279,6 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
             background: isDuskOrNight
               ? 'radial-gradient(ellipse 70% 45% at 50% 10%, rgba(245, 158, 11, 0.10), transparent 72%)'
               : 'radial-gradient(ellipse 75% 48% at 55% 6%, rgba(254, 240, 199, 0.11), transparent 70%)',
-          }}
-        />
-      )}
-
-      {/* Low-Sanity Peripheral Vignette */}
-      {sanity < 50 && (
-        <div
-          className="absolute inset-0 transition-opacity duration-500"
-          style={{
-            opacity: Math.min(0.88, ((50 - sanity) / 50) * 0.85),
-            background:
-              sanity <= 25
-                ? 'radial-gradient(ellipse 68% 60% at 50% 50%, transparent 42%, rgba(88, 28, 135, 0.34) 78%, rgba(69, 10, 24, 0.72) 100%)'
-                : 'radial-gradient(ellipse 72% 64% at 50% 50%, transparent 48%, rgba(49, 46, 129, 0.28) 82%, rgba(15, 23, 42, 0.56) 100%)',
           }}
         />
       )}
