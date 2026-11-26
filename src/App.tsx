@@ -1750,6 +1750,7 @@ export default function App() {
           hunger={gameState.hunger} keepnetCount={gameState.keepnet.length} keepnetWeightKg={keepnetWeight}
           keepnetCapacityKg={keepnetCap} lootCount={gameState.foundLoot.length} readyQuestsCount={readyQuestsCount}
           visitedLocationIds={gameState.visitedLocationIds} activeGroundbaitLocs={activeGroundbaitLocs}
+          onSelectDestination={handleSelectDestination}
           muted={muted} onToggleMute={handleToggleMute}
           onOpenHome={() => { setShowBunkerMap(false); setScreen('HOME'); }}
           onOpenInventory={() => setShowInventory(true)} onOpenQuests={() => setShowQuests(true)}
