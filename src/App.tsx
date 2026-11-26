@@ -70,7 +70,6 @@ function createFreshSave(): SaveState {
     xp: 0,
     level: 1,
     radiation: 0,
-    sanity: 100,
     hunger: 100,
     stamina: 100,
     energyBoostUntilMs: 0,
@@ -138,12 +137,13 @@ function loadSavedGame(): SaveState | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<SaveState>;
+    const parsed = JSON.parse(raw) as Partial<SaveState> & { sanity?: number };
     if (!parsed || !parsed.equippedRodId) return null;
+    const { sanity: _legacySanity, ...saved } = parsed;
     const base = createFreshSave();
     return {
       ...base,
-      ...parsed,
+      ...saved,
       weather: parsed.weather === 'fog' || parsed.weather === 'rain' ? parsed.weather : 'clear',
       ownedRodIds: parsed.ownedRodIds?.length ? parsed.ownedRodIds : base.ownedRodIds,
       ownedReelIds: parsed.ownedReelIds?.length ? parsed.ownedReelIds : base.ownedReelIds,
@@ -672,7 +672,7 @@ export default function App() {
       if (goldCoinDrop || amberShardDrop) {
         showToast(`Рідкісна знахідка: ${goldCoinDrop ? '+1 золота монета ' : ''}${amberShardDrop ? `+${amberShardDrop} шмат. бурштину` : ''}!`);
       } else if (newlyReadyTitles.length > 0) {
-        showToast(`Завдання «${newlyReadyTitles[0]}» готове до здачі Єльцину!`);
+        showToast(`Завдання «${newlyReadyTitles[0]}» готове до здачі Баризі!`);
       } else {
         showToast(`Знахідка «${item.name}» покладена до рюкзака (+35 XP)!`);
       }
@@ -737,12 +737,12 @@ export default function App() {
             consumableInventory: { ...prev.consumableInventory, [itemId]: c - 1 },
           };
         });
-      } else if (def?.isFood || def?.sanityRestore) {
+      } else if (def?.isFood || def?.hungerRestore) {
         if (cur.hunger >= 98 && !(def.staminaRestore && cur.stamina < 100)) {
           showToast('Ви не голодні. Збережіть їжу на потім.');
           return;
         }
-        const restoreAmt = def.sanityRestore ?? 25;
+        const restoreAmt = def.hungerRestore ?? 25;
         audioEngine.playCatch(false);
         showToast(
           `Вжито «${def.name}»: голод зменшився на ${restoreAmt}%${def.staminaRestore ? ', сили відновлено' : ''}.`
@@ -878,7 +878,7 @@ export default function App() {
       if (!target) return;
       const payout = finalPrice ?? target.value;
       audioEngine.playCoin();
-      showToast(`Знахідку продано Єльцину за ₴ ${payout}`);
+      showToast(`Знахідку продано Баризі за ₴ ${payout}`);
       setGameState((prev) => {
         const item = prev.foundLoot.find((l) => l.uid === uid);
         if (!item) return prev;
@@ -899,7 +899,7 @@ export default function App() {
       if (cur.foundLoot.length === 0) return;
       const sum = totalPrice ?? cur.foundLoot.reduce((s, l) => s + l.value, 0);
       audioEngine.playCoin();
-      showToast(`Усі знахідки продано Єльцину за ₴ ${sum}!`);
+      showToast(`Усі знахідки продано Баризі за ₴ ${sum}!`);
       setGameState((prev) => {
         if (prev.foundLoot.length === 0) return prev;
         const payout = totalPrice ?? prev.foundLoot.reduce((s, l) => s + l.value, 0);
@@ -919,7 +919,7 @@ export default function App() {
     if (cur.haggleDay === cur.day && (cur.haggleBonusPct ?? 0) > 0) return;
     const bonusPct = 12 + Math.floor(Math.random() * 14);
     audioEngine.playBiteBell();
-    showToast(`Торг із Єльциним вдався! +${bonusPct}% до ціни скупки на весь день.`);
+    showToast(`Торг із Баризою вдався! +${bonusPct}% до ціни скупки на весь день.`);
     setGameState((prev) => ({
       ...prev,
       haggleDay: prev.day,
