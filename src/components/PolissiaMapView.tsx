@@ -53,7 +53,7 @@ const WEATHER_LABELS: Record<WeatherType, string> = {
   rain: 'Мряка / Дощ',
 };
 
-const MIN_ZOOM = 0.85;
+const MIN_ZOOM = 1; // Карта не зменшується нижче повноекранного масштабу
 const MAX_ZOOM = 3.5;
 
 export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
