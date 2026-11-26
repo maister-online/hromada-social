@@ -360,7 +360,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     const rBot = 0.011 * Math.pow(0.76, i);
     const rTop = 0.014 * Math.pow(0.76, i + 1);
     const segMesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(rTop, rBot, segLen, 32, 1, false),
+      new THREE.CylinderGeometry(rTop, rBot, segLen, 48, 2, false),
       blankMat
     );
     segMesh.rotation.x = Math.PI / 2;
@@ -384,11 +384,11 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     const guide = new THREE.Group();
     guide.position.set(0, -ringRadius * 0.82, guideZ);
     const outerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(ringRadius, 0.0018, 8, 32),
+      new THREE.TorusGeometry(ringRadius, 0.0022, 10, 48),
       metalMat
     );
     const ceramicInsert = new THREE.Mesh(
-      new THREE.TorusGeometry(ringRadius - 0.003, 0.0011, 8, 32),
+      new THREE.TorusGeometry(ringRadius - 0.003, 0.00135, 10, 48),
       ceramicMat
     );
     guide.add(outerRing, ceramicInsert);
@@ -452,53 +452,108 @@ export function buildBobberRig(isAnomalyGlow: boolean, floatDef?: FloatDef): Bob
   const bodyHex = floatDef ? new THREE.Color(floatDef.colorHex).getHex() : 0xf8fafc;
   const tipHex = floatDef
     ? new THREE.Color(floatDef.tipHex).getHex()
-    : isAnomalyGlow
-      ? 0x22d3ee
-      : 0xef4444;
+    : isAnomalyGlow ? 0x22d3ee : 0xef4444;
   const isNightGlow = Boolean(floatDef?.nightGlow || isAnomalyGlow);
   const isElectronic = Boolean(floatDef?.electronic);
+  const isBall = style === 'ball';
+  const isSlim = style === 'pencil' || style === 'goose' || style === 'waggler';
+  const isHeavy = style === 'catfish' || style === 'livebait';
+  const radius = isHeavy ? 0.068 : isBall ? 0.057 : isSlim ? 0.031 : 0.046;
+  const height = isBall ? 0.105 : style === 'goose' ? 0.24 : style === 'waggler' || style === 'pencil' ? 0.29 : 0.19;
 
-  const radius = style === 'catfish' || style === 'livebait' ? 0.075 : style === 'pencil' || style === 'goose' ? 0.038 : 0.055;
-  const yScale = style === 'ball' ? 1.0 : style === 'pencil' || style === 'goose' ? 2.9 : 1.85;
+  const bodyMat = new THREE.MeshPhysicalMaterial({
+    color: bodyHex,
+    roughness: 0.24,
+    metalness: style === 'electronic' ? 0.22 : 0.035,
+    clearcoat: 0.92,
+    clearcoatRoughness: 0.12,
+  });
+  const tipMat = new THREE.MeshPhysicalMaterial({
+    color: tipHex,
+    roughness: 0.2,
+    metalness: 0.04,
+    clearcoat: 0.85,
+    emissive: isNightGlow || isElectronic ? tipHex : 0x000000,
+    emissiveIntensity: isElectronic ? 1.35 : isNightGlow ? 0.9 : 0.04,
+  });
+  const darkMetal = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.28, metalness: 0.82 });
+  const paleMetal = new THREE.MeshStandardMaterial({ color: 0xc6d0d4, roughness: 0.22, metalness: 0.88 });
+  const bandMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.28, metalness: 0.02 });
 
-  const bodyGeo = new THREE.SphereGeometry(radius, 12, 10);
-  bodyGeo.scale(1, yScale, 1);
-  const body = new THREE.Mesh(
-    bodyGeo,
-    new THREE.MeshStandardMaterial({ color: bodyHex, roughness: 0.35, metalness: 0.08 })
+  if (isBall) {
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 40, 32), bodyMat);
+    group.add(ball);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.006, 40, 16, 0, Math.PI * 2, 0, Math.PI * 0.46), tipMat);
+    cap.position.y = radius * 0.12;
+    group.add(cap);
+  } else {
+    const profile = isHeavy
+      ? [[0.006, -height * 0.58], [radius * 0.52, -height * 0.48], [radius * 0.92, -height * 0.24], [radius, 0], [radius * 0.82, height * 0.24], [radius * 0.48, height * 0.42], [0.006, height * 0.58]]
+      : [[0.004, -height * 0.56], [radius * 0.55, -height * 0.40], [radius, -height * 0.08], [radius * 0.82, height * 0.20], [radius * 0.46, height * 0.40], [0.004, height * 0.56]];
+    const body = new THREE.Mesh(
+      new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), 40),
+      bodyMat
+    );
+    group.add(body);
+
+    // A clearly painted shoulder and a narrow reflective band give the float a finished tackle-shop look.
+    const shoulder = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 0.48, radius * 0.82, height * 0.075, 32),
+      tipMat
+    );
+    shoulder.position.y = height * 0.36;
+    group.add(shoulder);
+    const trim = new THREE.Mesh(
+      new THREE.TorusGeometry(radius * 0.78, 0.0022, 8, 40),
+      bandMat
+    );
+    trim.position.y = height * 0.23;
+    group.add(trim);
+  }
+
+  // High-visibility antenna with two fine contrasting paint bands.
+  const antennaH = style === 'waggler' || style === 'pencil' ? 0.34 : style === 'goose' ? 0.29 : 0.25;
+  const antenna = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.0065, 0.010, antennaH, 20),
+    tipMat
   );
-  group.add(body);
+  antenna.position.y = (isBall ? radius * 0.82 : height * 0.49) + antennaH * 0.48;
+  group.add(antenna);
+  for (const bandY of [0.32, 0.62]) {
+    const band = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0072, 0.0072, 0.012, 16),
+      bandMat
+    );
+    band.position.y = antenna.position.y - antennaH * 0.5 + antennaH * bandY;
+    group.add(band);
+  }
+  const antennaTop = new THREE.Mesh(new THREE.SphereGeometry(0.008, 16, 12), tipMat);
+  antennaTop.position.y = antenna.position.y + antennaH * 0.5;
+  group.add(antennaTop);
 
-  const capGeo = new THREE.SphereGeometry(radius * 1.03, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
-  capGeo.scale(1, yScale, 1);
-  const cap = new THREE.Mesh(
-    capGeo,
-    new THREE.MeshStandardMaterial({ color: tipHex, roughness: 0.3 })
-  );
-  group.add(cap);
-
-  const antennaH = style === 'waggler' || style === 'pencil' ? 0.32 : 0.23;
-  const tipMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.009, 0.012, antennaH, 8),
-    new THREE.MeshStandardMaterial({
-      color: tipHex,
-      emissive: isNightGlow || isElectronic ? tipHex : 0xf59e0b,
-      emissiveIntensity: isElectronic ? 1.8 : isNightGlow ? 1.5 : 0.9,
-      roughness: 0.2,
-    })
-  );
-  tipMesh.position.y = radius * yScale * 0.8 + antennaH * 0.45;
-  group.add(tipMesh);
-
+  // Realistic weighted keel, tiny metal eyelet and line attachment.
+  const keelLength = isHeavy ? 0.19 : 0.15;
   const keel = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.006, 0.004, 0.24, 6),
-    new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })
+    new THREE.CylinderGeometry(0.0035, 0.0055, keelLength, 16),
+    darkMetal
   );
-  keel.position.y = -radius * yScale * 0.95 - 0.06;
+  keel.position.y = -(isBall ? radius * 0.88 : height * 0.48) - keelLength * 0.5;
   group.add(keel);
+  const eyelet = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0026, 8, 24), paleMetal);
+  eyelet.position.y = keel.position.y - keelLength * 0.48;
+  group.add(eyelet);
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.018, 20), paleMetal);
+  collar.position.y = keel.position.y + keelLength * 0.42;
+  group.add(collar);
+
+  if (isElectronic || isNightGlow) {
+    const glow = new THREE.PointLight(tipHex, isElectronic ? 0.7 : 0.38, 1.15, 2);
+    glow.position.y = antenna.position.y;
+    group.add(glow);
+  }
 
   const rippleRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.14, 0.22, 24),
+    new THREE.RingGeometry(0.14, 0.22, 48),
     new THREE.MeshBasicMaterial({
       color: isElectronic ? 0x22d3ee : 0xe2e8f0,
       transparent: true,
@@ -510,7 +565,7 @@ export function buildBobberRig(isAnomalyGlow: boolean, floatDef?: FloatDef): Bob
   rippleRing.rotation.x = -Math.PI / 2;
   rippleRing.position.y = 0.02;
 
-  return { group, rippleRing, tipMesh, baseTipHex: tipHex, isNightGlow, isElectronic };
+  return { group, rippleRing, tipMesh: antenna, baseTipHex: tipHex, isNightGlow, isElectronic };
 }
 
 export interface ShoreEnvironmentRig {
