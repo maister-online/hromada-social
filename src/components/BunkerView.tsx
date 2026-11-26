@@ -840,7 +840,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 </div>
               )}
 
-              {/* YELTSIN (BARYGA): UNDERGROUND MARKET, DAILY DEMAND, BARGAINING & RELIC BUYBACK */}
+              {/* BARYGA: UNDERGROUND MARKET, DAILY DEMAND, BARGAINING & RELIC BUYBACK */}
               {activeNpc === 'baryga' && (
                 <div className="space-y-5">
                   <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
