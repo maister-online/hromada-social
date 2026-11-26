@@ -1660,7 +1660,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
 
       {showLocationMenu && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#020604]/80 p-3 pt-14 backdrop-blur-sm"
+          className="fixed inset-0 z-[300] flex items-start justify-center overflow-y-auto bg-[#020604]/80 p-3 pt-14 backdrop-blur-sm"
           onClick={() => setShowLocationMenu(false)}
         >
           <button
