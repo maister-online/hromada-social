@@ -190,30 +190,12 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     };
   }, []);
 
-  const applyZoomAtPoint = useCallback(
-    (nextZoom: number, clientX?: number, clientY?: number) => {
-      const z = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(nextZoom.toFixed(3))));
-      const prevZ = zoomRef.current;
-      const curPan = panRef.current;
-      const rect = stageRef.current?.getBoundingClientRect();
-
-      if (rect && clientX !== undefined && clientY !== undefined && prevZ > 0) {
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const relX = clientX - cx;
-        const relY = clientY - cy;
-        const ratio = z / prevZ;
-        const nextX = curPan.x * ratio + relX * (1 - ratio);
-        const nextY = curPan.y * ratio + relY * (1 - ratio);
-        setZoom(z);
-        setPan(clampPan(nextX, nextY, z));
-      } else {
-        setZoom(z);
-        setPan(clampPan(curPan.x, curPan.y, z));
-      }
-    },
-    [clampPan]
-  );
+  // Масштабуємо тільки від центру екрана: карта не зсувається за пальцем.
+  const applyZoomAtPoint = useCallback((nextZoom: number) => {
+    const z = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(nextZoom.toFixed(3))));
+    setZoom(z);
+    setPan({ x: 0, y: 0 });
+  }, []);
 
 
 
@@ -247,15 +229,9 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         return;
       }
       setSelectedId(loc.id);
-      const rect = stageRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const targetZ = zoomRef.current < 1.35 ? 1.45 : zoomRef.current;
-      const offsetX = ((50 - loc.mapX) / 100) * rect.width * 0.65 * targetZ;
-      const offsetY = ((50 - loc.mapY) / 100) * rect.height * 0.65 * targetZ;
-      setZoom(targetZ);
-      setPan(clampPan(offsetX, offsetY, targetZ));
+      // Вибір локації не пересуває карту — вона завжди залишається зафіксованою по центру.
     },
-    [clampPan, onSelectDestination, selectedId]
+    [onSelectDestination, selectedId]
   );
 
   const resetView = useCallback(() => {
@@ -313,38 +289,13 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
         MIN_ZOOM,
         Math.min(MAX_ZOOM, p.startZoom * (dist / p.startDist))
       );
-      const ratio = nextZoom / p.startZoom;
-
-      const rect = stageRef.current?.getBoundingClientRect();
-      const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
-      const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
-      const relMidX = p.startMidX - cx;
-      const relMidY = p.startMidY - cy;
-
-      const nextPanX = p.startPanX * ratio + relMidX * (1 - ratio) + (midX - p.startMidX);
-      const nextPanY = p.startPanY * ratio + relMidY * (1 - ratio) + (midY - p.startMidY);
-
+      // Pinch змінює лише масштаб; центр карти не рухається.
       setZoom(Number(nextZoom.toFixed(3)));
-      setPan(clampPan(nextPanX, nextPanY, nextZoom));
+      setPan({ x: 0, y: 0 });
       return;
     }
 
-    if (!dragStateRef.current.active) return;
-    const dx = e.clientX - dragStateRef.current.startX;
-    const dy = e.clientY - dragStateRef.current.startY;
-    if (Math.hypot(dx, dy) > 6) {
-      dragStateRef.current.moved = true;
-      setIsInteracting(true);
-    }
-    if (dragStateRef.current.moved) {
-      setPan(
-        clampPan(
-          dragStateRef.current.origPanX + dx,
-          dragStateRef.current.origPanY + dy,
-          zoomRef.current
-        )
-      );
-    }
+    // Одним пальцем карту не перетягуємо — торкання залишаються для вибору локацій.
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
