@@ -58,6 +58,30 @@ export const ROKITNE_PHOTO_URL = rokitneRiverPhoto;
 export const BUNKER_PHOTO_URL = bunkerPhoto;
 
 const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
+  rokitne_city: {
+    id: 'rokitne_city',
+    name: 'Рокитне',
+    regionLabel: 'Міський хаб',
+    isCity: true,
+    depthRangeM: [0, 0],
+    waterType: 'lake',
+    waterLabel: 'Місто · торговий центр гри',
+    mapX: 50,
+    mapY: 50,
+    pinTheme: 'bunker',
+    radiationLevel: 0,
+    anomalyActivity: 0,
+    dangerRating: 'Безпечна зона',
+    maxCastDistanceM: 0,
+    currentSpeed: 0,
+    waterColorDeep: '#101b20',
+    waterColorShallow: '#1c3038',
+    fogColor: '#101820',
+    glowColor: '#38bdf8',
+    description: 'Міський хаб Рокитного. Тут розташовані ринок, магазин, обмінник і ломбард. Це окреме місто, не риболовна водойма.',
+    bestTimeHint: 'Міські заклади',
+    speciesIds: [],
+  },
   rokitne_bunker: {
     id: 'rokitne_bunker',
     name: 'Бункер Рокитне',
@@ -470,7 +494,7 @@ const RAW_LOCATIONS: Record<LocationId, LocationDef> = {
 
 export const LOCATIONS: Record<LocationId, LocationDef> = Object.fromEntries(
   Object.entries(RAW_LOCATIONS).map(([id, loc]) => {
-    if (loc.isBunker) return [id, loc];
+    if (loc.isBunker || loc.isCity) return [id, loc];
     const extras = getExtraSpeciesIdsForLocation(
       loc.id,
       loc.waterType,
