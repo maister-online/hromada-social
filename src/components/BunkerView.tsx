@@ -11,7 +11,6 @@ import {
   Compass,
   Hammer,
   Moon,
-  Music,
   Scale,
   ScrollText,
   Shield,
@@ -65,9 +64,7 @@ interface BunkerViewProps {
   playIntro: boolean;
   onIntroEnded: () => void;
   muted: boolean;
-  musicEnabled: boolean;
   onToggleMute: () => void;
-  onToggleMusic: () => void;
   onOpenJournal: () => void;
   onSellFish: (uid: string) => void;
   onSellAll: () => void;
@@ -183,9 +180,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   playIntro,
   onIntroEnded,
   muted,
-  musicEnabled,
   onToggleMute,
-  onToggleMusic,
   onOpenJournal,
   onSellFish,
   onSellAll,
@@ -313,9 +308,6 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
             </button>
             <button type="button" onClick={onOpenJournal} className="btn-tactile btn-field min-h-10 inline-flex items-center gap-1.5 rounded-md border border-amber-500/25 bg-[#080d0b]/85 px-2.5 text-[11px] font-semibold text-amber-100 backdrop-blur-md">
               <BookMarked className="w-4 h-4" />Журнал
-            </button>
-            <button type="button" onClick={onToggleMusic} className={`btn-tactile min-h-10 inline-flex items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-semibold backdrop-blur-md ${musicEnabled && !muted ? 'bg-emerald-950/85 border-emerald-400/50 text-emerald-200' : 'bg-[#080d0b]/85 border-white/15 text-slate-300'}`}>
-              <Music className="w-4 h-4" />Музика
             </button>
             <button type="button" onClick={onToggleMute} className="btn-tactile min-h-10 inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-[#080d0b]/85 px-2.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
