@@ -75,7 +75,6 @@ export class ShoreFishingScene {
   private skyMat!: THREE.ShaderMaterial;
   private waterMat!: THREE.ShaderMaterial;
   private waterMesh!: THREE.Mesh;
-  private fogExp2!: THREE.FogExp2;
   private hemiLight!: THREE.HemisphereLight;
   private sunLight!: THREE.DirectionalLight;
   private isPhotoMode = false;
@@ -158,8 +157,7 @@ export class ShoreFishingScene {
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
-    this.fogExp2 = new THREE.FogExp2(0x182520, 0.0045);
-    this.scene.fog = this.isPhotoMode ? null : this.fogExp2;
+    this.scene.fog = null;
 
     const aspect =
       (container.clientWidth || window.innerWidth) /
@@ -211,7 +209,7 @@ export class ShoreFishingScene {
       this.isPhotoMode = Boolean(next.location.backdropPhotoUrl);
       this.renderer.setClearColor(0x0b1418, this.isPhotoMode ? 0 : 1);
       this.skyMesh.visible = !this.isPhotoMode;
-      this.scene.fog = this.isPhotoMode ? null : this.fogExp2;
+      this.scene.fog = null;
       this.rebuildEnvironment(next.location);
       this.waterMat.uniforms.uPhotoOverlay.value = this.isPhotoMode ? 1.0 : 0.0;
       const photoBounds = getPhotoVisualBounds(next.location);
@@ -441,8 +439,6 @@ export class ShoreFishingScene {
         uSkyHorizon: { value: new THREE.Color(0x88adc4) },
         uDeepColor: { value: new THREE.Color(loc.waterColorDeep) },
         uShallowColor: { value: new THREE.Color(loc.waterColorShallow) },
-        uFogColor: { value: new THREE.Color(loc.fogColor) },
-        uFogDensity: { value: 0.0045 },
         uGlowColor: { value: new THREE.Color(loc.glowColor) },
         uAnomalyGlow: {
           value: loc.waterType === 'anomaly_lake' ? 0.85 : loc.waterType === 'swamp' ? 0.35 : 0.05,
@@ -478,8 +474,6 @@ export class ShoreFishingScene {
         uniform vec3 uSkyHorizon;
         uniform vec3 uDeepColor;
         uniform vec3 uShallowColor;
-        uniform vec3 uFogColor;
-        uniform float uFogDensity;
         uniform vec3 uGlowColor;
         uniform float uAnomalyGlow;
         uniform vec2 uBobberPos;
@@ -558,10 +552,6 @@ export class ShoreFishingScene {
             gl_FragColor = vec4(overlayCol, overlayAlpha);
             return;
           }
-
-          float camDist = length(cameraPosition - vWorldPos);
-          float fogF = 1.0 - exp(-pow(camDist * uFogDensity, 2.0));
-          col = mix(col, uFogColor, clamp(fogF, 0.0, 1.0));
 
           gl_FragColor = vec4(col, 1.0);
         }
@@ -761,7 +751,6 @@ export class ShoreFishingScene {
 
     const loc = this.sync.location;
     const isRain = this.sync.weather === 'rain';
-    const isFog = this.sync.weather === 'fog';
 
     const sunDirX = Math.cos(sunAngle) * 0.75;
     const sunDirY = Math.max(0.18, Math.abs(sunH) * 0.85);
@@ -784,9 +773,6 @@ export class ShoreFishingScene {
       .setHex(0x8bb0c7)
       .lerp(_cFog.setHex(0xd46a43), duskF * 0.65)
       .lerp(_cFog.setHex(0x0c1724), nightF);
-    _cFog
-      .copy(_cHor)
-      .lerp(_cSun.set(loc.fogColor), 0.52 + nightF * 0.35);
 
     this.skyMat.uniforms.uTopColor.value.copy(_cTop);
     this.skyMat.uniforms.uHorizonColor.value.copy(_cHor);
@@ -803,26 +789,12 @@ export class ShoreFishingScene {
     this.waterMat.uniforms.uShallowColor.value
       .set(loc.waterColorShallow)
       .lerp(_cTop.setHex(0x081a1f), nightF * 0.5);
-    this.waterMat.uniforms.uFogColor.value.copy(_cFog);
 
     const baseAnomalyGlow =
       loc.waterType === 'anomaly_lake' ? 0.85 : loc.waterType === 'swamp' ? 0.35 : 0.05;
     this.waterMat.uniforms.uAnomalyGlow.value = baseAnomalyGlow;
 
-    // Keep atmospheric depth without washing the whole image into a grey blur.
-    const fogDensity =
-      0.0045 +
-      nightF * 0.0015 +
-      (isFog ? 0.004 : 0) +
-      (isRain ? 0.002 : 0) +
-      (loc.waterType === 'swamp' ? 0.0015 : 0);
-
-    this.waterMat.uniforms.uFogDensity.value = fogDensity;
-    if (this.scene.fog instanceof THREE.FogExp2) {
-      this.scene.fog.color.copy(_cFog);
-      this.scene.fog.density = fogDensity;
-    }
-
+    // Fog is intentionally disabled in every weather state.
     this.hemiLight.intensity = THREE.MathUtils.lerp(0.32, 0.92, dayF) * (isRain ? 0.8 : 1.0);
     this.envRig.lanternLight.intensity = THREE.MathUtils.lerp(6, 28, nightF);
 
