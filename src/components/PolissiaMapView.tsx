@@ -397,8 +397,8 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
             <span className="font-mono-num font-semibold text-emerald-300">{radSuitLevel}</span>
           </div>
           <div className="rounded-md border border-violet-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
-            <span className="text-slate-400">ПСИХІКА </span>
-            <span className={`font-mono-num font-semibold ${hunger <= 30 ? 'text-rose-400' : hunger <= 60 ? 'text-amber-300' : 'text-violet-300'}`}>{Math.round(hunger)}%</span>
+            <span className="text-slate-400">СИТІСТЬ </span>
+            <span className={`font-mono-num font-semibold ${hunger <= 30 ? 'text-rose-400' : hunger <= 60 ? 'text-amber-300' : 'text-amber-200'}`}>{Math.round(hunger)}%</span>
           </div>
         </div>
       </header>
