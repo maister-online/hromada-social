@@ -471,7 +471,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const handleSonarDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!sonarDragRef.current) return;
     const start = sonarDragRef.current;
-    setSonarLeft(Math.max(8, Math.min(window.innerWidth - Math.min(360, window.innerWidth - 16) - 8, start.left + event.clientX - start.pointerX)));
+    setSonarLeft(Math.max(8, Math.min(window.innerWidth - Math.min(260, window.innerWidth - 16) - 8, start.left + event.clientX - start.pointerX)));
     setSonarTop(Math.max(28, Math.min(window.innerHeight - 190, start.top + event.clientY - start.pointerY)));
   };
   const stopSonarDrag = () => { sonarDragRef.current = null; };
@@ -1763,7 +1763,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[200] w-[min(360px,calc(100vw-16px))] select-none"
+          className="pointer-events-none fixed z-[200] w-[min(260px,calc(100vw-16px))] select-none"
           style={{ left: sonarLeft, top: sonarTop, touchAction: 'none' }}
         >
           <div className="relative aspect-[16/9] w-full">
@@ -1788,7 +1788,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               onLostPointerCapture={stopSonarDrag}
             >⠿ ПЕРЕМІСТИТИ ЕХОЛОТ</div>
             <img
-              src={`${import.meta.env.BASE_URL}assets/Ехолот_на_весь_екран_7c768551_2K.jpg`}
+              src={`${import.meta.env.BASE_URL}assets/markup_1000003839.jpg`}
               alt="Корпус ехолота"
               className="pointer-events-none absolute inset-0 h-full w-full object-fill drop-shadow-[0_5px_12px_rgba(0,0,0,0.55)]"
               draggable={false}
