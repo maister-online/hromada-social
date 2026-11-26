@@ -1451,7 +1451,7 @@ export default function App() {
       day: nextDay,
       timeOfDay: nextTod,
       stamina: 100,
-      sanity: 100,
+      hunger: 100,
       radiation: Math.max(0, prev.radiation - 20),
     }));
   }, [showToast]);
@@ -1600,7 +1600,6 @@ export default function App() {
           amberShards={gameState.amberShards ?? 0}
           level={gameState.level}
           radSuitLevel={gameState.radSuitLevel}
-          sanity={gameState.sanity}
           hunger={gameState.hunger} keepnetCount={gameState.keepnet.length}
           keepnetWeightKg={keepnetWeight}
           keepnetCapacityKg={keepnetCap}
