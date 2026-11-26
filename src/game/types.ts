@@ -6,7 +6,6 @@ export type WeatherType = 'clear' | 'fog' | 'rain' | 'anomaly_surge';
 
 export type LocationId =
   | 'rokitne_bunker'
-  | 'rokitne_town'
   | 'rokitne'
   | 'tomashgorod'
   | 'blazhove'
