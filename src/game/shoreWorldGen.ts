@@ -104,28 +104,41 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0xcbd5e1,
-    roughness: 0.25,
-    metalness: 0.88,
+    color: 0x87919a,
+    roughness: 0.34,
+    metalness: 0.82,
   });
-  const blankMat = new THREE.MeshStandardMaterial({
+  const ceramicMat = new THREE.MeshPhysicalMaterial({
+    color: 0x171d20,
+    roughness: 0.2,
+    metalness: 0.18,
+    clearcoat: 0.8,
+  });
+  const threadMat = new THREE.MeshStandardMaterial({
+    color: 0x252b2e,
+    roughness: 0.42,
+    metalness: 0.28,
+  });
+  const blankMat = new THREE.MeshPhysicalMaterial({
     color: blankColor,
-    roughness: rodType === 'float' ? 0.35 : 0.22,
-    metalness: rodLevelIndex >= 3 ? 0.65 : 0.2,
+    roughness: rodType === 'float' ? 0.27 : 0.19,
+    metalness: rodLevelIndex >= 3 ? 0.42 : 0.28,
+    clearcoat: 1,
+    clearcoatRoughness: 0.12,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: rodLevelIndex >= 3 ? 0x2dd4bf : 0xf59e0b,
-    roughness: 0.3,
-    metalness: 0.7,
+    color: 0x343c42,
+    roughness: 0.28,
+    metalness: 0.82,
   });
 
   // Butt & cork grip (bottom-center along -Z forward/up)
-  const buttCap = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.06, 12), metalMat);
+  const buttCap = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.06, 32), metalMat);
   buttCap.rotation.x = Math.PI / 2;
   buttCap.position.set(0, 0, 0.14);
   root.add(buttCap);
 
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.021, 0.36, 12), corkMat);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.021, 0.36, 32), corkMat);
   grip.rotation.x = Math.PI / 2;
   grip.position.set(0, 0, -0.06);
   root.add(grip);
@@ -137,7 +150,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     root.add(seam);
   }
 
-  const reelSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.11, 12), evaMat);
+  const reelSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.11, 32), evaMat);
   reelSeat.rotation.x = Math.PI / 2;
   reelSeat.position.set(0, 0, -0.28);
   root.add(reelSeat);
@@ -150,16 +163,30 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   reelStem.position.set(0, 0.022, 0);
   reelGroup.add(reelStem);
 
-  const reelBody = new THREE.Mesh(new THREE.SphereGeometry(0.043, 16, 12), evaMat);
-  reelBody.scale.set(0.9, 0.72, 1.12);
+  const reelBody = new THREE.Mesh(new THREE.SphereGeometry(0.043, 32, 24), evaMat);
+  reelBody.scale.set(0.78, 0.66, 1.12);
   reelBody.position.set(0, -0.018, 0.01);
   reelGroup.add(reelBody);
+  const reelSidePlate = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.034, 0.034, 0.012, 32),
+    accentMat
+  );
+  reelSidePlate.rotation.x = Math.PI / 2;
+  reelSidePlate.position.set(0, -0.018, 0.047);
+  reelGroup.add(reelSidePlate);
+  const dragKnob = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.014, 0.016, 0.018, 24),
+    metalMat
+  );
+  dragKnob.rotation.x = Math.PI / 2;
+  dragKnob.position.set(0, -0.012, -0.069);
+  reelGroup.add(dragKnob);
 
   const spoolCore = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.019, 0.048, 18), metalMat);
   spoolCore.rotation.x = Math.PI / 2;
   spoolCore.position.set(0, -0.012, -0.036);
   reelGroup.add(spoolCore);
-  const spoolMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.029, 0.052, 20), accentMat);
+  const spoolMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.029, 0.052, 32), accentMat);
   spoolMesh.rotation.x = Math.PI / 2;
   spoolMesh.position.set(0, -0.012, -0.036);
   reelGroup.add(spoolMesh);
@@ -310,10 +337,21 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   supportHand.add(supportThumb);
   root.add(supportHand);
 
-  // 5 flexible rod segments chained forward along -Z
+  // Five articulated, tapered graphite sections with realistic guide hardware.
   const segments: THREE.Group[] = [];
   let parent: THREE.Object3D = root;
   const segLen = rodType === 'float' ? 0.56 : 0.48;
+
+  const addStrut = (group: THREE.Group, from: THREE.Vector3, to: THREE.Vector3) => {
+    const delta = new THREE.Vector3().subVectors(to, from);
+    const mesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0015, 0.0022, delta.length(), 8),
+      metalMat
+    );
+    mesh.position.copy(from).add(to).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+    group.add(mesh);
+  };
 
   for (let i = 0; i < 5; i++) {
     const segGroup = new THREE.Group();
@@ -321,29 +359,69 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
 
     const rBot = 0.014 * Math.pow(0.76, i);
     const rTop = 0.014 * Math.pow(0.76, i + 1);
-    const segMesh = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, segLen, 10), blankMat);
+    const segMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(rTop, rBot, segLen, 32, 1, false),
+      blankMat
+    );
     segMesh.rotation.x = Math.PI / 2;
     segMesh.position.z = -segLen / 2;
+    segMesh.castShadow = true;
     segGroup.add(segMesh);
 
-    // Metallic guide ring
-    const ringRadius = Math.max(0.008, 0.024 - i * 0.0038);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(ringRadius, 0.0022, 6, 14), metalMat);
-    ring.position.set(0, -ringRadius - rTop * 0.8, -segLen * 0.92);
-    segGroup.add(ring);
+    // Fine joint ferrule and narrow winding bands, not chunky plastic joints.
+    if (i > 0) {
+      const ferrule = new THREE.Mesh(
+        new THREE.CylinderGeometry(rBot * 1.08, rBot * 1.08, 0.035, 24),
+        accentMat
+      );
+      ferrule.rotation.x = Math.PI / 2;
+      ferrule.position.z = -0.018;
+      segGroup.add(ferrule);
+    }
+
+    const guideZ = -segLen * 0.88;
+    const ringRadius = Math.max(0.007, 0.023 - i * 0.0037);
+    const guide = new THREE.Group();
+    guide.position.set(0, -ringRadius * 0.82, guideZ);
+    const outerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(ringRadius, 0.0018, 8, 32),
+      metalMat
+    );
+    const ceramicInsert = new THREE.Mesh(
+      new THREE.TorusGeometry(ringRadius - 0.003, 0.0011, 8, 32),
+      ceramicMat
+    );
+    guide.add(outerRing, ceramicInsert);
+
+    // Two thin metal feet connect the guide ring to the rod blank.
+    addStrut(guide, new THREE.Vector3(-ringRadius * 0.68, -ringRadius * 0.72, 0),
+      new THREE.Vector3(-rTop * 0.45, ringRadius * 0.25, 0));
+    addStrut(guide, new THREE.Vector3(ringRadius * 0.68, -ringRadius * 0.72, 0),
+      new THREE.Vector3(rTop * 0.45, ringRadius * 0.25, 0));
+    segGroup.add(guide);
+
+    // Dark thread wraps and a tiny resin finish at each guide foot.
+    for (const offset of [-0.025, -0.019, -0.013]) {
+      const wrap = new THREE.Mesh(
+        new THREE.TorusGeometry(rTop * 1.08, 0.0008, 5, 24),
+        threadMat
+      );
+      wrap.rotation.x = Math.PI / 2;
+      wrap.position.z = guideZ + offset;
+      segGroup.add(wrap);
+    }
 
     if (i === 4 && rodLevelIndex >= 2) {
-      // High-visibility luminous tip accent
       const tipPaint = new THREE.Mesh(
-        new THREE.CylinderGeometry(rTop * 1.15, rTop * 1.25, 0.1, 8),
+        new THREE.CylinderGeometry(rTop * 1.08, rTop * 1.2, 0.075, 20),
         new THREE.MeshStandardMaterial({
-          color: 0xf97316,
-          emissive: 0xea580c,
-          emissiveIntensity: 0.7,
+          color: 0xd66b2e,
+          roughness: 0.32,
+          metalness: 0.08,
         })
       );
       tipPaint.rotation.x = Math.PI / 2;
-      tipPaint.position.z = -segLen + 0.05;
+      tipPaint.position.z = -segLen + 0.04;
       segGroup.add(tipPaint);
     }
 
