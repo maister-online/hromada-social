@@ -674,7 +674,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
           0.7 +
           bait.mutantBonus * 1.2 +
           gbMutant * 1.2 +
-          (isDeepSpot ? 0.18 : 0) +
+          (isDeepSpot ? 0.18 : 0);
         w = Math.max(1, Math.round(w * mutMult));
       }
       for (let i = 0; i < w; i++) weighted.push(sp);
