@@ -534,7 +534,7 @@ export const LOOT_ITEMS_CATALOG: LootItemDef[] = [
     weightKg: 0.15,
     accentColor: '#a78bfa',
     iconKey: 'chocolate',
-    description: 'Плитка міцного чорного шоколаду з карпатським горіхом і м’ятою. Миттєво стабілізує психіку під час викиду.',
+    description: 'Плитка міцного чорного шоколаду з карпатським горіхом і м’ятою. Допомагає відновити сили після сильного стресу.',
     effectLabel: '+65% розсудливості',
     sanityRestore: 65,
     isFood: true,
