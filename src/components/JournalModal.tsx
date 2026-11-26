@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Award, BookMarked, Box, Trophy, X } from 'lucide-react';
 import { FISH_MAP, LOCATIONS } from '../game/data';
 import { FaunaKind, FishSpeciesDef, SaveState } from '../game/types';
-import { Fauna3DPreview } from './Fauna3DPreview';
 import { FishIllustration } from './FishIllustration';
 
 interface JournalModalProps {
@@ -296,13 +295,13 @@ export const JournalModal: React.FC<JournalModalProps> = ({ gameState, onClose }
                 type="button"
                 onClick={() => setInspectSpecies(null)}
                 className="btn-tactile btn-field min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-lg cursor-pointer"
-                aria-label="Закрити 3D огляд"
+                aria-label="Закрити огляд риби"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <Fauna3DPreview species={inspectSpecies} className="w-full h-56" />
+            <div className="w-full h-56 rounded-xl overflow-hidden bg-[#050907]"><FishIllustration species={inspectSpecies} className="w-full h-full" /></div>
 
             <div className="grid grid-cols-2 gap-2 text-xs bg-[#070d0a] border border-white/10 rounded-xl p-3">
               <div>
