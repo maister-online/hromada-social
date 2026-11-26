@@ -432,49 +432,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const [showRigDrawer, setShowRigDrawer] = useState(false);
   const [rigTab, setRigTab] = useState<RigTab>('rod');
   const [showSonar, setShowSonar] = useState(true);
-  const [showSonarAdjust, setShowSonarAdjust] = useState(false);
-  const [sonarScreenWidth, setSonarScreenWidth] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
-      return Number.isFinite(saved.width) ? Math.min(94, Math.max(45, saved.width)) : 76;
-    } catch { return 76; }
-  });
-  const [sonarScreenHeight, setSonarScreenHeight] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
-      return Number.isFinite(saved.height) ? Math.min(88, Math.max(30, saved.height)) : 58;
-    } catch { return 58; }
-  });
-  const [sonarLeft, setSonarLeft] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
-      return Number.isFinite(saved.left) ? Math.max(0, saved.left) : 8;
-    } catch { return 8; }
-  });
-  const [sonarTop, setSonarTop] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
-      return Number.isFinite(saved.top) ? Math.max(0, saved.top) : 105;
-    } catch { return 8; }
-  });
-  const sonarDragRef = useRef<{ pointerX: number; pointerY: number; left: number; top: number } | null>(null);
-  const saveSonarLayout = () => {
-    try {
-      localStorage.setItem('wilde-polissia-sonar-window', JSON.stringify({
-        width: sonarScreenWidth, height: sonarScreenHeight, left: sonarLeft, top: sonarTop
-      }));
-      setShowSonarAdjust(false);
-    } catch {
-      // Keep the current layout in memory if browser storage is unavailable.
-    }
-  };
-  const handleSonarDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!sonarDragRef.current) return;
-    const start = sonarDragRef.current;
-    setSonarLeft(Math.max(8, Math.min(window.innerWidth - Math.min(135, window.innerWidth - 16) - 8, start.left + event.clientX - start.pointerX)));
-    setSonarTop(Math.max(28, Math.min(window.innerHeight - 135, start.top + event.clientY - start.pointerY)));
-  };
-  const stopSonarDrag = () => { sonarDragRef.current = null; };
   const [sonarRange, setSonarRange] = useState(10);
   const [sonarScan, setSonarScan] = useState(0);
   const [reticlePos, setReticlePos] = useState<{
@@ -1764,29 +1721,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {showSonar ? (
         <div
           className="pointer-events-none fixed z-[200] w-[min(135px,calc(100vw-16px))] select-none"
-          style={{ left: sonarLeft, top: sonarTop, touchAction: 'none' }}
+          style={{ left: 8, top: 8 }}
         >
           <div className="relative aspect-[16/9] w-full">
-            <div
-              className="pointer-events-auto absolute -top-7 left-0 right-0 z-50 flex h-7 touch-none items-center justify-center rounded-t-md border-2 border-cyan-300 bg-slate-950 text-[10px] font-black tracking-wide text-cyan-100 shadow-lg active:cursor-grabbing cursor-grab"
-              style={{ touchAction: 'none' }}
-              title="Перетягніть за цю смугу, щоб перемістити весь ехолот"
-              onPointerDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                event.currentTarget.setPointerCapture(event.pointerId);
-                sonarDragRef.current = { pointerX: event.clientX, pointerY: event.clientY, left: sonarLeft, top: sonarTop };
-              }}
-              onPointerMove={(event) => {
-                if (sonarDragRef.current) {
-                  event.preventDefault();
-                  handleSonarDragMove(event);
-                }
-              }}
-              onPointerUp={(event) => { event.preventDefault(); stopSonarDrag(); }}
-              onPointerCancel={stopSonarDrag}
-              onLostPointerCapture={stopSonarDrag}
-            >⠿ ПЕРЕМІСТИТИ ЕХОЛОТ</div>
             <img
               src={`${import.meta.env.BASE_URL}assets/markup_1000003839.jpg`}
               alt="Корпус ехолота"
@@ -1797,7 +1734,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             <button type="button" onClick={() => setShowSonar(false)} aria-label="Вимкнути ехолот" className="pointer-events-auto absolute right-[16%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-400/60 bg-black/80 text-slate-100 shadow"><span className="text-[10px] leading-none">⏻</span></button>
             <div
               className="pointer-events-auto absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[3px] border-2 border-cyan-300 bg-[#06131d] shadow-[inset_0_0_12px_rgba(0,0,0,0.95)]"
-              style={{ width: `${sonarScreenWidth}%`, height: `${sonarScreenHeight}%` }}
+              style={{ width: '76%', height: '58%' }}
             >
               <svg viewBox="0 0 240 120" preserveAspectRatio="none" className="block h-full w-full" role="img" aria-label="Кольоровий ехолот: поплавок, глибина, риб'ячі відбиття та контур дна">
                 <defs>
@@ -1860,18 +1797,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
               </div>
             </div>
-            {true && (
-              <div className="pointer-events-auto absolute left-0 right-0 top-full z-[210] mt-2 rounded-lg border-2 border-cyan-400 bg-slate-950 p-3 text-[11px] text-slate-100 shadow-2xl">
-                <div className="mb-1 text-center font-black tracking-wide text-cyan-200">⚙ РЕДАГУВАННЯ ЕХОЛОТА</div><div className="mb-1 flex items-center justify-between"><span>Ширина екрана</span><span className="font-mono">{sonarScreenWidth}%</span></div>
-                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }} />
-                <div className="mb-1 mt-1 flex items-center justify-between"><span>Висота екрана</span><span className="font-mono">{sonarScreenHeight}%</span></div>
-                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }} />
-                <div className="mt-2 grid grid-cols-2 gap-1">
-                  <button type="button" onClick={()=>{setSonarScreenWidth(76);setSonarScreenHeight(58);setSonarLeft(8);setSonarTop(8);}} className="rounded bg-slate-700 px-2 py-1.5 font-semibold">Скинути</button>
-                  <button type="button" onClick={saveSonarLayout} className="rounded bg-emerald-700 px-2 py-1.5 font-bold text-white">Зберегти</button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       ) : (
