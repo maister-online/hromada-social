@@ -195,9 +195,12 @@ function loadSavedGame(): SaveState | null {
       ownedAccessoryIds: (parsed.ownedAccessoryIds ?? []).filter((id) =>
         ACCESSORIES.some((item) => item.id === id)
       ),
-      ownedBottomRigIds: parsed.ownedBottomRigIds?.length
-        ? parsed.ownedBottomRigIds.filter((id) => BOTTOM_RIGS.some((item) => item.id === id))
-        : base.ownedBottomRigIds,
+      ownedBottomRigIds: (() => {
+        const validIds = (parsed.ownedBottomRigIds ?? []).filter((id) =>
+          BOTTOM_RIGS.some((item) => item.id === id)
+        );
+        return validIds.length ? validIds : base.ownedBottomRigIds;
+      })(),
       ownedGearIds: (parsed.ownedGearIds ?? []).filter((id) =>
         GEAR_ITEMS.some((item) => item.id === id)
       ),
