@@ -7,6 +7,7 @@ import {
   CloudFog,
   CloudRain,
   Menu,
+  Map,
   Droplets,
   Package,
   Radar,
@@ -1708,7 +1709,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenInventory(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Shield className="mr-2 inline h-4 w-4 text-sky-300" />Рюкзак</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenJournal(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><BookMarked className="mr-2 inline h-4 w-4 text-teal-300" />Журнал</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onOpenQuests(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><ScrollText className="mr-2 inline h-4 w-4 text-emerald-300" />Завдання</button>
-              <button type="button" onClick={() => { setShowLocationMenu(false); onOpenMap(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Compass className="mr-2 inline h-4 w-4 text-teal-300" />Карта</button>
+              <button type="button" onClick={() => { setShowLocationMenu(false); onOpenMap(); }} className="btn-tactile btn-field min-h-[48px] rounded-xl px-3 text-left text-sm font-semibold"><Map className="mr-2 inline h-4 w-4 text-teal-300" />Карта</button>
               <button type="button" onClick={() => { setShowLocationMenu(false); onGoToBunker(); }} className="btn-tactile btn-primary-emerald col-span-2 min-h-[48px] rounded-xl px-3 text-sm font-bold"><Warehouse className="mr-2 inline h-4 w-4" />Повернутися до бункера</button>
               <button type="button" onClick={onToggleMusic} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{musicEnabled ? 'Вимкнути музику' : 'Увімкнути музику'}</button>
               <button type="button" onClick={onToggleMute} className="btn-tactile btn-field min-h-[44px] rounded-xl px-3 text-xs font-semibold">{muted ? 'Увімкнути звук' : 'Вимкнути звук'}</button>
