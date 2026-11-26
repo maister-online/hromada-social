@@ -89,40 +89,19 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
 
     const splashes: WaterSplash[] = [];
 
-    const sporeCount =
-      weather === 'anomaly_surge'
-        ? width < 640
-          ? 42
-          : 72
-        : weather === 'fog'
-          ? 16
-          : isDuskOrNight || highAnomalySpot
-            ? 20
-            : 8;
+    const sporeCount = weather === 'fog' ? 16 : isDuskOrNight || highAnomalySpot ? 20 : 8;
 
     const spores: AnomalySpore[] = Array.from({ length: sporeCount }, () => {
       const r = Math.random();
-      const hue: AnomalySpore['hue'] =
-        weather === 'anomaly_surge'
-          ? r < 0.42
-            ? 'cyan'
-            : r < 0.78
-              ? 'emerald'
-              : 'violet'
-          : highAnomalySpot
-            ? r < 0.5
-              ? 'emerald'
-              : 'cyan'
-            : 'amber';
+      const hue: AnomalySpore['hue'] = highAnomalySpot
+        ? r < 0.5 ? 'emerald' : 'cyan'
+        : 'amber';
       return {
         x: Math.random() * width,
         y: Math.random() * height,
         vx: (Math.random() - 0.5) * 22,
-        vy:
-          weather === 'anomaly_surge'
-            ? -18 - Math.random() * 34
-            : -6 - Math.random() * 14,
-        radius: weather === 'anomaly_surge' ? 1.8 + Math.random() * 3.4 : 1.4 + Math.random() * 2.1,
+        vy: -6 - Math.random() * 14,
+        radius: 1.4 + Math.random() * 2.1,
         phase: Math.random() * Math.PI * 2,
         hue,
       };
@@ -131,8 +110,6 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
     let last = performance.now();
     let lightningFlash = 0;
     let nextLightningIn = 4 + Math.random() * 7;
-    let arcTimer = 1.6 + Math.random() * 2.6;
-    let activeArc: { x1: number; y1: number; x2: number; y2: number; ttl: number } | null = null;
 
     const drawFrame = (now: number) => {
       const dt = prefersReducedMotion ? 0 : Math.min((now - last) / 1000, 0.05);
@@ -201,7 +178,7 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
         }
       }
 
-      // ANOMALY SURGE / TWILIGHT FIREFLIES / FOG PARTICLES
+      // TWILIGHT FIREFLIES / FOG PARTICLES
       const t = now * 0.001;
       for (let i = 0; i < spores.length; i++) {
         const sp = spores[i];
@@ -217,12 +194,7 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
         }
 
         const pulse = 0.45 + 0.55 * Math.sin(t * 2.8 + sp.phase);
-        const alpha =
-          weather === 'anomaly_surge'
-            ? 0.35 + pulse * 0.48
-            : weather === 'fog'
-              ? 0.12 + pulse * 0.18
-              : 0.22 + pulse * 0.42;
+        const alpha = weather === 'fog' ? 0.12 + pulse * 0.18 : 0.22 + pulse * 0.42;
 
         const rgb =
           sp.hue === 'cyan'
@@ -242,41 +214,6 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
         ctx.beginPath();
         ctx.arc(sp.x, sp.y, sp.radius * 4.2, 0, Math.PI * 2);
         ctx.fill();
-      }
-
-      // Occasional subtle anomalous electrical discharge arc near horizon/water during anomaly_surge
-      if (weather === 'anomaly_surge' && !prefersReducedMotion) {
-        arcTimer -= dt;
-        if (arcTimer <= 0) {
-          const x1 = width * (0.15 + Math.random() * 0.7);
-          const y1 = height * (0.28 + Math.random() * 0.34);
-          activeArc = {
-            x1,
-            y1,
-            x2: x1 + (Math.random() - 0.5) * 140,
-            y2: y1 + 35 + Math.random() * 75,
-            ttl: 0.18,
-          };
-          arcTimer = 2.1 + Math.random() * 3.4;
-        }
-
-        if (activeArc) {
-          activeArc.ttl -= dt;
-          if (activeArc.ttl <= 0) {
-            activeArc = null;
-          } else {
-            const a = activeArc.ttl / 0.18;
-            const mx = (activeArc.x1 + activeArc.x2) / 2 + (Math.random() - 0.5) * 28;
-            const my = (activeArc.y1 + activeArc.y2) / 2 + (Math.random() - 0.5) * 20;
-            ctx.strokeStyle = `rgba(103, 232, 249, ${a * 0.55})`;
-            ctx.lineWidth = 1.6;
-            ctx.beginPath();
-            ctx.moveTo(activeArc.x1, activeArc.y1);
-            ctx.lineTo(mx, my);
-            ctx.lineTo(activeArc.x2, activeArc.y2);
-            ctx.stroke();
-          }
-        }
       }
 
       if (!prefersReducedMotion) {
@@ -334,25 +271,7 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
         </>
       )}
 
-      {/* ANOMALY SURGE: shimmering bioluminescent Polissia rift glow */}
-      {weather === 'anomaly_surge' && (
-        <>
-          <div
-            className="animate-anomaly-shimmer absolute inset-0"
-            style={{
-              background:
-                'radial-gradient(ellipse 65% 42% at 50% 24%, rgba(34, 211, 238, 0.22), transparent 72%), radial-gradient(ellipse 75% 45% at 22% 72%, rgba(16, 185, 129, 0.18), transparent 72%), radial-gradient(ellipse 65% 40% at 82% 68%, rgba(168, 85, 247, 0.16), transparent 72%)',
-            }}
-          />
-          <div
-            className="animate-fog-a absolute inset-x-0 top-[30%] h-[36%] opacity-65"
-            style={{
-              background:
-                'linear-gradient(90deg, transparent 0%, rgba(45, 212, 191, 0.16) 32%, rgba(56, 189, 248, 0.22) 55%, rgba(167, 139, 250, 0.14) 78%, transparent 100%)',
-            }}
-          />
-        </>
-      )}
+
 
       {/* CLEAR: subtle warm sun/twilight atmospheric glow */}
       {weather === 'clear' && (
@@ -380,7 +299,7 @@ export const WeatherEffectsOverlay: React.FC<WeatherEffectsOverlayProps> = ({
         />
       )}
 
-      {/* Live animated weather canvas (raindrops, water splashes, drifting anomaly spores, fireflies) */}
+      {/* Live animated weather canvas (raindrops, water splashes, ambient spores and fireflies) */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
     </div>
   );
