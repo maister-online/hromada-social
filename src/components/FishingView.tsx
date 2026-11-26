@@ -1649,7 +1649,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         weather={gameState.weather}
         timeOfDay={gameState.timeOfDay}
         anomalyActivity={location.anomalyActivity}
-        sanity={gameState.hunger}
+        sanity={100}
         isPhotoMode={Boolean(location.backdropPhotoUrl)}
       />
 
