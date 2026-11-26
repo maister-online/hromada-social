@@ -1863,9 +1863,9 @@ export const FishingView: React.FC<FishingViewProps> = ({
             {true && (
               <div className="pointer-events-auto absolute left-0 right-0 top-full z-[210] mt-2 rounded-lg border-2 border-cyan-400 bg-slate-950 p-3 text-[11px] text-slate-100 shadow-2xl">
                 <div className="mb-1 text-center font-black tracking-wide text-cyan-200">⚙ РЕДАГУВАННЯ ЕХОЛОТА</div><div className="mb-1 flex items-center justify-between"><span>Ширина екрана</span><span className="font-mono">{sonarScreenWidth}%</span></div>
-                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }}/
+                <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }} />
                 <div className="mb-1 mt-1 flex items-center justify-between"><span>Висота екрана</span><span className="font-mono">{sonarScreenHeight}%</span></div>
-                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }}/
+                <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="pointer-events-auto h-5 w-full accent-cyan-300" style={{ touchAction: 'pan-y' }} />
                 <div className="mt-2 grid grid-cols-2 gap-1">
                   <button type="button" onClick={()=>{setSonarScreenWidth(76);setSonarScreenHeight(58);setSonarLeft(8);setSonarTop(8);}} className="rounded bg-slate-700 px-2 py-1.5 font-semibold">Скинути</button>
                   <button type="button" onClick={saveSonarLayout} className="rounded bg-emerald-700 px-2 py-1.5 font-bold text-white">Зберегти</button>
