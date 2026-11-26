@@ -1131,23 +1131,12 @@ export class ShoreFishingScene {
     // Update Weather / Anomaly Spores in 3D space
     const isRain = this.sync.weather === 'rain';
     const isFog = this.sync.weather === 'fog';
-    const isAnomaly =
-      location.radiationLevel >= 1 ||
-      this.sync.timeOfDay >= 19 ||
-      this.sync.timeOfDay <= 5.5;
     const pMat = this.weatherParticles.material as THREE.PointsMaterial;
-    this.weatherParticles.visible = isRain || isAnomaly || isFog;
+    // Keep only natural rain and fog particles; remove floating anomaly spores.
+    this.weatherParticles.visible = isRain || isFog;
 
     if (this.weatherParticles.visible) {
-      pMat.color.setHex(
-        isRain
-          ? 0xcbd5e1
-          : isFog
-            ? 0xd1fae5
-            : location.radiationLevel >= 2
-              ? 0x22d3ee
-              : 0xa3e635
-      );
+      pMat.color.setHex(isRain ? 0xcbd5e1 : 0xd1fae5);
       pMat.size = isRain ? 0.13 : isFog ? 0.22 : 0.15;
       pMat.opacity = isFog ? 0.28 : 0.62;
       const pAttr = this.weatherParticles.geometry.attributes.position as THREE.BufferAttribute;
