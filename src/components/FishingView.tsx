@@ -1273,7 +1273,6 @@ export const FishingView: React.FC<FishingViewProps> = ({
     looseTimerRef.current = 0;
     setTensionRatio(tensionRef.current);
     audioEngine.playHookSet();
-    audioEngine.playSplash(0.72);
     sceneRef.current?.triggerWaterSplash(1.3);
     setPhase('FIGHTING');
     setStatusMsg(
