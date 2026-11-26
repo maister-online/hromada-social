@@ -2326,7 +2326,7 @@ export const NAMED_MUTANTS: FishSpeciesDef[] = [
     preferredDepth: 'bottom',
     uniqueTrait: 'Поглинає світло навколо пащі, лягає на дно каменем.',
     description: 'Вугільно-чорний сом із фіолетовими вусами та залізною хваткою.',
-    anomalyNote: 'При наближенні до берега знижує розсудливість без захисного спорядження.',
+    anomalyNote: 'При наближенні до берега різко змінює напрямок і робить потужний ривок.',
   },
   {
     id: 'mutant_giant_carp',
@@ -2515,7 +2515,7 @@ export const NAMED_MUTANTS: FishSpeciesDef[] = [
     preferredDepth: 'surface',
     uniqueTrait: 'Тверді надкрила рикошетять від легких гачків; гуде як дрон.',
     description: 'Аномальний водяний жук розміром із тарілку, що світиться смарагдовим сяйвом.',
-    anomalyNote: 'Єльцин скуповує його хітин за чималу ціну.',
+    anomalyNote: 'Барига скуповує його хітин за чималу ціну.',
   },
   {
     id: 'mutant_water_predator',
