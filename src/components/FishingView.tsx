@@ -437,28 +437,44 @@ export const FishingView: React.FC<FishingViewProps> = ({
     try {
       const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
       return Number.isFinite(saved.width) ? Math.min(94, Math.max(45, saved.width)) : 76;
-    } catch {
-      return 76;
-    }
+    } catch { return 76; }
   });
   const [sonarScreenHeight, setSonarScreenHeight] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
       return Number.isFinite(saved.height) ? Math.min(88, Math.max(30, saved.height)) : 58;
-    } catch {
-      return 58;
-    }
+    } catch { return 58; }
   });
-  useEffect(() => {
+  const [sonarLeft, setSonarLeft] = useState(() => {
     try {
-      localStorage.setItem(
-        'wilde-polissia-sonar-window',
-        JSON.stringify({ width: sonarScreenWidth, height: sonarScreenHeight })
-      );
+      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
+      return Number.isFinite(saved.left) ? Math.max(0, saved.left) : 8;
+    } catch { return 8; }
+  });
+  const [sonarTop, setSonarTop] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('wilde-polissia-sonar-window') || '{}');
+      return Number.isFinite(saved.top) ? Math.max(0, saved.top) : 8;
+    } catch { return 8; }
+  });
+  const sonarDragRef = useRef<{ pointerX: number; pointerY: number; left: number; top: number } | null>(null);
+  const saveSonarLayout = () => {
+    try {
+      localStorage.setItem('wilde-polissia-sonar-window', JSON.stringify({
+        width: sonarScreenWidth, height: sonarScreenHeight, left: sonarLeft, top: sonarTop
+      }));
+      setShowSonarAdjust(false);
     } catch {
-      // Keep the current sizes for this session if browser storage is unavailable.
+      // Keep the current layout in memory if browser storage is unavailable.
     }
-  }, [sonarScreenWidth, sonarScreenHeight]);
+  };
+  const handleSonarDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!sonarDragRef.current) return;
+    const start = sonarDragRef.current;
+    setSonarLeft(Math.max(0, Math.min(window.innerWidth - 110, start.left + event.clientX - start.pointerX)));
+    setSonarTop(Math.max(0, Math.min(window.innerHeight - 70, start.top + event.clientY - start.pointerY)));
+  };
+  const stopSonarDrag = () => { sonarDragRef.current = null; };
   const [sonarRange, setSonarRange] = useState(10);
   const [sonarScan, setSonarScan] = useState(0);
   const [reticlePos, setReticlePos] = useState<{
@@ -1746,8 +1762,22 @@ export const FishingView: React.FC<FishingViewProps> = ({
 
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
-        <div className="pointer-events-none fixed right-2 top-2 z-[60] w-[168px] select-none sm:right-3 sm:top-3 sm:w-[190px]">
+        <div
+          className="pointer-events-none fixed z-[60] w-[168px] select-none sm:w-[190px]"
+          style={{ left: sonarLeft, top: sonarTop }}
+        >
           <div className="relative aspect-[16/9] w-full">
+            <div
+              className="pointer-events-auto absolute -top-5 left-0 right-0 flex h-5 touch-none items-center justify-center rounded-t-md border border-slate-500/70 bg-slate-950/95 text-[9px] font-bold tracking-wide text-cyan-100 active:cursor-grabbing cursor-grab"
+              title="Перетягніть, щоб перемістити ехолот"
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                sonarDragRef.current = { pointerX: event.clientX, pointerY: event.clientY, left: sonarLeft, top: sonarTop };
+              }}
+              onPointerMove={handleSonarDragMove}
+              onPointerUp={stopSonarDrag}
+              onPointerCancel={stopSonarDrag}
+            >⠿ ПЕРЕМІСТИТИ ЕХОЛОТ</div>
             <img
               src={`${import.meta.env.BASE_URL}Ехолот_на_весь_екран_52de58a7.jpg`}
               alt="Корпус ехолота"
@@ -1827,7 +1857,10 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <input aria-label="Ширина вікна ехолота" type="range" min="45" max="94" value={sonarScreenWidth} onChange={(event)=>setSonarScreenWidth(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
                 <div className="mb-1 mt-1 flex items-center justify-between"><span>Висота екрана</span><span className="font-mono">{sonarScreenHeight}%</span></div>
                 <input aria-label="Висота вікна ехолота" type="range" min="30" max="88" value={sonarScreenHeight} onChange={(event)=>setSonarScreenHeight(Number(event.target.value))} className="h-3 w-full accent-cyan-300"/>
-                <button type="button" onClick={()=>{setSonarScreenWidth(76);setSonarScreenHeight(58);}} className="mt-1 w-full rounded bg-slate-700 px-2 py-1 font-semibold">Скинути розмір</button>
+                <div className="mt-2 grid grid-cols-2 gap-1">
+                  <button type="button" onClick={()=>{setSonarScreenWidth(76);setSonarScreenHeight(58);setSonarLeft(8);setSonarTop(8);}} className="rounded bg-slate-700 px-2 py-1.5 font-semibold">Скинути</button>
+                  <button type="button" onClick={saveSonarLayout} className="rounded bg-emerald-700 px-2 py-1.5 font-bold text-white">Зберегти</button>
+                </div>
               </div>
             )}
           </div>
