@@ -2129,7 +2129,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                 </div>
               )}
 
-              {/* VELCHKO (MALE PROFESSOR): SCIENTIFIC QUESTS & BESTIARY WITH 3D VIEWER */}
+              {/* VELCHKO (MALE PROFESSOR): SCIENTIFIC QUESTS & BESTIARY */}
               {activeNpc === 'velychko' && (
                 <div className="space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
@@ -2312,7 +2312,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                               {rec && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] text-cyan-300 font-semibold shrink-0">
                                   <Box className="w-3 h-3" />
-                                  3D
+                                  Огляд
                                 </span>
                               )}
                             </div>
@@ -2331,7 +2331,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
         </div>
       )}
 
-      {/* 3D Specimen Modal inside Bunker */}
+      {/* Fish details modal inside Bunker */}
       {inspectSpecies && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/84"
