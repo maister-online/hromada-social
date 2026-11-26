@@ -1653,8 +1653,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
         className="fixed top-3 right-3 z-30 btn-tactile btn-field min-h-[44px] inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold shadow-xl"
         aria-label="Відкрити меню локації"
       >
-        <Compass className="w-4 h-4 text-teal-300" />
-        Меню
+        <Compass className="w-5 h-5 text-teal-300" />
       </button>
 
       {showLocationMenu && (
@@ -1720,7 +1719,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
       {/* КОМПАКТНИЙ 2D-СОНАР: поверхня, поплавок, відбиття та дно */}
       {showSonar ? (
         <div
-          className="pointer-events-none fixed z-[200] w-[min(210px,calc(100vw-16px))] select-none"
+          className="pointer-events-none fixed z-[200] w-[min(220px,calc(100vw-16px))] select-none"
           style={{ left: 8, top: 8 }}
         >
           <div className="relative aspect-[16/9] w-full">
@@ -1734,7 +1733,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
             <button type="button" onClick={() => setShowSonar(false)} aria-label="Вимкнути ехолот" className="pointer-events-auto absolute right-[16%] top-[3%] z-30 flex h-5 w-5 items-center justify-center rounded-full border border-slate-400/60 bg-black/80 text-slate-100 shadow"><span className="text-[10px] leading-none">⏻</span></button>
             <div
               className="pointer-events-auto absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[3px] border-2 border-cyan-300 bg-[#06131d] shadow-[inset_0_0_12px_rgba(0,0,0,0.95)]"
-              style={{ width: '88%', height: '74%' }}
+              style={{ width: '91%', height: '78%' }}
             >
               <svg viewBox="0 0 240 120" preserveAspectRatio="none" className="block h-full w-full" role="img" aria-label="Кольоровий ехолот: поплавок, глибина, риб'ячі відбиття та контур дна">
                 <defs>
