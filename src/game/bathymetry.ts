@@ -44,6 +44,49 @@ function locHash(locId: string): number {
   return (h >>> 0) / 4294967295;
 }
 
+
+const RIVER_ONLY_FISH = new Set([
+  'gudgeon', 'chub', 'chub_dwarf', 'ide', 'asp', 'nase', 'vimba', 'barbel',
+  'sabrefish', 'dace_river', 'piskar_river', 'ukleika', 'grayling', 'huchen',
+  'round_goby', 'monkey_goby', 'white_bream_flat', 'white_eye_bream',
+  'spined_loach', 'donets_ruffe', 'black_sea_roach', 'sterlet', 'russian_sturgeon',
+]);
+const LAKE_ONLY_FISH = new Set([
+  'carp_mirror', 'carp_common', 'carp_scaled', 'carp_leather', 'wild_carp',
+  'grass_carp', 'silver_carp', 'bighead_carp', 'black_amur', 'tench',
+  'tench_moss', 'blue_bream', 'amur_sleeper', 'sun_bass', 'bitterling', 'stickleback',
+]);
+const SWAMP_FISH = new Set([
+  'crucian', 'crucian_common', 'silver_crucian', 'tench', 'loach',
+  'amur_sleeper', 'european_eel', 'catfish', 'catfish_bullhead', 'burbot',
+]);
+
+function isFishLikeSpecies(species: NonNullable<(typeof FISH_MAP)[string]>): boolean {
+  if (!species.faunaKind || species.faunaKind === 'fish') return true;
+  if (species.faunaKind !== 'mutant') return false;
+  return !/(crayfish|beetle|leech|frog|insect|spider|turtle|snake|salamander|newt)/i.test(species.id);
+}
+
+/** Fish and aquatic fauna assigned to this exact water body. */
+export function getLocationCatchPool(loc: LocationDef) {
+  return loc.speciesIds
+    .map((id) => FISH_MAP[id])
+    .filter((species): species is NonNullable<typeof species> => Boolean(species))
+    .filter((species) => {
+      const fishLike = isFishLikeSpecies(species);
+      if (fishLike && loc.waterType === 'river' && LAKE_ONLY_FISH.has(species.id)) return false;
+      if (fishLike && loc.waterType === 'lake' && RIVER_ONLY_FISH.has(species.id)) return false;
+      if (fishLike && loc.waterType === 'swamp' && !SWAMP_FISH.has(species.id) && !species.isMutant) return false;
+      if (species.isMutant && loc.waterType !== 'anomaly_lake' && loc.anomalyActivity < 40) return false;
+      return true;
+    });
+}
+
+/** Fish-shaped sonar targets only; crayfish, insects and shore wildlife are not shown as fish. */
+export function getLocationFishPool(loc: LocationDef) {
+  return getLocationCatchPool(loc).filter(isFishLikeSpecies);
+}
+
 /**
  * Deterministic 2D bathymetry field across the entire water body (yaw -0.85..+0.85, dist 4..maxCastM).
  * Creates realistic shoals, drop-offs (бровки), deep pits (ями), and side coves per location.
@@ -175,7 +218,7 @@ export function scanSectorFish(
   hasGroundbait: boolean,
   scanNonce = 0
 ): SonarFishBlip[] {
-  const pool = loc.speciesIds.map((id) => FISH_MAP[id]).filter(Boolean);
+  const pool = getLocationFishPool(loc);
   const sectorBucket = Math.round(yaw * 5); // distinct sectors across the water body
   const timeBucket = Math.floor(timeOfDay * 2);
   const baseSeed =
