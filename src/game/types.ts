@@ -160,7 +160,7 @@ export interface LootItemDef {
   iconKey: string;
   description: string;
   effectLabel?: string;
-  sanityRestore?: number;
+  hungerRestore?: number;
   staminaRestore?: boolean;
   isFood?: boolean;
 }
@@ -368,7 +368,6 @@ export interface GearItemDef {
   snagEscapeBonus?: number;
   landingBonus?: number;
   radResistBonus?: number;
-  sanityShieldBonus?: number;
   castBonusM?: number;
   biteSpeedBonus?: number;
   fightPowerBonus?: number;
@@ -458,7 +457,6 @@ export interface SaveState {
   xp: number;
   level: number;
   radiation: number; // 0..100
-  sanity: number; // legacy compatibility only
   hunger: number; // 0..100, 100 = full
   stamina: number; // 0..100
   energyBoostUntilMs: number;
