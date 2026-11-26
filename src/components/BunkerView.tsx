@@ -30,6 +30,7 @@ import {
   ACCESSORIES,
   BAITS,
   BOTTOM_RIGS,
+  BUNKER_PHOTO_URL,
   CHARACTERS,
   FEEDERS,
   FISH_MAP,
@@ -219,6 +220,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   onExitToMap,
   onOpenMap,
 }) => {
+  const [showBunkerIntro, setShowBunkerIntro] = useState(true);
   const [activeNpc, setActiveNpc] = useState<CharacterId | null>(null);
   const [tarasTab, setTarasTab] = useState<'catch' | 'rest' | 'quests'>('catch');
   const [shopCat, setShopCat] = useState<ShopCategory>('rods');
@@ -278,6 +280,22 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
+      {showBunkerIntro && (
+        <div className="fixed inset-0 z-[100] bg-black">
+          <video
+            src={BUNKER_VIDEO_URL}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            onEnded={() => setShowBunkerIntro(false)}
+            onError={() => setShowBunkerIntro(false)}
+            aria-label="Проморолик локації Бункер Рокитне"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Компактний сталкерський HUD без суцільної верхньої панелі */}
       <header className="absolute top-0 left-0 right-0 z-20 p-2 sm:p-3 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
@@ -331,15 +349,11 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
       <div className="absolute inset-0 overflow-hidden bg-[#040705] p-0">
         {/* Responsive portrait stage: fills all available screen height and scales down to fit narrow screens */}
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#070b09]">
-          <video
-            src={BUNKER_VIDEO_URL}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            aria-label="Відеофон локації Бункер Рокитне"
+          <img
+            src={BUNKER_PHOTO_URL}
+            alt="Інтер’єр Бункера Рокитне з чотирма сталкерами"
             className="absolute inset-0 block w-screen h-[100dvh] max-w-none object-cover object-center select-none pointer-events-none"
+            draggable={false}
             style={{ width: "100vw", height: "100dvh", objectFit: "cover", objectPosition: "center" }}
           />
 
