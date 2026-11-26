@@ -62,10 +62,10 @@ import { FishIllustration } from './FishIllustration';
 import { ItemIllustration } from './ItemIllustration';
 import { CatalogPhoto } from './CatalogPhoto';
 
-const BUNKER_VIDEO_URL = `${import.meta.env.BASE_URL}assets/${encodeURIComponent('Camera_flying_through_open_doors_93526622 (1).mp4')}`;
-
 interface BunkerViewProps {
   gameState: SaveState;
+  playIntro: boolean;
+  onIntroEnded: () => void;
   muted: boolean;
   musicEnabled: boolean;
   onToggleMute: () => void;
@@ -182,6 +182,8 @@ const BUNKER_HOTSPOTS: BunkerHotspot[] = [
 
 export const BunkerView: React.FC<BunkerViewProps> = ({
   gameState,
+  playIntro,
+  onIntroEnded,
   muted,
   musicEnabled,
   onToggleMute,
@@ -220,7 +222,6 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
   onExitToMap,
   onOpenMap,
 }) => {
-  const [showBunkerIntro, setShowBunkerIntro] = useState(true);
   const [activeNpc, setActiveNpc] = useState<CharacterId | null>(null);
   const [tarasTab, setTarasTab] = useState<'catch' | 'rest' | 'quests'>('catch');
   const [shopCat, setShopCat] = useState<ShopCategory>('rods');
@@ -280,16 +281,16 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
 
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
-      {showBunkerIntro && (
+      {playIntro && (
         <div className="fixed inset-0 z-[100] bg-black">
           <video
-            src={BUNKER_VIDEO_URL}
+            src={`${import.meta.env.BASE_URL}assets/${encodeURIComponent('Camera_flying_through_open_doors_93526622 (1).mp4')}`}
             autoPlay
             muted
             playsInline
             preload="auto"
-            onEnded={() => setShowBunkerIntro(false)}
-            onError={() => setShowBunkerIntro(false)}
+            onEnded={onIntroEnded}
+            onError={onIntroEnded}
             aria-label="Проморолик локації Бункер Рокитне"
             className="absolute inset-0 h-full w-full object-cover"
           />
