@@ -6,7 +6,7 @@ import {
   Check,
   CloudFog,
   CloudRain,
-  Compass,
+  Menu,
   Droplets,
   Package,
   Radar,
@@ -1653,7 +1653,8 @@ export const FishingView: React.FC<FishingViewProps> = ({
         className="fixed top-3 right-3 z-30 btn-tactile btn-field min-h-[44px] inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold shadow-xl"
         aria-label="Відкрити меню локації"
       >
-        <Compass className="w-5 h-5 text-teal-300" />
+        <Menu className="w-5 h-5 text-teal-300" />
+        <span>МЕНЮ</span>
       </button>
 
       {showLocationMenu && (
@@ -1792,7 +1793,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
                 <rect x="151" y="106" width="87" height="12" rx="2" fill="#020b13" fillOpacity=".92"/>
                 <text x="234" y="115" textAnchor="end" fontSize="8.5" fontWeight="bold" fill="#ffffff" stroke="#020b13" strokeWidth=".6" paintOrder="stroke">ДО ДНА {Math.max(0,currentWaterSpot.depthM-effectiveFishingDepthM).toFixed(1)}м</text>
               </svg>
-              <div className="pointer-events-auto absolute right-[1%] top-[17%] bottom-[13%] z-30 flex items-center">
+              <div className="pointer-events-auto absolute right-[1%] top-[22%] bottom-[8%] z-30 flex items-center">
                 <input aria-label="Глибина поплавка та гачка" title="Перетягніть, щоб змінити глибину поплавкової оснастки" type="range" min="0.4" max={Math.max(0.4,currentWaterSpot.depthM-0.1)} step="0.1" value={effectiveFishingDepthM} onChange={(event) => handleChangeFishingDepth(Number(event.target.value))} className="h-full w-2 cursor-ns-resize accent-cyan-300" style={{writingMode:"vertical-lr",direction:"rtl",touchAction:"none"}}/>
               </div>
             </div>
