@@ -1,4 +1,4 @@
-export type ScreenMode = 'TITLE' | 'MAP' | 'FISHING' | 'BUNKER';
+export type ScreenMode = 'TITLE' | 'MAP' | 'FISHING' | 'BUNKER' | 'HOME';
 
 export type WaterType = 'river' | 'lake' | 'swamp' | 'anomaly_lake';
 
@@ -429,6 +429,23 @@ export interface PersonalRecordEntry {
   locationId: LocationId;
 }
 
+export interface SavedTackleSet {
+  id: string;
+  name: string;
+  equippedRodId: string;
+  equippedReelId: string;
+  equippedLineId: string;
+  equippedBaitId: string;
+  equippedFloatId: string;
+  equippedHookId: string;
+  equippedSinkerId: string;
+  equippedFeederId: string;
+  equippedBottomRigId: string;
+  equippedFlavoringId: string;
+  equippedAccessoryIds: string[];
+  equippedGearIds: string[];
+}
+
 export interface SaveState {
   day: number;
   timeOfDay: number; // 0..24
@@ -486,4 +503,5 @@ export interface SaveState {
   totalEarnedCredits: number;
   haggleDay?: number;
   haggleBonusPct?: number;
+  savedTackleSets?: SavedTackleSet[];
 }
