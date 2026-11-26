@@ -321,7 +321,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
           </div>
           <div className="rounded-md border border-violet-500/20 bg-[#080d0b]/80 px-2.5 py-1.5 text-[11px] sm:text-xs backdrop-blur-md">
             <span className="text-slate-400">ГОЛОД </span>
-            <span className={`font-mono-num font-semibold ${gameState.hunger <= 30 ? 'text-rose-400' : gameState.hunger <= 60 ? 'text-amber-300' : 'text-emerald-300'}`}>{Math.round(gameState.sanity)}%</span>
+            <span className={`font-mono-num font-semibold ${gameState.hunger <= 30 ? 'text-rose-400' : gameState.hunger <= 60 ? 'text-amber-300' : 'text-emerald-300'}`}>{Math.round(gameState.hunger)}%</span>
           </div>
         </div>
       </header>
@@ -574,7 +574,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             Продовольчий склад Тараса (відновлення ситості)
                           </div>
                           <span className="font-mono-num text-xs text-indigo-300">
-                            Рівень ситості: {Math.round(gameState.sanity)}%
+                            Рівень ситості: {Math.round(gameState.hunger)}%
                           </span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -584,7 +584,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                             const qty = gameState.consumableInventory[food.id] ?? 0;
                             const price = food.buyPrice ?? 50;
                             const canBuy = gameState.credits >= price;
-                            const canUse = qty > 0 && gameState.sanity < 100;
+                            const canUse = qty > 0 && gameState.hunger < 100;
                             return (
                               <div
                                 key={food.id}
@@ -674,14 +674,14 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
                           <span className="text-slate-400">Голод:</span>
                           <span
                             className={
-                              gameState.sanity <= 30
+                              gameState.hunger <= 30
                                 ? 'text-rose-400 font-bold'
-                                : gameState.sanity <= 60
+                                : gameState.hunger <= 60
                                   ? 'text-amber-300 font-bold'
                                   : 'text-indigo-300 font-bold'
                             }
                           >
-                            {Math.round(gameState.sanity)}%
+                            {Math.round(gameState.hunger)}%
                           </span>
                         </div>
                       </div>
