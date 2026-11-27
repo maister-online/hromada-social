@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Roboto+Condensed:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Russo+One&family=Roboto+Condensed:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -1470,5 +1470,346 @@ input,
 select,
 textarea {
   border-radius: 10px;
+}
+
+/* ============================================================
+   ДИКЕ ПОЛІССЯ — COMPLETE GUNMETAL / STEEL UI REDESIGN
+   One visual system for title, map, city, bunker, fishing and every modal.
+   ============================================================ */
+:root {
+  color-scheme: dark;
+  --game-black: #070809;
+  --game-carbon: #101215;
+  --game-graphite: #191c20;
+  --game-steel: #292e34;
+  --game-steel-light: #69727c;
+  --game-silver: #c0c7ce;
+  --game-silver-dim: #858e98;
+  --game-bronze: #8f633c;
+  --game-orange: #e58a32;
+  --game-orange-light: #ffb35b;
+  --game-border: rgba(151, 162, 173, .28);
+  --game-border-hot: rgba(229, 138, 50, .62);
+  --game-panel: linear-gradient(145deg, #292d32 0%, #1a1d21 42%, #101215 100%);
+  --game-panel-deep: linear-gradient(180deg, #1d2024 0%, #0c0e11 100%);
+}
+
+/* Global type: heavy military/game display face + readable condensed body. */
+html, body, #root {
+  background: var(--game-black) !important;
+  color: var(--game-silver);
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+}
+#root, #root * {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+  font-stretch: condensed;
+}
+#root h1, #root h2, #root h3, #root h4, #root h5, #root h6,
+#root .font-display, #root .game-title, #root .dialog-title,
+#root button, #root [role="button"], #root [role="tab"] {
+  font-family: "Russo One", "Arial Narrow", Impact, sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+#root h1, #root h2, #root h3, #root h4,
+#root .font-display, #root .game-title, #root .dialog-title {
+  color: #c5cbd1 !important;
+  background-image: linear-gradient(180deg, #f0f3f5 0%, #c2c9d0 44%, #77818b 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.7);
+}
+#root p, #root li, #root label, #root small, #root td, #root th {
+  letter-spacing: .012em;
+}
+#root .font-mono-num {
+  font-family: "Roboto Condensed", "Arial Narrow", sans-serif !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Remove the old green/teal UI palette: replace it with steel and graphite. */
+#root [class*="text-emerald-"],
+#root [class*="text-green-"],
+#root [class*="text-teal-"],
+#root [class*="text-lime-"] {
+  color: #b7c0c9 !important;
+}
+#root [class*="border-emerald-"],
+#root [class*="border-green-"],
+#root [class*="border-teal-"],
+#root [class*="border-lime-"] {
+  border-color: rgba(142, 153, 164, .42) !important;
+}
+#root [class*="ring-emerald-"],
+#root [class*="ring-green-"],
+#root [class*="ring-teal-"],
+#root [class*="ring-lime-"] {
+  --tw-ring-color: rgba(153, 164, 175, .55) !important;
+}
+#root [class*="bg-emerald-"],
+#root [class*="bg-green-"],
+#root [class*="bg-teal-"],
+#root [class*="bg-lime-"] {
+  background-color: #252a30 !important;
+  background-image: none !important;
+}
+#root [class*="from-emerald-"],
+#root [class*="from-green-"],
+#root [class*="from-teal-"],
+#root [class*="from-lime-"] {
+  --tw-gradient-from: #737d87 !important;
+  --tw-gradient-to: rgb(115 125 135 / 0) !important;
+}
+#root [class*="to-emerald-"],
+#root [class*="to-green-"],
+#root [class*="to-teal-"],
+#root [class*="to-lime-"] {
+  --tw-gradient-to: #30363d !important;
+}
+
+/* Convert the project's dark green custom surfaces to neutral charcoal steel. */
+#root [class*="bg-[#060a08]"],
+#root [class*="bg-[#060a09]"],
+#root [class*="bg-[#060a0b]"],
+#root [class*="bg-[#060b09]"],
+#root [class*="bg-[#060c09]"],
+#root [class*="bg-[#060c08]"],
+#root [class*="bg-[#060908]"],
+#root [class*="bg-[#050806]"],
+#root [class*="bg-[#050907]"],
+#root [class*="bg-[#040706]"],
+#root [class*="bg-[#040705]"],
+#root [class*="bg-[#020604]"],
+#root [class*="bg-[#070b09]"],
+#root [class*="bg-[#070c09]"],
+#root [class*="bg-[#070d0a]"],
+#root [class*="bg-[#07100c]"],
+#root [class*="bg-[#07110d]"],
+#root [class*="bg-[#080d0b]"],
+#root [class*="bg-[#08100c]"],
+#root [class*="bg-[#08120e]"],
+#root [class*="bg-[#09120e]"],
+#root [class*="bg-[#091815]"],
+#root [class*="bg-[#0a130f]"],
+#root [class*="bg-[#0b130f]"],
+#root [class*="bg-[#0b1510]"],
+#root [class*="bg-[#0e1c16]"],
+#root [class*="bg-[#0e1c17]"],
+#root [class*="bg-[#101a15]"],
+#root [class*="bg-[#102219]"],
+#root [class*="bg-[#11190f]"],
+#root [class*="bg-[#12160c]"],
+#root [class*="bg-[#12160d]"],
+#root [class*="bg-[#17160c]"],
+#root [class*="bg-[#061b12]"],
+#root [class*="bg-[#082016]"],
+#root [class*="bg-[#0d1c18]"],
+#root [class*="bg-[#111e18]"],
+#root [class*="bg-[#26372b]"],
+#root [class*="bg-[#101b15]"],
+#root [class*="bg-[#0a1510]"],
+#root [class*="bg-[#040706]"] {
+  background-color: #171a1e !important;
+  background-image: none !important;
+}
+
+/* Main window shells: brushed graphite, rounded corners, steel bevel. */
+#root .panel-window,
+#root .panel-field,
+#root .bunker-dialog,
+#root [role="dialog"] {
+  color: #c0c7ce;
+  background: var(--game-panel) !important;
+  border: 1px solid rgba(151,162,173,.42) !important;
+  border-radius: 17px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 0 0 1px rgba(0,0,0,.62),
+    0 22px 60px rgba(0,0,0,.78),
+    0 0 0 1px rgba(255,255,255,.025) !important;
+}
+#root .panel-field {
+  background: linear-gradient(145deg, #252a30, #15181c 55%, #0c0e11) !important;
+}
+#root .bunker-dialog {
+  background: linear-gradient(145deg, rgba(37,41,46,.99), rgba(10,12,15,.99)) !important;
+  border-color: rgba(151,162,173,.48) !important;
+}
+#root .bunker-dialog-topbar,
+#root .bunker-main-header,
+#root .panel-window > .flex.items-center.justify-between:first-child {
+  background: linear-gradient(180deg, #343a41 0%, #202429 48%, #14171a 100%) !important;
+  border-bottom: 1px solid rgba(177,187,197,.38) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.28);
+}
+#root .bunker-dialog-content {
+  background:
+    linear-gradient(180deg, rgba(37,42,48,.96), rgba(13,15,18,.99)) !important;
+}
+#root .bunker-character-card,
+#root .bunker-npc-tag,
+#root .bunker-character-dock {
+  background: linear-gradient(145deg, #30363d, #171a1e 72%) !important;
+  border: 1px solid rgba(151,162,173,.38) !important;
+  border-radius: 13px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.45) !important;
+}
+#root .bunker-dialogue-bubble {
+  border-left: 3px solid var(--game-orange) !important;
+  border-radius: 0 12px 12px 0 !important;
+  background: linear-gradient(90deg, rgba(229,138,50,.13), rgba(229,138,50,.025)) !important;
+}
+
+/* Every nested card becomes a readable game card, not a flat web form. */
+#root .panel-window [class*="border"][class*="rounded-"],
+#root .bunker-dialog-content [class*="border"][class*="rounded-"],
+#root [role="dialog"] [class*="border"][class*="rounded-"] {
+  border-color: rgba(142,153,164,.3);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 5px 16px rgba(0,0,0,.22);
+}
+#root .panel-window [class*="border-white/"],
+#root .bunker-dialog-content [class*="border-white/"],
+#root [role="dialog"] [class*="border-white/"] {
+  border-color: rgba(151,162,173,.24) !important;
+}
+#root .panel-window img,
+#root .bunker-dialog img,
+#root [role="dialog"] img {
+  border-radius: 9px;
+}
+
+/* Catalog photography: dark framed item plates with a subtle metal edge. */
+#root .catalog-photo-frame {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #343a40, #080a0c) !important;
+  border: 1px solid rgba(151,162,173,.42);
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 7px 18px rgba(0,0,0,.38);
+}
+#root .catalog-photo-frame img {
+  filter: contrast(1.08) saturate(.88);
+  transition: transform .25s ease, filter .25s ease;
+}
+#root .catalog-photo-frame:active img {
+  transform: scale(1.035);
+  filter: contrast(1.12) saturate(.95);
+}
+
+/* Steel controls, orange only for the primary action. */
+#root button,
+#root [role="button"],
+#root input,
+#root select,
+#root textarea {
+  border-radius: 10px;
+}
+#root button:not(.btn-primary-emerald):not(.btn-primary-amber):not(.map-dialog-primary):not(.map-toolbar-primary) {
+  color: #c2c9d0;
+  border-color: rgba(151,162,173,.34);
+}
+#root .btn-field,
+#root .map-toolbar-button,
+#root .map-toolbar-icon,
+#root .map-dialog-secondary {
+  color: #c3cad1 !important;
+  background: linear-gradient(180deg, #343a41 0%, #1b1f23 100%) !important;
+  border: 1px solid rgba(151,162,173,.42) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 5px 14px rgba(0,0,0,.36) !important;
+}
+#root .btn-field:hover:not(:disabled),
+#root .map-toolbar-button:hover,
+#root .map-toolbar-icon:hover,
+#root .map-dialog-secondary:hover {
+  background: linear-gradient(180deg, #454c54 0%, #24292f 100%) !important;
+  border-color: rgba(190,199,208,.65) !important;
+}
+#root .btn-primary-emerald,
+#root .btn-primary-amber,
+#root .map-toolbar-primary,
+#root .map-dialog-primary {
+  color: #17120c !important;
+  background: linear-gradient(180deg, #ffb451 0%, #d77727 54%, #914a1d 100%) !important;
+  border: 1px solid rgba(255,218,166,.58) !important;
+  border-radius: 11px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.38), 0 7px 20px rgba(0,0,0,.45), 0 0 16px rgba(229,138,50,.16) !important;
+}
+#root .btn-primary-emerald:hover:not(:disabled),
+#root .btn-primary-amber:hover:not(:disabled),
+#root .map-toolbar-primary:hover,
+#root .map-dialog-primary:hover {
+  background: linear-gradient(180deg, #ffc36d 0%, #e58a32 56%, #a85b25 100%) !important;
+}
+#root input, #root select, #root textarea {
+  color: #d1d6dc !important;
+  background: linear-gradient(180deg, #111418, #20252a) !important;
+  border: 1px solid rgba(151,162,173,.38) !important;
+}
+#root input::placeholder, #root textarea::placeholder {
+  color: #77818b !important;
+}
+
+/* Map and HUD details: neutral steel markers; orange is the selected signal. */
+#root .region-place-kind { color: #c0c7ce !important; }
+#root .region-place-marker.has-fishing .region-place-dot {
+  background: #e58a32 !important;
+  box-shadow: 0 0 0 3px rgba(0,0,0,.4), 0 0 14px rgba(229,138,50,.55) !important;
+}
+#root .leaflet-control-attribution a { color: #d6a06a !important; }
+#root .custom-scroll::-webkit-scrollbar-track { background: #0b0d10 !important; }
+#root .custom-scroll::-webkit-scrollbar-thumb { background: #59616a !important; border-radius: 8px; }
+
+/* Bunker menus used to be deliberately transparent; restore proper game windows. */
+#root .bunker-scene .bunker-dialog,
+#root .bunker-scene .bunker-dialog-content,
+#root .bunker-scene .bunker-dialog-topbar,
+#root .bunker-scene .bunker-character-card,
+#root .bunker-scene .panel-window,
+#root .bunker-scene .panel-field,
+#root .bunker-scene .bunker-dialogue-bubble,
+#root .bunker-scene .bunker-main-header,
+#root .bunker-scene .bunker-npc-tag {
+  background: var(--game-panel) !important;
+  background-color: #171a1e !important;
+  background-image: var(--game-panel) !important;
+  border-color: rgba(151,162,173,.42) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 32px rgba(0,0,0,.58) !important;
+  backdrop-filter: blur(12px) saturate(115%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(115%) !important;
+}
+#root .bunker-scene .bunker-dialog-backdrop {
+  background: rgba(0,0,0,.58) !important;
+  backdrop-filter: blur(3px) !important;
+}
+
+/* Promo controls and all small labels follow the same steel/orange identity. */
+#root .city-promo-button {
+  color: #17120c !important;
+  background: linear-gradient(180deg,#ffb451,#bd6b27) !important;
+  border-color: rgba(255,218,166,.58) !important;
+}
+#root .city-promo-skip {
+  color: #c4cbd2 !important;
+  background: linear-gradient(180deg,#343a41,#171a1e) !important;
+  border-color: rgba(151,162,173,.42) !important;
+}
+#root .bunker-main-header h1,
+#root .panel-window h1,
+#root .panel-window h2,
+#root .bunker-dialog h1,
+#root .bunker-dialog h2 {
+  text-shadow: 0 1px 0 rgba(255,255,255,.13), 0 3px 12px rgba(0,0,0,.85) !important;
+}
+@media (max-width: 640px) {
+  #root .panel-window,
+  #root .panel-field,
+  #root .bunker-dialog,
+  #root [role="dialog"] {
+    border-radius: 14px !important;
+  }
 }
 
