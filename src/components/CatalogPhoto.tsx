@@ -16,7 +16,7 @@ export const CatalogPhoto: React.FC<CatalogPhotoProps> = ({
 }) => {
   const { ref, src } = useCommonsPhoto(query, fallbackQueries);
   return (
-    <div ref={ref} className={`overflow-hidden bg-gradient-to-br from-slate-800 to-emerald-950 ${className}`}>
+    <div ref={ref} className={`catalog-photo-frame overflow-hidden bg-gradient-to-br from-slate-800 to-slate-950 ${className}`}>
       {src && (
         <img
           src={src}
