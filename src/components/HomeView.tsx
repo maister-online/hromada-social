@@ -17,7 +17,7 @@ const initialPositions: Record<WindowKey, {x:number;y:number}> = {
   storage:{x:16,y:86}, trophies:{x:16,y:126}, gear:{x:16,y:166}, progress:{x:16,y:206}
 };
 export const HomeView: React.FC<Props> = (p) => {
-  const [opened,setOpened]=useState<WindowKey[]>([]);
+  const [opened,setOpened]=useState<WindowKey | null>(null);
   const [positions,setPositions]=useState(initialPositions);
   const [drag,setDrag]=useState<{key:WindowKey;dx:number;dy:number}|null>(null);
   const [tab,setTab]=useState<'fish'|'loot'|'currencies'>('fish');
@@ -43,7 +43,7 @@ export const HomeView: React.FC<Props> = (p) => {
     return ()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};
   },[drag]);
   useEffect(()=>{try{localStorage.setItem('polissia_home_window_positions',JSON.stringify(positions));}catch{}},[positions]);
-  const toggle=(key:WindowKey)=>setOpened(prev=>prev.includes(key)?prev.filter(x=>x!==key):[...prev,key]);
+  const toggle=(key:WindowKey)=>setOpened(prev=>prev===key?null:key);
   const fishName=(f:CaughtFish)=>FISH_MAP[f.speciesId]?.name ?? 'Невідома риба';
   const lootName=(l:FoundLootEntry)=>LOOT_MAP[l.itemId]?.name ?? 'Знахідка';
   const panel='absolute z-20 w-[min(330px,calc(100vw-24px))] overflow-hidden rounded-xl border border-amber-200/40 bg-[#101a15]/95 text-slate-100 shadow-2xl backdrop-blur-md';
@@ -59,7 +59,7 @@ export const HomeView: React.FC<Props> = (p) => {
       <button onClick={()=>toggle('trophies')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Trophy size={16}/>Трофейна кімната</button>
       <button onClick={()=>toggle('gear')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Package size={16}/>Робочий стіл</button><button onClick={()=>toggle('progress')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><BarChart3 size={16}/>Особистий прогрес</button>
     </div>
-    {opened.includes('storage')&&<section className={panel} style={{left:positions.storage.x,top:positions.storage.y}}>
+    {opened === 'storage'&&<section className={panel} style={{left:positions.storage.x,top:positions.storage.y}}>
       {header('storage','Сховище предметів',<Box size={16}/>)}
       <div className="flex gap-1 p-2">{(['fish','loot','currencies'] as const).map(t=><button key={t} onClick={()=>setTab(t)} className={`flex-1 rounded px-2 py-1.5 text-[11px] ${tab===t?'bg-emerald-700':'bg-white/5 text-slate-300'}`}>{t==='fish'?'Риба':t==='loot'?'Знахідки':'Ресурси'}</button>)}</div>
       <div className="max-h-[48vh] overflow-y-auto">
@@ -68,7 +68,7 @@ export const HomeView: React.FC<Props> = (p) => {
         {tab==='currencies'&&<div className="space-y-2 p-3 text-xs"><p>Гривні: <b>₴ {p.gameState.credits.toLocaleString('uk-UA')}</b></p><p>Золоті монети: <b>{p.gameState.goldCoins}</b></p><p>Бурштин: <b>{p.gameState.amberShards}</b></p><p className="text-slate-400">Грошові ресурси зберігаються на рахунку персонажа.</p></div>}
       </div>
     </section>}
-    {opened.includes('trophies')&&<section className={panel} style={{left:positions.trophies.x,top:positions.trophies.y}}>
+    {opened === 'trophies'&&<section className={panel} style={{left:positions.trophies.x,top:positions.trophies.y}}>
       {header('trophies','Кімната трофеїв',<Trophy size={16}/>)}
       <div className="max-h-[55vh] overflow-y-auto">
         <div className="border-b border-white/10 px-3 py-2 text-[11px] font-bold text-amber-200">Риба на стенді</div>
@@ -80,7 +80,7 @@ export const HomeView: React.FC<Props> = (p) => {
         <p className="px-3 py-2 text-[10px] text-slate-400">Після виставлення предмет зникає зі сховища. Знятий трофей повертається назад.</p>
       </div>
     </section>}
-    {opened.includes('gear')&&<section className={panel} style={{left:positions.gear.x,top:positions.gear.y}}>
+    {opened === 'gear'&&<section className={panel} style={{left:positions.gear.x,top:positions.gear.y}}>
       {header('gear','Робочий стіл',<Package size={16}/>)}
       <div className="max-h-[55vh] overflow-y-auto p-3 text-xs">
         <p className="mb-2 text-emerald-200">Наявне спорядження</p>
@@ -93,7 +93,7 @@ export const HomeView: React.FC<Props> = (p) => {
         </div>
       </div>
     </section>}
-    {opened.includes('progress')&&<section className={panel} style={{left:positions.progress.x,top:positions.progress.y}}>
+    {opened === 'progress'&&<section className={panel} style={{left:positions.progress.x,top:positions.progress.y}}>
       {header('progress','Особистий прогрес',<BarChart3 size={16}/>)}
       <div className="space-y-2 p-3 text-xs">
         <div className="flex items-center justify-between"><span className="text-slate-400">Рівень персонажа</span><b className="text-amber-200">{p.gameState.level}</b></div>
