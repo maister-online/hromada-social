@@ -298,7 +298,7 @@ export default function App() {
   }, [screen, showBunkerMap]);
 
   useEffect(() => {
-    const isMapOpen = !showCityPromo && (screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap));
+    const isMapOpen = !showCityPromo && screen !== 'CITY' && (screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap));
     if (!mapMusicRef.current) {
       const audio = new Audio(MAP_BGM_TRACK_URL);
       audio.loop = true;
@@ -387,8 +387,20 @@ export default function App() {
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : loc === 'rokitne_city' ? 'CITY' : 'FISHING');
   }, []);
 
+  const stopMapMusic = useCallback(() => {
+    const audio = mapMusicRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = true;
+    }
+    // Також глушимо фоновий музичний канал гри, щоб жоден трек не переживав перехід.
+    audioEngine.setMusicEnabled(false);
+  }, []);
+
   const openDestinationNow = useCallback(
     (locId: LocationId) => {
+      stopMapMusic();
       audioEngine.init();
       setShowBunkerMap(false);
       const target = LOCATIONS[locId];
@@ -421,7 +433,7 @@ export default function App() {
         }
       }
     },
-    [showToast, screen, showBunkerMap]
+    [showToast, screen, showBunkerMap, stopMapMusic]
   );
 
   const finishCityPromo = useCallback(() => {
@@ -437,12 +449,13 @@ export default function App() {
 
   const handleSelectDestination = useCallback((locId: LocationId) => {
     if (locId === 'rokitne_city') {
+      stopMapMusic();
       setShowCityPromo(true);
       setCityPromoNeedsStart(false);
       return;
     }
     openDestinationNow(locId);
-  }, [openDestinationNow]);
+  }, [openDestinationNow, stopMapMusic]);
 
   useEffect(() => {
     if (!showCityPromo) return;
