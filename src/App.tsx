@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Backpack } from 'lucide-react';
 import { BestiaryModal } from './components/BestiaryModal';
 import { BunkerView } from './components/BunkerView';
 import { FishingView } from './components/FishingView';
@@ -1952,6 +1953,19 @@ export default function App() {
           onOpenInventory={() => setShowInventory(true)} onOpenQuests={() => setShowQuests(true)}
           onOpenBestiary={() => setShowBestiary(true)} onOpenJournal={() => setShowJournal(true)}
         />
+      )}
+
+      {screen !== 'TITLE' && !showInventory && (
+        <button
+          type="button"
+          onClick={() => setShowInventory(true)}
+          aria-label="Відкрити рюкзак"
+          title="Рюкзак"
+          className="fixed right-3 top-[calc(env(safe-area-inset-top)+5.5rem)] z-[45] inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-300/60 bg-[#101b15]/95 px-3 py-2 text-xs font-extrabold tracking-wider text-emerald-100 shadow-[0_4px_18px_rgba(0,0,0,.65)] backdrop-blur-sm hover:bg-[#1c3023]"
+        >
+          <Backpack className="h-5 w-5" />
+          <span>РЮКЗАК</span>
+        </button>
       )}
 
       {showInventory && (
