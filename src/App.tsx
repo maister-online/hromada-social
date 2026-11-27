@@ -298,7 +298,7 @@ export default function App() {
   }, [screen, showBunkerMap]);
 
   useEffect(() => {
-    const isMapOpen = screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap);
+    const isMapOpen = !showCityPromo && (screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap));
     if (!mapMusicRef.current) {
       const audio = new Audio(MAP_BGM_TRACK_URL);
       audio.loop = true;
@@ -321,8 +321,9 @@ export default function App() {
 
     return () => {
       audio.pause();
+      audio.currentTime = 0;
     };
-  }, [screen, showBunkerMap, muted]);
+  }, [screen, showBunkerMap, showCityPromo, muted]);
 
   useEffect(() => () => {
     mapMusicRef.current?.pause();
@@ -448,8 +449,8 @@ export default function App() {
     const video = cityPromoVideoRef.current;
     if (!video) return;
     video.currentTime = 0;
-    video.muted = false;
-    video.volume = 1;
+    video.muted = true;
+    video.volume = 0;
     void video.play().then(() => {
       setCityPromoNeedsStart(false);
     }).catch(() => {
@@ -463,8 +464,8 @@ export default function App() {
       finishCityPromo();
       return;
     }
-    video.muted = false;
-    video.volume = 1;
+    video.muted = true;
+    video.volume = 0;
     void video.play().then(() => setCityPromoNeedsStart(false)).catch(() => setCityPromoNeedsStart(true));
   }, [finishCityPromo]);
 
@@ -1682,6 +1683,7 @@ export default function App() {
             ref={cityPromoVideoRef}
             className="city-promo-video"
             autoPlay
+            muted
             playsInline
             preload="auto"
             onEnded={finishCityPromo}
