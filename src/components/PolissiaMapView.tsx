@@ -584,7 +584,6 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                   <button type="button" onClick={saveMapEdit} className="min-h-10 rounded-md border border-emerald-400/50 bg-emerald-900/70 px-3 text-xs font-bold text-emerald-100">Зберегти</button>
                 </div>
                 {mapCopyStatus && <span className="max-w-56 text-right text-[10px] text-emerald-200">{mapCopyStatus}</span>}
-                </div>
               </div>
             )}
           </div>
