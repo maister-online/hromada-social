@@ -493,6 +493,10 @@ export interface SaveState {
   foundLoot: FoundLootEntry[];
   activeGroundbaitByLoc: Partial<Record<LocationId, { groundbaitId: string; castsLeft: number }>>;
   keepnet: CaughtFish[];
+  homeStoredFish: CaughtFish[];
+  homeStoredLoot: FoundLootEntry[];
+  homeTrophyFish: CaughtFish[];
+  homeTrophyLoot: FoundLootEntry[];
   discovered: Record<string, DiscoveryEntry>;
   personalRecords: Record<string, PersonalRecordEntry>;
   fishingJournal: FishingJournalEntry[];
