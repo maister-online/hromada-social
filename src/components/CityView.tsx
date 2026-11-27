@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ArrowLeftRight, Building2, Coins, Coffee, Gem, Hammer, ShoppingBasket, Store, Warehouse } from 'lucide-react';
 
-type BusinessId = 'market' | 'shop' | 'exchange' | 'pawnshop';
+type BusinessId = 'market' | 'shop' | 'exchange' | 'pawnshop' | 'amber' | 'cafe' | 'warehouse';
 const BUSINESSES: Array<{ id: BusinessId; title: string; subtitle: string; description: string; Icon: React.ElementType }> = [
   { id: 'market', title: 'Ринок', subtitle: 'Торгівля між мандрівниками', description: 'Міський ринок для купівлі та продажу речей. Тут згодом з’являться торгові пропозиції та товари інших гравців.', Icon: ShoppingBasket },
   { id: 'shop', title: 'Магазин', subtitle: 'Спорядження та товари', description: 'Магазин міських товарів. Каталог і купівля товарів будуть підключені окремо.', Icon: Store },
@@ -20,7 +20,15 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   const selected = BUSINESSES.find((item) => item.id === active);
   return (
     <main className="fixed inset-0 z-[95] overflow-y-auto bg-[#081117] text-slate-100">
-      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(34,91,112,.42), transparent 58%), linear-gradient(180deg,#0b1b22 0%,#081117 60%,#05090d 100%)' }} />
+      <div className="pointer-events-none fixed inset-0">
+        <img
+          src={`${import.meta.env.BASE_URL}${encodeURIComponent('Зроби_мега_різкість_9392a4f5_2K.jpg')}`}
+          alt=""
+          className="h-full w-full object-cover object-center"
+          onError={(event) => { event.currentTarget.style.display = 'none'; }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-[#081117]/75 to-[#05090d]/95" />
+      </div>
       <div className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col p-4 sm:p-7">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-300/20 pb-4">
           <div><p className="text-[10px] font-bold tracking-[.28em] text-emerald-300">МІСЬКИЙ ХАБ</p><h1 className="mt-1 text-3xl font-black tracking-wide sm:text-4xl">РОКИТНЕ</h1><p className="mt-1 text-xs text-slate-400">Місто · торгівля · послуги</p></div>
