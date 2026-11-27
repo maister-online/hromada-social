@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-const CITY_IMAGE_URL = 'https://raw.githubusercontent.com/maister-online/hromada-social/main/' + encodeURIComponent('Зроби_мега_різкість_9392a4f5_2K.jpg');
+import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg';
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
   ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, Move, Check, RotateCcw,
