@@ -1,98 +1,74 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg';
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
-  ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, X,
+  ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, Move, Check, RotateCcw,
 } from 'lucide-react';
 
 type BusinessId = 'market' | 'shop' | 'trade' | 'amber' | 'cafe' | 'warehouse';
+type PointPosition = { left: number; top: number };
 
 const CITY_PLACES: Array<{
-  id: BusinessId;
-  title: string;
-  subtitle: string;
-  description: string;
-  services: string[];
-  position: { left: string; top: string };
-  Icon: React.ElementType;
+  id: BusinessId; title: string; subtitle: string; description: string;
+  services: string[]; position: PointPosition; Icon: React.ElementType;
 }> = [
-  {
-    id: 'market', title: 'Центральний ринок', subtitle: 'Торгівля та продукти',
-    description: 'Міський ринок Рокитного. Тут збираються місцеві торговці та мандрівники.',
-    services: ['Риба, гриби та ягоди', 'Їжа й корисні припаси', 'Бурштин та знайдені речі'],
-    position: { left: '23%', top: '48%' }, Icon: ShoppingBasket,
-  },
-  {
-    id: 'shop', title: 'Універсальний магазин', subtitle: 'Спорядження та товари',
-    description: 'Магазин повсякденних товарів і спорядження для виходу в Полісся.',
-    services: ['Продукти й одяг', 'Рибальські снасті', 'Інструменти та спорядження'],
-    position: { left: '51%', top: '36%' }, Icon: Store,
-  },
-  {
-    id: 'trade', title: 'Обмінник і ломбард', subtitle: 'Валюта та цінні речі',
-    description: 'Можна буде обмінювати ігрові валюти, оцінювати, здавати під заставу та викуповувати знайдені цінності.',
-    services: ['Обмін гривень і золотих монет', 'Оцінка бурштину та артефактів', 'Застава й викуп речей'],
-    position: { left: '76%', top: '52%' }, Icon: ArrowLeftRight,
-  },
-  {
-    id: 'amber', title: 'Бурштинова майстерня', subtitle: 'Обробка та оцінка',
-    description: 'Майстерня поліських бурштинарів для роботи зі знайденим бурштином.',
-    services: ['Промивання та сортування', 'Обробка бурштину', 'Оцінка знахідок'],
-    position: { left: '83%', top: '25%' }, Icon: Hammer,
-  },
-  {
-    id: 'cafe', title: 'Кафе', subtitle: 'Їжа, відпочинок і чутки',
-    description: 'Місце, де можна перепочити, поїсти та почути новини від місцевих.',
-    services: ['Їжа та напої', 'Відпочинок', 'Чутки й зустрічі з персонажами'],
-    position: { left: '39%', top: '72%' }, Icon: Coffee,
-  },
-  {
-    id: 'warehouse', title: 'Старий склад', subtitle: 'Схованки та таємні угоди',
-    description: 'Покинутий склад на околиці міста. Тут можуть ховатися тайники, контрабандисти та секретний провідник до Чорнобиля.',
-    services: ['Пошук схованок', 'Таємні угоди', 'Секретний провідник до Чорнобиля'],
-    position: { left: '12%', top: '27%' }, Icon: Warehouse,
-  },
+  { id: 'market', title: 'Центральний ринок', subtitle: 'Торгівля та продукти', description: 'Міський ринок Рокитного. Тут збираються місцеві торговці та мандрівники.', services: ['Риба, гриби та ягоди', 'Їжа й корисні припаси', 'Бурштин та знайдені речі'], position: { left: 23, top: 48 }, Icon: ShoppingBasket },
+  { id: 'shop', title: 'Універсальний магазин', subtitle: 'Спорядження та товари', description: 'Магазин повсякденних товарів і спорядження для виходу в Полісся.', services: ['Продукти й одяг', 'Рибальські снасті', 'Інструменти та спорядження'], position: { left: 51, top: 36 }, Icon: Store },
+  { id: 'trade', title: 'Обмінник і ломбард', subtitle: 'Валюта та цінні речі', description: 'Можна буде обмінювати ігрові валюти, оцінювати, здавати під заставу та викуповувати знайдені цінності.', services: ['Обмін гривень і золотих монет', 'Оцінка бурштину та артефактів', 'Застава й викуп речей'], position: { left: 76, top: 52 }, Icon: ArrowLeftRight },
+  { id: 'amber', title: 'Бурштинова майстерня', subtitle: 'Обробка та оцінка', description: 'Майстерня поліських бурштинарів для роботи зі знайденим бурштином.', services: ['Промивання та сортування', 'Обробка бурштину', 'Оцінка знахідок'], position: { left: 83, top: 25 }, Icon: Hammer },
+  { id: 'cafe', title: 'Кафе', subtitle: 'Їжа, відпочинок і чутки', description: 'Місце, де можна перепочити, поїсти та почути новини від місцевих.', services: ['Їжа та напої', 'Відпочинок', 'Чутки й зустрічі з персонажами'], position: { left: 39, top: 72 }, Icon: Coffee },
+  { id: 'warehouse', title: 'Старий склад', subtitle: 'Схованки та таємні угоди', description: 'Покинутий склад на околиці міста. Тут можуть ховатися тайники, контрабандисти та секретний провідник до Чорнобиля.', services: ['Пошук схованок', 'Таємні угоди', 'Секретний провідник до Чорнобиля'], position: { left: 12, top: 27 }, Icon: Warehouse },
 ];
 
+const POSITION_STORAGE_KEY = 'rokytne-city-marker-positions-v1';
+const DEFAULT_POSITIONS = Object.fromEntries(CITY_PLACES.map((place) => [place.id, place.position])) as Record<BusinessId, PointPosition>;
 
-interface CityViewProps {
-  credits: number;
-  goldCoins: number;
-  amberShards: number;
-  onBack: () => void;
-}
+interface CityViewProps { credits: number; goldCoins: number; amberShards: number; onBack: () => void; }
 
 export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberShards, onBack }) => {
   const [activeId, setActiveId] = useState<BusinessId | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [positions, setPositions] = useState<Record<BusinessId, PointPosition>>(() => {
+    try {
+      const saved = localStorage.getItem(POSITION_STORAGE_KEY);
+      return saved ? { ...DEFAULT_POSITIONS, ...JSON.parse(saved) } : DEFAULT_POSITIONS;
+    } catch { return DEFAULT_POSITIONS; }
+  });
   const activePlace = CITY_PLACES.find((place) => place.id === activeId);
+
+  useEffect(() => {
+    try { localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(positions)); } catch { /* session-only fallback */ }
+  }, [positions]);
+
+  const moveMarker = (id: BusinessId, event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!editMode) return;
+    const area = event.currentTarget.parentElement?.getBoundingClientRect();
+    if (!area) return;
+    const left = Math.max(2, Math.min(98, ((event.clientX - area.left) / area.width) * 100));
+    const top = Math.max(3, Math.min(97, ((event.clientY - area.top) / area.height) * 100));
+    setPositions((current) => ({ ...current, [id]: { left, top } }));
+  };
 
   return (
     <main className="fixed inset-0 z-[95] isolate overflow-hidden bg-[#080d0b] text-white">
       <div className="absolute inset-0">
-        <img
-          src={CITY_IMAGE_URL}
-          alt="Міська локація Рокитне"
-          className="h-full w-full object-cover object-center"
-          draggable={false}
-          onError={(event) => { event.currentTarget.style.display = 'none'; }}
-        />
+        <img src={CITY_IMAGE_URL} alt="Міська локація Рокитне" className="h-full w-full object-cover object-center" draggable={false} onError={(event) => { event.currentTarget.style.display = 'none'; }} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black/65" />
         <div className="absolute inset-0 bg-[#11190f]/15" />
       </div>
 
       <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3 pt-[max(12px,env(safe-area-inset-top))] sm:p-5">
         <div className="rounded-xl border border-white/15 bg-black/55 px-3 py-2 shadow-xl backdrop-blur-md">
-          <div className="flex items-center gap-2 text-[10px] font-bold tracking-[.22em] text-emerald-200">
-            <MapPin className="h-3.5 w-3.5" /> МІСЬКА ЛОКАЦІЯ
-          </div>
+          <div className="flex items-center gap-2 text-[10px] font-bold tracking-[.22em] text-emerald-200"><MapPin className="h-3.5 w-3.5" /> МІСЬКА ЛОКАЦІЯ</div>
           <h1 className="mt-0.5 text-2xl font-black tracking-wider sm:text-3xl">РОКИТНЕ</h1>
           <p className="text-[10px] text-white/65">Полісся · міська територія</p>
         </div>
-
         <div className="flex flex-col items-end gap-2">
-          <button onClick={onBack} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/20 bg-black/60 px-3 text-xs font-bold shadow-lg backdrop-blur-md hover:bg-black/80">
-            <ArrowLeft className="h-4 w-4" /> На карту
+          <button onClick={onBack} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/20 bg-black/60 px-3 text-xs font-bold shadow-lg backdrop-blur-md hover:bg-black/80"><ArrowLeft className="h-4 w-4" /> На карту</button>
+          <button onClick={() => setEditMode((value) => !value)} className={'inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold shadow-lg backdrop-blur-md ' + (editMode ? 'border-emerald-300 bg-emerald-950/90 text-emerald-100' : 'border-white/20 bg-black/65 text-white')}>
+            {editMode ? <Check className="h-4 w-4" /> : <Move className="h-4 w-4" />}{editMode ? 'Готово' : 'Редагувати точки'}
           </button>
+          {editMode && <button onClick={() => setPositions(DEFAULT_POSITIONS)} className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-white/20 bg-black/65 px-3 text-[11px] font-bold text-white/85"><RotateCcw className="h-3.5 w-3.5" /> Скинути позиції</button>}
           <div className="flex gap-2 rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-[11px] shadow-lg backdrop-blur-md">
             <span className="flex items-center gap-1 text-amber-200"><Coins className="h-3.5 w-3.5" />₴{credits}</span>
             <span className="flex items-center gap-1 text-yellow-200"><Gem className="h-3.5 w-3.5" />{goldCoins}</span>
@@ -101,58 +77,46 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
         </div>
       </header>
 
-      <section className="absolute inset-0 z-10" aria-label="Інтерактивні міські об'єкти">
-        {CITY_PLACES.map(({ id, title, position, Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveId(id)}
-            style={{ left: position.left, top: position.top }}
-            className={`city-location-marker absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all active:scale-95 ${activeId === id ? 'z-20 scale-110 bg-emerald-950/90 ring-2 ring-emerald-300' : 'bg-black/65 hover:bg-black/85'} border border-white/35 shadow-[0_4px_18px_rgba(0,0,0,.7)] backdrop-blur-sm`}
-            aria-label={`Відкрити: ${title}`}
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200/60 bg-[#15251b]/95 text-emerald-100 shadow-lg sm:h-11 sm:w-11">
-              <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-            </span>
-            <span className="max-w-[112px] whitespace-nowrap text-[10px] font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)] sm:text-xs">{title}</span>
+      {!activePlace && <section className="absolute inset-0 z-10" aria-label="Інтерактивні міські об'єкти">
+        {CITY_PLACES.map(({ id, title, Icon }) => (
+          <button key={id} type="button" onClick={() => { if (!editMode) setActiveId(id); }}
+            onPointerDown={(event) => { if (!editMode) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); }}
+            onPointerMove={(event) => moveMarker(id, event)}
+            onPointerUp={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
+            onPointerCancel={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
+            style={{ left: String(positions[id].left) + '%', top: String(positions[id].top) + '%', touchAction: editMode ? 'none' : 'manipulation' }}
+            className={'city-location-marker absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-[0_3px_12px_rgba(0,0,0,.8)] backdrop-blur-sm transition-colors sm:h-8 sm:w-8 ' + (editMode ? 'z-30 cursor-grab border-amber-200 bg-amber-950/90 text-amber-100 ring-2 ring-amber-300/60 active:cursor-grabbing' : 'cursor-pointer border-emerald-200/80 bg-[#102219]/90 text-emerald-100 hover:scale-110 hover:bg-emerald-900')}>
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            {editMode && <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 px-1.5 py-1 text-[9px] font-bold text-amber-100">{title}</span>}
           </button>
         ))}
-      </section>
+      </section>}
 
-      {!activePlace && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 pb-[max(16px,env(safe-area-inset-bottom))]">
-          <div className="mx-auto mb-3 w-fit rounded-full border border-white/15 bg-black/60 px-4 py-2 text-center text-xs font-semibold text-white/85 shadow-lg backdrop-blur-md">
-            Обери будівлю на міській локації
+      {!activePlace && <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 pb-[max(16px,env(safe-area-inset-bottom))]">
+        <div className="mx-auto mb-3 w-fit rounded-full border border-white/15 bg-black/65 px-4 py-2 text-center text-xs font-semibold text-white/90 shadow-lg backdrop-blur-md">
+          {editMode ? 'Перетягуй точки пальцем на потрібні будівлі · позиції зберігаються автоматично' : 'Натисни маленьку точку на будівлі, щоб перейти до локації'}
+        </div>
+      </div>}
+
+      {activePlace && <section className="absolute inset-0 z-40 flex flex-col bg-[#080d0b]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(31,65,45,0.28),_transparent_65%)]" />
+        <header className="relative z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-black/45 p-3 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur-md sm:p-5">
+          <button onClick={() => setActiveId(null)} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/20 bg-black/60 px-3 text-xs font-bold"><ArrowLeft className="h-4 w-4" /> До міста</button>
+          <div className="text-right"><p className="text-[9px] font-bold tracking-[.2em] text-emerald-300">ЛОКАЦІЯ РОКИТНОГО</p><h2 className="text-lg font-black">{activePlace.title}</h2></div>
+        </header>
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 text-center">
+          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-emerald-200/25 bg-emerald-950/50 text-emerald-100 shadow-2xl"><activePlace.Icon className="h-10 w-10" /></div>
+          <h3 className="text-2xl font-black">{activePlace.title}</h3>
+          <p className="mt-2 max-w-sm text-sm text-white/60">{activePlace.subtitle}</p>
+          <div className="mt-7 max-w-sm rounded-xl border border-dashed border-white/20 bg-black/30 px-5 py-4">
+            <p className="text-sm font-bold text-emerald-200">Фото цієї локації ще не додано</p>
+            <p className="mt-2 text-xs leading-relaxed text-white/55">Коли завантажиш фото будівлі, підключимо його сюди. Це буде окрема локація, а не картка поверх міської мапи.</p>
           </div>
+          <p className="mt-5 max-w-sm text-xs leading-relaxed text-white/45">{activePlace.description}</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">{activePlace.services.map((service) => <span key={service} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/65">{service}</span>)}</div>
+          <span className="mt-6 flex items-center gap-1 text-[10px] font-bold tracking-wider text-emerald-300">ЛОКАЦІЯ ГОТУЄТЬСЯ <ArrowUpRight className="h-3 w-3" /></span>
         </div>
-      )}
-
-      {activePlace && (
-        <div className="absolute inset-x-0 bottom-0 z-30 p-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:p-5">
-          <section className="mx-auto max-w-xl rounded-2xl border border-emerald-200/25 bg-[#0b120e]/95 p-4 shadow-2xl backdrop-blur-xl">
-            <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-200/25 bg-emerald-900/40 text-emerald-100">
-                <activePlace.Icon className="h-6 w-6" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold tracking-[.18em] text-emerald-300">МІСЬКИЙ ОБ'ЄКТ</p>
-                <h2 className="text-lg font-black">{activePlace.title}</h2>
-                <p className="text-xs text-white/55">{activePlace.subtitle}</p>
-              </div>
-              <button onClick={() => setActiveId(null)} aria-label="Закрити" className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white"><X className="h-5 w-5" /></button>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-white/85">{activePlace.description}</p>
-            <div className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-              {activePlace.services.map((service) => (
-                <div key={service} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-white/75">{service}</div>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
-              <p className="text-[10px] text-white/45">Інтерактивні послуги цього об'єкта ще розробляються</p>
-              <span className="flex shrink-0 items-center gap-1 text-[10px] font-bold text-emerald-200">РОЗДІЛ МІСТА <ArrowUpRight className="h-3 w-3" /></span>
-            </div>
-          </section>
-        </div>
-      )}
+      </section>}
     </main>
   );
 };
