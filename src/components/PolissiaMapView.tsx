@@ -100,6 +100,7 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
   });
   const [editPositions, setEditPositions] = useState<Record<string, { x: number; y: number }> | null>(null);
   const [draggingMapPoint, setDraggingMapPoint] = useState<string | null>(null);
+  const [mapCopyStatus, setMapCopyStatus] = useState('');
   const mapPointPointerRef = useRef<number | null>(null);
   const getMapPosition = (id: string, defaultX: number, defaultY: number) =>
     (editPositions ?? mapPositions)[id] ?? { x: defaultX, y: defaultY };
@@ -111,6 +112,19 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
     setEditPositions(null);
     setDraggingMapPoint(null);
     setMapEditMode(false);
+  };
+  const copyMapPositions = async () => {
+    const completePositions = Object.fromEntries([
+      ['home', getMapPosition('home', 48.7, 48.4)],
+      ...Object.values(LOCATIONS).map((loc) => [loc.id, getMapPosition(loc.id, loc.mapX, loc.mapY)]),
+    ]);
+    const config = JSON.stringify({ version: 1, map: 'polissia-world-map', positions: completePositions }, null, 2);
+    try {
+      await navigator.clipboard.writeText(config);
+      setMapCopyStatus('Координати скопійовано — надішли їх сюди');
+    } catch {
+      setMapCopyStatus('Не вдалося скопіювати. Дозволь буфер обміну в браузері');
+    }
   };
   const saveMapEdit = () => {
     if (!editPositions) return;
@@ -566,7 +580,10 @@ export const PolissiaMapView: React.FC<PolissiaMapViewProps> = ({
                 <span className="text-[11px] font-bold text-sky-100">Перетягуй точки пальцем</span>
                 <div className="flex gap-2">
                   <button type="button" onClick={cancelMapEdit} className="min-h-10 rounded-md border border-white/20 px-3 text-xs font-semibold text-slate-200">Скасувати</button>
+                  <button type="button" onClick={copyMapPositions} className="min-h-10 rounded-md border border-sky-400/50 bg-sky-950/80 px-3 text-xs font-bold text-sky-100">Копіювати координати</button>
                   <button type="button" onClick={saveMapEdit} className="min-h-10 rounded-md border border-emerald-400/50 bg-emerald-900/70 px-3 text-xs font-bold text-emerald-100">Зберегти</button>
+                </div>
+                {mapCopyStatus && <span className="max-w-56 text-right text-[10px] text-emerald-200">{mapCopyStatus}</span>}
                 </div>
               </div>
             )}
