@@ -583,7 +583,7 @@ export class ShoreFishingScene {
     // visibly in the player's lower-right field of view on portrait screens.
     this.rodRig.root.position.set(0.10, -0.27, -0.52);
     this.rodRig.root.rotation.set(0.22, -0.06, -0.035);
-    this.rodRig.root.scale.setScalar(0.44);
+    this.rodRig.root.scale.setScalar(0.48);
     this.rodRig.root.visible = true;
     this.camera.add(this.rodRig.root);
   }
@@ -913,14 +913,18 @@ export class ShoreFishingScene {
     this.rodRig.rodBlank.geometry.computeVertexNormals();
     this.rodRig.rodGuideGroups.forEach((guide, index) => {
       const t = this.rodRig.rodGuideT[index];
-      const curve = Math.pow(t, 2.05);
-      const radius = THREE.MathUtils.lerp(0.019, 0.0060, t);
+      // Guides sit on the exact same continuous curve as the carbon blank.
+      const curve = Math.pow(t, 2.25);
+      const radius = THREE.MathUtils.lerp(0.0205, 0.0062, t);
       guide.position.set(
         sideBend * curve,
         -radius * 0.82 - bendForce * 1.05 * curve,
         -0.34 - this.rodRig.rodLength * t
       );
-      guide.rotation.x = -Math.atan((2.25 * bendForce * 1.05 * Math.pow(t, 1.25)) / this.rodRig.rodLength);
+      const bendSlope = (2.25 * bendForce * 1.05 * Math.pow(t, 1.25)) / this.rodRig.rodLength;
+      const sideSlope = (2.25 * sideBend * Math.pow(t, 1.25)) / this.rodRig.rodLength;
+      guide.rotation.x = -Math.atan(bendSlope);
+      guide.rotation.z = Math.atan(sideSlope);
     });
     const tipT = 1;
     this.rodRig.tipMarker.position.set(
