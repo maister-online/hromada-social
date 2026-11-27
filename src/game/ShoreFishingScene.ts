@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { FishSpeciesDef, FloatDef, LocationDef, RodType, WeatherType } from './types';
 import {
@@ -64,6 +65,7 @@ export class ShoreFishingScene {
   private isSoftwareGl: boolean;
   private frameId = 0;
   private disposed = false;
+  private rodModelRequest = 0;
   private contextLost = false;
   private clock = new THREE.Clock();
 
@@ -588,6 +590,56 @@ export class ShoreFishingScene {
     this.rodRig.root.scale.setScalar(0.26);
     this.rodRig.root.visible = true;
     this.camera.add(this.rodRig.root);
+
+    // Load the uploaded detailed rod model; procedural rig remains as fallback.
+    const requestId = ++this.rodModelRequest;
+    new GLTFLoader().load(
+      'https://raw.githubusercontent.com/maister-online/hromada-social/main/polissia_fishing_rod.glb',
+      (gltf) => {
+        if (this.disposed || requestId !== this.rodModelRequest) return;
+        const modelRoot = gltf.scene;
+        const blank = modelRoot.getObjectByName('One-piece tapered carbon rod blank');
+        const tip = modelRoot.getObjectByName('Tip marker');
+        const crank = modelRoot.getObjectByName('Reel crank arm');
+        const spool = modelRoot.getObjectByName('Spool');
+        if (!(blank instanceof THREE.Mesh) || !tip || !crank || !spool) return;
+
+        const guides: THREE.Object3D[] = [];
+        modelRoot.traverse((object) => {
+          if (object.name.startsWith('Line guide ')) guides.push(object);
+          if (object.name.startsWith('Fishing line')) object.visible = false;
+        });
+        guides.sort((a, b) => Number(a.name.replace('Line guide ', '')) - Number(b.name.replace('Line guide ', '')));
+        const position = blank.geometry.getAttribute('position') as THREE.BufferAttribute;
+        const basePositions = new Float32Array(position.array as ArrayLike<number>);
+        const rodLength = 2.65;
+        const guideBasePositions = guides.map((guide) => guide.position.clone());
+        const oldRig = this.rodRig;
+        oldRig.root.parent?.remove(oldRig.root);
+
+        modelRoot.rotation.set(0.20, Math.PI / 2 - 0.045, -0.025);
+        modelRoot.position.set(0.075, -0.29, -0.48);
+        modelRoot.scale.setScalar(0.26);
+        this.rodRig = {
+          ...oldRig,
+          root: modelRoot,
+          rodBlank: blank,
+          rodBasePositions: basePositions,
+          rodGuideGroups: guides,
+          rodGuideT: guideBasePositions.map((p) => THREE.MathUtils.clamp(p.x / rodLength, 0, 1)),
+          rodLength,
+          tipMarker: tip,
+          reelHandle: crank,
+          spoolMesh: spool,
+          modelAxisX: true,
+          rodGuideBasePositions: guideBasePositions,
+          tipBasePosition: tip.position.clone(),
+        };
+        this.camera.add(modelRoot);
+      },
+      undefined,
+      () => { /* Keep procedural fallback if loading fails. */ }
+    );
   }
 
   private rebuildBobber(loc: LocationDef, floatDef?: FloatDef): void {
