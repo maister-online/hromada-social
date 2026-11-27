@@ -119,6 +119,10 @@ function createFreshSave(): SaveState {
     foundLoot: [],
     activeGroundbaitByLoc: {},
     keepnet: [],
+    homeStoredFish: [],
+    homeStoredLoot: [],
+    homeTrophyFish: [],
+    homeTrophyLoot: [],
     discovered: {},
     personalRecords: {},
     fishingJournal: [],
@@ -232,6 +236,10 @@ function loadSavedGame(): SaveState | null {
       energyBoostUntilMs: parsed.energyBoostUntilMs ?? 0,
       activeGroundbaitByLoc: parsed.activeGroundbaitByLoc ?? {},
       keepnet: parsed.keepnet ?? [],
+      homeStoredFish: parsed.homeStoredFish ?? [],
+      homeStoredLoot: parsed.homeStoredLoot ?? [],
+      homeTrophyFish: parsed.homeTrophyFish ?? [],
+      homeTrophyLoot: parsed.homeTrophyLoot ?? [],
       discovered: parsed.discovered ?? {},
       personalRecords: parsed.personalRecords ?? {},
       fishingJournal: parsed.fishingJournal ?? [],
@@ -1600,6 +1608,55 @@ export default function App() {
     showToast('Збережений комплект видалено.');
   }, [showToast]);
 
+  const handleHomeStoreFish = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const fish = prev.keepnet.find((item) => item.uid === uid);
+      return fish ? { ...prev, keepnet: prev.keepnet.filter((item) => item.uid !== uid), homeStoredFish: [...prev.homeStoredFish, fish] } : prev;
+    });
+  }, []);
+  const handleHomeTakeFish = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const fish = prev.homeStoredFish.find((item) => item.uid === uid);
+      return fish ? { ...prev, homeStoredFish: prev.homeStoredFish.filter((item) => item.uid !== uid), keepnet: [...prev.keepnet, fish] } : prev;
+    });
+  }, []);
+  const handleHomeStoreLoot = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const item = prev.foundLoot.find((entry) => entry.uid === uid);
+      return item ? { ...prev, foundLoot: prev.foundLoot.filter((entry) => entry.uid !== uid), homeStoredLoot: [...prev.homeStoredLoot, item] } : prev;
+    });
+  }, []);
+  const handleHomeTakeLoot = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const item = prev.homeStoredLoot.find((entry) => entry.uid === uid);
+      return item ? { ...prev, homeStoredLoot: prev.homeStoredLoot.filter((entry) => entry.uid !== uid), foundLoot: [...prev.foundLoot, item] } : prev;
+    });
+  }, []);
+  const handleHomeMountFish = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const fish = prev.homeStoredFish.find((item) => item.uid === uid);
+      return fish ? { ...prev, homeStoredFish: prev.homeStoredFish.filter((item) => item.uid !== uid), homeTrophyFish: [...prev.homeTrophyFish, fish] } : prev;
+    });
+  }, []);
+  const handleHomeUnmountFish = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const fish = prev.homeTrophyFish.find((item) => item.uid === uid);
+      return fish ? { ...prev, homeTrophyFish: prev.homeTrophyFish.filter((item) => item.uid !== uid), homeStoredFish: [...prev.homeStoredFish, fish] } : prev;
+    });
+  }, []);
+  const handleHomeMountLoot = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const item = prev.homeStoredLoot.find((entry) => entry.uid === uid);
+      return item ? { ...prev, homeStoredLoot: prev.homeStoredLoot.filter((entry) => entry.uid !== uid), homeTrophyLoot: [...prev.homeTrophyLoot, item] } : prev;
+    });
+  }, []);
+  const handleHomeUnmountLoot = useCallback((uid: string) => {
+    setGameState((prev) => {
+      const item = prev.homeTrophyLoot.find((entry) => entry.uid === uid);
+      return item ? { ...prev, homeTrophyLoot: prev.homeTrophyLoot.filter((entry) => entry.uid !== uid), homeStoredLoot: [...prev.homeStoredLoot, item] } : prev;
+    });
+  }, []);
+
   const handleFullBunkerRest = useCallback(() => {
     const cur = stateRef.current;
     let nextTod = cur.timeOfDay + 2.5;
@@ -1750,6 +1807,14 @@ export default function App() {
           onDeleteTackleSet={handleDeleteTackleSet}
           onUseConsumable={handleUseConsumable}
           onRest={handleHomeRest}
+          onStoreFish={handleHomeStoreFish}
+          onTakeFish={handleHomeTakeFish}
+          onStoreLoot={handleHomeStoreLoot}
+          onTakeLoot={handleHomeTakeLoot}
+          onMountFish={handleHomeMountFish}
+          onUnmountFish={handleHomeUnmountFish}
+          onMountLoot={handleHomeMountLoot}
+          onUnmountLoot={handleHomeUnmountLoot}
         />
       )}
 
