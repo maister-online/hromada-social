@@ -266,6 +266,7 @@ export default function App() {
   const [showRiverIntro, setShowRiverIntro] = useState(false);
   const [showBunkerIntro, setShowBunkerIntro] = useState(false);
   const [showCityPromo, setShowCityPromo] = useState(false);
+  const [cityPromoFadingOut, setCityPromoFadingOut] = useState(false);
   const [cityPromoNeedsStart, setCityPromoNeedsStart] = useState(false);
   const cityPromoVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -458,13 +459,18 @@ export default function App() {
 
   const finishCityPromo = useCallback(() => {
     const video = cityPromoVideoRef.current;
-    if (video) {
-      video.pause();
-      video.currentTime = 0;
-    }
-    setShowCityPromo(false);
+    if (video) video.pause();
+
+    // Спочатку показуємо міське фото під останнім кадром відео,
+    // потім плавно прибираємо відео — без чорного проміжного екрану.
     setCityPromoNeedsStart(false);
     openDestinationNow('rokitne_city');
+    setCityPromoFadingOut(true);
+    window.setTimeout(() => {
+      if (video) video.currentTime = 0;
+      setShowCityPromo(false);
+      setCityPromoFadingOut(false);
+    }, 700);
   }, [openDestinationNow]);
 
   const handleSelectDestination = useCallback((locId: LocationId) => {
@@ -1760,10 +1766,10 @@ export default function App() {
         src={`${import.meta.env.BASE_URL}Presentation_and_promo_video_340f25b1.mp4`}
       />
       {showCityPromo && (
-        <div className="city-promo-overlay fixed inset-0 z-[130] flex items-center justify-center bg-black">
+        <div className={`city-promo-overlay fixed inset-0 z-[130] flex items-center justify-center ${cityPromoFadingOut ? "city-promo-fade-out" : ""}`}>
           <video
             ref={cityPromoVideoRef}
-            className="city-promo-video"
+            className={`city-promo-video ${cityPromoFadingOut ? "city-promo-video-fade-out" : ""}`}
             autoPlay
             muted
             playsInline
