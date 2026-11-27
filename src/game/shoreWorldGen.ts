@@ -476,6 +476,83 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     root.add(collar);
   }
 
+  // Field-worn STALKER-inspired detailing: hand-laced olive cord on the grip,
+  // oxidised steel collars and a small service plate. All details are real meshes.
+  const cordMat = new THREE.MeshStandardMaterial({
+    color: 0x59613a,
+    roughness: 0.98,
+    metalness: 0.02,
+  });
+  const cordDarkMat = new THREE.MeshStandardMaterial({
+    color: 0x292d22,
+    roughness: 1,
+    metalness: 0,
+  });
+  for (let wrapIndex = 0; wrapIndex < 2; wrapIndex++) {
+    const points: THREE.Vector3[] = [];
+    const startZ = -0.225 + wrapIndex * 0.105;
+    for (let step = 0; step <= 72; step++) {
+      const t = step / 72;
+      const angle = t * Math.PI * 2 * 1.35;
+      const z = startZ + t * 0.105;
+      points.push(new THREE.Vector3(
+        Math.cos(angle) * 0.0195,
+        Math.sin(angle) * 0.0195,
+        z
+      ));
+    }
+    const lace = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 72, 0.0022, 5, false),
+      wrapIndex === 0 ? cordMat : cordDarkMat
+    );
+    lace.castShadow = true;
+    root.add(lace);
+  }
+
+  // Worn steel locking collars at the reel seat, with tiny visible fasteners.
+  for (const z of [-0.235, -0.315]) {
+    const collar = new THREE.Mesh(
+      new THREE.TorusGeometry(0.0215, 0.0022, 7, 28),
+      wornSteelMat
+    );
+    collar.position.set(0, 0, z);
+    root.add(collar);
+    for (let bolt = 0; bolt < 4; bolt++) {
+      const angle = (bolt / 4) * Math.PI * 2;
+      const rivet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.0025, 8, 6),
+        metalMat
+      );
+      rivet.position.set(Math.cos(angle) * 0.0215, Math.sin(angle) * 0.0215, z);
+      root.add(rivet);
+    }
+  }
+
+  // Small matte equipment tag on the reel seat: faded hazard-orange marks,
+  // not a flat image decal, so it remains part of the 3D model.
+  const serviceTag = new THREE.Group();
+  serviceTag.position.set(0.019, 0.012, -0.285);
+  serviceTag.rotation.z = -0.18;
+  const tagBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.012, 0.026, 0.0025),
+    cordDarkMat
+  );
+  serviceTag.add(tagBase);
+  const tagMarkMat = new THREE.MeshStandardMaterial({
+    color: 0xb56a32,
+    roughness: 0.82,
+    metalness: 0.08,
+  });
+  for (let mark = 0; mark < 3; mark++) {
+    const stripe = new THREE.Mesh(
+      new THREE.BoxGeometry(0.008, 0.0022, 0.001),
+      tagMarkMat
+    );
+    stripe.position.set(0, -0.007 + mark * 0.007, 0.0017);
+    serviceTag.add(stripe);
+  }
+  root.add(serviceTag);
+
   // Contrasting tip ring makes the fine, flexible end visible against water.
   const tipMarker = new THREE.Object3D();
   tipMarker.position.set(0, 0, -0.34 - rodLength);
