@@ -1318,3 +1318,157 @@ body,
 #root th {
   font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
 }
+
+/* WILD POLISSIA — unified graphite, bronze and amber game UI */
+:root {
+  --ui-panel-top: #242629;
+  --ui-panel-bottom: #111315;
+  --ui-panel-border: rgba(184, 125, 67, .48);
+  --ui-bronze: #a97845;
+  --ui-amber: #ed9a3b;
+  --ui-amber-bright: #ffb454;
+  --ui-text: #e8e2d9;
+}
+
+/* Shared window surfaces */
+.panel-field,
+.panel-window,
+.bunker-dialog,
+.bunker-character-card,
+.bunker-npc-tag,
+.bunker-character-dock,
+[class*="modal"],
+[class*="Modal"],
+[role="dialog"] {
+  background-color: #17191b;
+  border-color: var(--ui-panel-border);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 18px 48px rgba(0,0,0,.68),
+    0 0 0 1px rgba(169,120,69,.07);
+}
+
+.panel-field,
+.panel-window {
+  background: linear-gradient(155deg, #282a2d 0%, #191b1e 48%, #101214 100%);
+  border: 1px solid var(--ui-panel-border);
+}
+
+.bunker-dialog {
+  background: linear-gradient(145deg, rgba(35,37,40,.99), rgba(13,15,17,.99));
+  border-color: rgba(184,125,67,.55);
+}
+.bunker-dialog-topbar,
+.bunker-main-header {
+  background: linear-gradient(90deg, #292725, #171719 70%, #111214);
+  border-color: rgba(184,125,67,.42);
+}
+.bunker-dialog-content {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(237,154,59,.07), transparent 58%),
+    linear-gradient(180deg, #191a1c, #101214);
+}
+.bunker-character-card {
+  background: linear-gradient(125deg, #303033, #191a1c 72%);
+  border-color: rgba(184,125,67,.35);
+}
+.bunker-npc-tag {
+  background: linear-gradient(180deg, rgba(34,32,29,.96), rgba(15,16,17,.94));
+  border-color: rgba(184,125,67,.4);
+}
+.bunker-dialogue-bubble {
+  border-left-color: rgba(237,154,59,.8);
+  background: linear-gradient(90deg, rgba(237,154,59,.12), rgba(237,154,59,.025));
+  border-radius: 0 12px 12px 0;
+}
+
+/* Replace emerald UI utility colors with restrained amber/bronze accents */
+[class*="text-emerald"],
+[class*="text-green-"] { color: #e6a052 !important; }
+[class*="border-emerald"],
+[class*="border-green-"] { border-color: rgba(184,125,67,.55) !important; }
+[class*="ring-emerald"],
+[class*="ring-green-"] { --tw-ring-color: rgba(237,154,59,.55) !important; }
+[class*="shadow-emerald"],
+[class*="shadow-green-"] { --tw-shadow-color: rgba(237,154,59,.22) !important; }
+[class*="bg-emerald-50"],
+[class*="bg-emerald-100"],
+[class*="bg-emerald-200"],
+[class*="bg-green-50"],
+[class*="bg-green-100"],
+[class*="bg-green-200"] { background-color: rgba(237,154,59,.16) !important; }
+[class*="bg-emerald-300"],
+[class*="bg-emerald-400"],
+[class*="bg-emerald-500"],
+[class*="bg-emerald-600"],
+[class*="bg-emerald-700"],
+[class*="bg-emerald-800"],
+[class*="bg-green-300"],
+[class*="bg-green-400"],
+[class*="bg-green-500"],
+[class*="bg-green-600"],
+[class*="bg-green-700"],
+[class*="bg-green-800"] {
+  background-color: #9a6232 !important;
+}
+
+/* Main action buttons: warm amber metal, secondary controls: graphite */
+.btn-primary-emerald {
+  background: linear-gradient(180deg, #f7b451 0%, #bd702d 100%);
+  color: #17120d;
+  border-color: rgba(255,220,166,.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 18px -4px rgba(210,125,48,.32);
+}
+.btn-primary-emerald:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ffc56c 0%, #d4873b 100%);
+}
+.btn-field {
+  background: linear-gradient(180deg, #303236 0%, #1b1d20 100%);
+  border-color: rgba(184,125,67,.32);
+  color: #e8e2d9;
+}
+.btn-field:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3a3732 0%, #242322 100%);
+  border-color: rgba(237,154,59,.62);
+}
+.map-toolbar-button,
+.map-toolbar-icon {
+  background: rgba(28,29,31,.95);
+  border-color: rgba(184,125,67,.34);
+}
+.map-toolbar-button:hover,
+.map-toolbar-icon:hover {
+  background: rgba(62,47,32,.96);
+  border-color: rgba(237,154,59,.65);
+}
+.map-toolbar-primary {
+  background: linear-gradient(180deg,#f2ad49,#a96327);
+  border-color: rgba(255,220,166,.5);
+  color: #1b140b;
+}
+.map-dialog-primary {
+  background: linear-gradient(180deg,#f2ad49,#a96327);
+  border-color: rgba(255,220,166,.5);
+  color: #1b140b;
+}
+
+/* Rounded, consistent corners across cards, tabs, controls and pop-up windows */
+.panel-field,
+.panel-window,
+.bunker-dialog,
+.bunker-character-card,
+.bunker-character-dock,
+[role="dialog"] {
+  overflow: hidden;
+}
+.panel-window,
+.panel-field { border-radius: 16px; }
+button,
+[role="button"],
+input,
+select,
+textarea {
+  border-radius: 10px;
+}
+
