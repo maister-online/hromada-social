@@ -87,7 +87,7 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
         />
         <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/45 via-transparent to-black/45" />
         <div className="absolute inset-0 z-[2] bg-[#11190f]/10" />
-        {cityImageFailed && <div className="absolute inset-x-4 bottom-20 z-[3] rounded-lg bg-black/90 p-3 text-center text-sm text-white">Не вдалося завантажити фото міста. Перевіряється доступ до оригінального файлу.</div>}
+        {cityImageFailed && <div className="pointer-events-none fixed inset-x-4 bottom-20 z-[120] rounded-lg border border-red-300/40 bg-black/95 p-4 text-center text-sm font-semibold text-white shadow-2xl">Не вдалося завантажити фото міста. Перевіряється доступ до оригінального файлу.</div>}
       </div>
 
       <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3 pt-[max(12px,env(safe-area-inset-top))] sm:p-5">
