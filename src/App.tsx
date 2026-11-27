@@ -1802,6 +1802,7 @@ export default function App() {
           gameState={gameState}
           savedTackleSets={gameState.savedTackleSets ?? []}
           onBack={() => setScreen('MAP')}
+          onOpenInventory={() => setShowInventory(true)}
           onSaveTackleSet={handleSaveTackleSet}
           onEquipTackleSet={handleEquipTackleSet}
           onDeleteTackleSet={handleDeleteTackleSet}
