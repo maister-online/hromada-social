@@ -28,6 +28,7 @@ interface CityViewProps { credits: number; goldCoins: number; amberShards: numbe
 export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberShards, onBack }) => {
   const [activeId, setActiveId] = useState<BusinessId | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('');
   const [positions, setPositions] = useState<Record<BusinessId, PointPosition>>(() => {
     try {
       const saved = localStorage.getItem(POSITION_STORAGE_KEY);
@@ -39,6 +40,16 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   useEffect(() => {
     try { localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(positions)); } catch { /* session-only fallback */ }
   }, [positions]);
+
+  const copyPositions = async () => {
+    const config = JSON.stringify({ version: 1, map: 'rokytne-city', positions }, null, 2);
+    try {
+      await navigator.clipboard.writeText(config);
+      setCopyStatus('Координати скопійовано — надішли їх сюди');
+    } catch {
+      setCopyStatus('Не вдалося скопіювати. Перевір дозвіл браузера на буфер обміну');
+    }
+  };
 
   const moveMarker = (id: BusinessId, event: React.PointerEvent<HTMLButtonElement>) => {
     if (!editMode) return;
@@ -68,7 +79,9 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
           <button onClick={() => setEditMode((value) => !value)} className={'inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold shadow-lg backdrop-blur-md ' + (editMode ? 'border-emerald-300 bg-emerald-950/90 text-emerald-100' : 'border-white/20 bg-black/65 text-white')}>
             {editMode ? <Check className="h-4 w-4" /> : <Move className="h-4 w-4" />}{editMode ? 'Готово' : 'Редагувати точки'}
           </button>
+          {editMode && <button onClick={copyPositions} className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-emerald-200/30 bg-emerald-950/85 px-3 text-[11px] font-bold text-emerald-100"><Check className="h-3.5 w-3.5" /> Зберегти координати</button>}
           {editMode && <button onClick={() => setPositions(DEFAULT_POSITIONS)} className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-white/20 bg-black/65 px-3 text-[11px] font-bold text-white/85"><RotateCcw className="h-3.5 w-3.5" /> Скинути позиції</button>}
+          {editMode && copyStatus && <div className="max-w-48 rounded-lg bg-black/80 px-2 py-1 text-right text-[10px] text-emerald-200">{copyStatus}</div>}
           <div className="flex gap-2 rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-[11px] shadow-lg backdrop-blur-md">
             <span className="flex items-center gap-1 text-amber-200"><Coins className="h-3.5 w-3.5" />₴{credits}</span>
             <span className="flex items-center gap-1 text-yellow-200"><Gem className="h-3.5 w-3.5" />{goldCoins}</span>
