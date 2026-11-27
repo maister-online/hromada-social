@@ -90,48 +90,48 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Worn black-carbon carp blank: near-black graphite with a restrained satin clearcoat.
-  const blankColor = 0x45483a; // visible natural olive-green graphite, satin finish
+  const blankColor = 0x171918; // matte black graphite with subtle worn edges
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0xa17d55,
+    color: 0x302b25,
     roughness: 0.9,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x62472e,
+    color: 0x171615,
     roughness: 1,
     metalness: 0,
   });
   const evaMat = new THREE.MeshStandardMaterial({
-    color: 0x303a32,
+    color: 0x202321,
     roughness: 0.58,
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0x78847e,
+    color: 0x555a56,
     roughness: 0.34,
     metalness: 0.82,
   });
   const ceramicMat = new THREE.MeshPhysicalMaterial({
-    color: 0x202725,
+    color: 0x111413,
     roughness: 0.2,
     metalness: 0.18,
     clearcoat: 0.8,
   });
   const threadMat = new THREE.MeshStandardMaterial({
-    color: 0x424a3b,
+    color: 0x292d29,
     roughness: 0.48,
     metalness: 0.28,
   });
   const blankMat = new THREE.MeshPhysicalMaterial({
     color: blankColor,
-    roughness: 0.38,
-    metalness: 0.08,
-    clearcoat: 0.32,
-    clearcoatRoughness: 0.42,
+    roughness: 0.88,
+    metalness: 0.02,
+    clearcoat: 0.04,
+    clearcoatRoughness: 0.9,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x252d29,
+    color: 0x181b19,
     roughness: 0.28,
     metalness: 0.82,
   });
@@ -148,12 +148,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   root.add(grip);
   // Uneven olive field tape wrapped around the handle, like repaired Zone gear.
   const tapeMat = new THREE.MeshStandardMaterial({
-    color: 0x514d38,
+    color: 0x34332e,
     roughness: 0.94,
     metalness: 0,
   });
   const darkTapeMat = new THREE.MeshStandardMaterial({
-    color: 0x292d26,
+    color: 0x171918,
     roughness: 1,
     metalness: 0,
   });
@@ -260,12 +260,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     metalness: 0,
   });
   const sleeveMat = new THREE.MeshStandardMaterial({
-    color: 0x303a2d,
+    color: 0x242824,
     roughness: 0.96,
     metalness: 0,
   });
   const cuffMat = new THREE.MeshStandardMaterial({
-    color: 0x202820,
+    color: 0x171a18,
     roughness: 0.9,
     metalness: 0.02,
   });
@@ -289,7 +289,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   handGroup.add(cuff);
   const cuffStitch = new THREE.Mesh(
     new THREE.TorusGeometry(0.078, 0.002, 5, 20),
-    new THREE.MeshStandardMaterial({ color: 0x59624d, roughness: 1 })
+    new THREE.MeshStandardMaterial({ color: 0x3b403b, roughness: 1 })
   );
   cuffStitch.rotation.x = Math.PI / 2;
   cuffStitch.position.set(0, -0.005, 0.04);
@@ -392,6 +392,29 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   rodGeometry.setAttribute('position', new THREE.BufferAttribute(rodPositions.slice(), 3));
   rodGeometry.setIndex(rodIndices);
   rodGeometry.computeVertexNormals();
+  // Fine, irregular graphite wear marks: subtle grey scuffs, not bright decals.
+  const scuffMat = new THREE.MeshStandardMaterial({
+    color: 0x555955,
+    roughness: 1,
+    metalness: 0,
+  });
+  const scuffDarkMat = new THREE.MeshStandardMaterial({
+    color: 0x090b0a,
+    roughness: 1,
+    metalness: 0,
+  });
+  for (let i = 0; i < 24; i++) {
+    const t = 0.06 + ((i * 37) % 87) / 100;
+    const angle = ((i * 2.399) % (Math.PI * 2));
+    const radius = THREE.MathUtils.lerp(0.024, 0.0019, Math.pow(t, 0.92));
+    const mark = new THREE.Mesh(
+      new THREE.BoxGeometry(0.0012 + (i % 3) * 0.0005, 0.0007, 0.009 + (i % 4) * 0.004),
+      i % 4 === 0 ? scuffDarkMat : scuffMat
+    );
+    mark.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, -0.34 - rodLength * t);
+    mark.rotation.z = angle;
+    root.add(mark);
+  }
   const rodBlank = new THREE.Mesh(rodGeometry, blankMat);
   rodBlank.castShadow = true;
   rodBlank.receiveShadow = true;
@@ -453,7 +476,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
     metalness: 0.08,
   });
   const wornSteelMat = new THREE.MeshStandardMaterial({
-    color: 0x747d78,
+    color: 0x555b57,
     roughness: 0.48,
     metalness: 0.72,
   });
@@ -479,12 +502,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Field-worn STALKER-inspired detailing: hand-laced olive cord on the grip,
   // oxidised steel collars and a small service plate. All details are real meshes.
   const cordMat = new THREE.MeshStandardMaterial({
-    color: 0x4b503c,
+    color: 0x30352f,
     roughness: 0.98,
     metalness: 0.02,
   });
   const cordDarkMat = new THREE.MeshStandardMaterial({
-    color: 0x292c26,
+    color: 0x191c1a,
     roughness: 1,
     metalness: 0,
   });
@@ -539,7 +562,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   );
   serviceTag.add(tagBase);
   const tagMarkMat = new THREE.MeshStandardMaterial({
-    color: 0x80613e,
+    color: 0x5b5143,
     roughness: 0.82,
     metalness: 0.08,
   });
@@ -559,7 +582,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   root.add(tipMarker);
   const tipBand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.0027, 0.0032, 0.045, 16),
-    new THREE.MeshStandardMaterial({ color: 0xc17d43, roughness: 0.38, metalness: 0.06 })
+    new THREE.MeshStandardMaterial({ color: 0x77736a, roughness: 0.38, metalness: 0.06 })
   );
   tipBand.rotation.x = Math.PI / 2;
   tipBand.position.z = 0.025;
