@@ -298,9 +298,14 @@ export default function App() {
   }, [screen, showBunkerMap]);
 
   useEffect(() => {
-    const isMapOpen = !showCityPromo && screen !== 'CITY' && (screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap));
+    // Одна й та сама музика безперервно звучить на карті, у проморолику міста та в самому місті.
+    // Перехід між цими екранами не повинен перезапускати або зупиняти аудіо.
+    const shouldPlayMapTrack =
+      !muted &&
+      (screen === 'MAP' || screen === 'CITY' || showCityPromo || (screen === 'BUNKER' && showBunkerMap));
+
     if (!mapMusicRef.current) {
-      const audio = new Audio();
+      const audio = new Audio(MAP_BGM_TRACK_URL);
       audio.loop = true;
       audio.preload = 'auto';
       audio.volume = 0.42;
@@ -308,25 +313,18 @@ export default function App() {
     }
 
     const audio = mapMusicRef.current;
-    if (isMapOpen && !muted) {
-      // Джерело карти підключається тільки поки відкрита карта.
-      if (!audio.getAttribute('src')) {
-        audio.src = MAP_BGM_TRACK_URL;
-        audio.load();
-      }
+    if (shouldPlayMapTrack) {
       audio.muted = false;
       audio.volume = 0.42;
       audio.loop = true;
-      void audio.play().catch(() => {
-        // Якщо браузер заблокував автозапуск, повторна спроба буде при наступному відкритті карти.
-      });
+      if (audio.paused) {
+        void audio.play().catch(() => {
+          // Браузер може вимагати повторного запуску після взаємодії користувача.
+        });
+      }
     } else {
-      // Повністю вивантажуємо трек, а не лише ставимо на паузу:
-      // так він не може продовжувати звучати поверх промо або міста.
       audio.pause();
-      audio.muted = true;
-      audio.removeAttribute('src');
-      audio.load();
+      audio.currentTime = 0;
     }
   }, [screen, showBunkerMap, showCityPromo, muted]);
 
@@ -392,20 +390,8 @@ export default function App() {
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : loc === 'rokitne_city' ? 'CITY' : 'FISHING');
   }, []);
 
-  const stopMapMusic = useCallback(() => {
-    const audio = mapMusicRef.current;
-    if (audio) {
-      // Жорстка зупинка: від'єднуємо файл від audio-елемента і вивантажуємо декодований потік.
-      audio.pause();
-      audio.muted = true;
-      audio.removeAttribute('src');
-      audio.load();
-    }
-  }, []);
-
   const openDestinationNow = useCallback(
     (locId: LocationId) => {
-      stopMapMusic();
       audioEngine.init();
       setShowBunkerMap(false);
       const target = LOCATIONS[locId];
@@ -438,7 +424,7 @@ export default function App() {
         }
       }
     },
-    [showToast, screen, showBunkerMap, stopMapMusic]
+    [showToast, screen, showBunkerMap]
   );
 
   const finishCityPromo = useCallback(() => {
@@ -454,13 +440,12 @@ export default function App() {
 
   const handleSelectDestination = useCallback((locId: LocationId) => {
     if (locId === 'rokitne_city') {
-      stopMapMusic();
       setShowCityPromo(true);
       setCityPromoNeedsStart(false);
       return;
     }
     openDestinationNow(locId);
-  }, [openDestinationNow, stopMapMusic]);
+  }, [openDestinationNow]);
 
   useEffect(() => {
     if (!showCityPromo) return;
