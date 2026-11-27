@@ -23,10 +23,10 @@ async function searchCommons(query: string): Promise<string | null> {
         generator: 'search',
         gsrsearch: query,
         gsrnamespace: '6',
-        gsrlimit: '5',
+        gsrlimit: '12',
         prop: 'imageinfo',
-        iiprop: 'url',
-        iiurlwidth: '640',
+        iiprop: 'url|size',
+        iiurlwidth: '800',
         format: 'json',
         origin: '*',
       });
@@ -34,8 +34,29 @@ async function searchCommons(query: string): Promise<string | null> {
       if (!response.ok) return null;
       const data = await response.json();
       const pages = Object.values(data?.query?.pages ?? {}) as Array<any>;
-      const page = pages.find((entry) => entry?.imageinfo?.[0]?.thumburl || entry?.imageinfo?.[0]?.url);
-      const url = page?.imageinfo?.[0]?.thumburl || page?.imageinfo?.[0]?.url || null;
+      const terms = key.split(/[^a-z0-9а-яіїєґ]+/i).filter((term) => term.length > 2);
+      const candidates = pages
+        .map((page) => {
+          const info = page?.imageinfo?.[0];
+          const title = String(page?.title ?? '').replace(/^File:/i, '').toLowerCase();
+          const mime = String(info?.mime ?? '');
+          const width = Number(info?.thumbwidth ?? info?.width ?? 0);
+          const height = Number(info?.thumbheight ?? info?.height ?? 0);
+          if (!info || !mime.startsWith('image/') || mime.includes('svg') || !info.thumburl) return null;
+          if (width < 260 || height < 180) return null;
+          const matches = terms.filter((term) => title.includes(term)).length;
+          const exactPhrase = title.includes(key) ? 8 : 0;
+          const resolutionScore = Math.min(3, (width * height) / 900000);
+          const ratio = width / Math.max(1, height);
+          const compositionScore = ratio >= 0.65 && ratio <= 2.4 ? 1.5 : 0;
+          return {
+            url: info.thumburl as string,
+            score: exactPhrase + matches * 2 + resolutionScore + compositionScore,
+          };
+        })
+        .filter((item): item is { url: string; score: number } => Boolean(item))
+        .sort((a, b) => b.score - a.score);
+      const url = candidates[0]?.url ?? null;
       writeCache(key, url);
       return url;
     } catch {
