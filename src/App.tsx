@@ -1686,7 +1686,7 @@ export default function App() {
             preload="auto"
             onEnded={finishCityPromo}
             onError={() => setCityPromoNeedsStart(true)}
-            src={`${import.meta.env.BASE_URL}city_promo.mp4`}
+            src={`https://raw.githubusercontent.com/maister-online/hromada-social/main/${encodeURIComponent('3д_моделювання_4366d1e4.mp4')}`}
           />
           <div className="city-promo-controls">
             {cityPromoNeedsStart && (
