@@ -952,41 +952,46 @@ export class ShoreFishingScene {
     const sideBend = phase === 'FIGHTING' ? this.smoothFishX * 0.055 : 0;
     const rodPosition = this.rodRig.rodBlank.geometry.getAttribute('position') as THREE.BufferAttribute;
     const basePositions = this.rodRig.rodBasePositions;
-    for (let i = 0; i < rodPosition.count; i++) {
-      const base = i * 3;
-      const t = THREE.MathUtils.clamp((-basePositions[base + 2] - 0.34) / this.rodRig.rodLength, 0, 1);
-      const curve = Math.pow(t, 2.25);
-      rodPosition.setXYZ(
-        i,
-        basePositions[base] + sideBend * curve,
-        basePositions[base + 1] - bendForce * 1.05 * curve,
-        basePositions[base + 2]
-      );
+    if (this.rodRig.modelAxisX) {
+      for (let i = 0; i < rodPosition.count; i++) {
+        const base = i * 3;
+        const t = THREE.MathUtils.clamp(basePositions[base] / this.rodRig.rodLength, 0, 1);
+        const curve = Math.pow(t, 2.25);
+        rodPosition.setXYZ(i, basePositions[base], basePositions[base + 1] - bendForce * 1.05 * curve, basePositions[base + 2] + sideBend * curve);
+      }
+      rodPosition.needsUpdate = true;
+      this.rodRig.rodBlank.geometry.computeVertexNormals();
+      this.rodRig.rodGuideGroups.forEach((guide, index) => {
+        const t = this.rodRig.rodGuideT[index];
+        const curve = Math.pow(t, 2.25);
+        const base = this.rodRig.rodGuideBasePositions?.[index];
+        if (!base) return;
+        guide.position.set(base.x, base.y - bendForce * 1.05 * curve, base.z + sideBend * curve);
+      });
+      const tipBase = this.rodRig.tipBasePosition ?? new THREE.Vector3(this.rodRig.rodLength, 0, 0);
+      this.rodRig.tipMarker.position.set(tipBase.x, tipBase.y - bendForce * 1.05, tipBase.z + sideBend);
+    } else {
+      for (let i = 0; i < rodPosition.count; i++) {
+        const base = i * 3;
+        const t = THREE.MathUtils.clamp((-basePositions[base + 2] - 0.34) / this.rodRig.rodLength, 0, 1);
+        const curve = Math.pow(t, 2.25);
+        rodPosition.setXYZ(i, basePositions[base] + sideBend * curve, basePositions[base + 1] - bendForce * 1.05 * curve, basePositions[base + 2]);
+      }
+      rodPosition.needsUpdate = true;
+      this.rodRig.rodBlank.geometry.computeVertexNormals();
+      this.rodRig.rodGuideGroups.forEach((guide, index) => {
+        const t = this.rodRig.rodGuideT[index];
+        const curve = Math.pow(t, 2.25);
+        const radius = THREE.MathUtils.lerp(0.0205, 0.0062, t);
+        guide.position.set(sideBend * curve, -radius * 0.82 - bendForce * 1.05 * curve, -0.34 - this.rodRig.rodLength * t);
+        const bendSlope = (2.25 * bendForce * 1.05 * Math.pow(t, 1.25)) / this.rodRig.rodLength;
+        const sideSlope = (2.25 * sideBend * Math.pow(t, 1.25)) / this.rodRig.rodLength;
+        guide.rotation.x = -Math.atan(bendSlope);
+        guide.rotation.z = Math.atan(sideSlope);
+      });
+      this.rodRig.tipMarker.position.set(sideBend, -bendForce * 1.05, -0.34 - this.rodRig.rodLength);
+      this.rodRig.tipMarker.rotation.x = -Math.atan((2.25 * bendForce * 1.05) / this.rodRig.rodLength);
     }
-    rodPosition.needsUpdate = true;
-    this.rodRig.rodBlank.geometry.computeVertexNormals();
-    this.rodRig.rodGuideGroups.forEach((guide, index) => {
-      const t = this.rodRig.rodGuideT[index];
-      // Guides sit on the exact same continuous curve as the carbon blank.
-      const curve = Math.pow(t, 2.25);
-      const radius = THREE.MathUtils.lerp(0.0205, 0.0062, t);
-      guide.position.set(
-        sideBend * curve,
-        -radius * 0.82 - bendForce * 1.05 * curve,
-        -0.34 - this.rodRig.rodLength * t
-      );
-      const bendSlope = (2.25 * bendForce * 1.05 * Math.pow(t, 1.25)) / this.rodRig.rodLength;
-      const sideSlope = (2.25 * sideBend * Math.pow(t, 1.25)) / this.rodRig.rodLength;
-      guide.rotation.x = -Math.atan(bendSlope);
-      guide.rotation.z = Math.atan(sideSlope);
-    });
-    const tipT = 1;
-    this.rodRig.tipMarker.position.set(
-      sideBend,
-      -bendForce * 1.05,
-      -0.34 - this.rodRig.rodLength
-    );
-    this.rodRig.tipMarker.rotation.x = -Math.atan((2.25 * bendForce * 1.05) / this.rodRig.rodLength);
 
     if (isReeling && (phase === 'FIGHTING' || phase === 'WAITING')) {
       this.rodRig.reelHandle.rotation.z += dt * 16;
