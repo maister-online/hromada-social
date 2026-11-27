@@ -1269,3 +1269,52 @@ img, video, canvas, svg {
   line-height: 1.55;
   color: #e5e8df;
 }
+
+
+/* GLOBAL GAME TYPOGRAPHY — apply consistently to every screen, HUD, modal and dialogue. */
+html,
+body,
+#root,
+#root * {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+  font-stretch: condensed;
+}
+#root h1,
+#root h2,
+#root h3,
+#root h4,
+#root h5,
+#root h6,
+#root .font-display,
+#root button,
+#root [role="button"],
+#root [role="tab"],
+#root .game-title,
+#root .dialog-title {
+  font-family: "Oswald", "Arial Narrow", Impact, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+#root input,
+#root textarea,
+#root select,
+#root option {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+}
+#root .font-mono-num {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+#root p,
+#root li,
+#root label,
+#root span,
+#root small,
+#root strong,
+#root b,
+#root td,
+#root th {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+}
