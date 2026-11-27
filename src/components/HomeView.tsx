@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, BarChart3, Box, House, Package, Trophy, X } from 'lucide-react';
+import { ArrowLeft, Backpack, BarChart3, Box, House, Package, Trophy, X } from 'lucide-react';
 import { FISH_MAP, LOCATIONS, LOOT_MAP, RODS, REELS, LINES } from '../game/data';
 import { CaughtFish, FoundLootEntry, SaveState, SavedTackleSet } from '../game/types';
 
 type WindowKey = 'storage' | 'trophies' | 'gear' | 'progress';
 interface Props {
-  gameState: SaveState; savedTackleSets: SavedTackleSet[]; onBack: () => void;
+  gameState: SaveState; savedTackleSets: SavedTackleSet[]; onBack: () => void; onOpenInventory: () => void;
   onSaveTackleSet: (name: string) => void; onEquipTackleSet: (set: SavedTackleSet) => void;
   onDeleteTackleSet: (id: string) => void; onUseConsumable: (id: string) => void; onRest: () => void;
   onStoreFish: (uid: string) => void; onTakeFish: (uid: string) => void;
@@ -54,6 +54,7 @@ export const HomeView: React.FC<Props> = (p) => {
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-cover bg-center" style={{backgroundImage:"linear-gradient(rgba(4,10,7,.32), rgba(4,10,7,.48)), url('https://raw.githubusercontent.com/maister-online/hromada-social/main/1111_%D0%BD%D0%B0%D0%BF%D0%B8%D1%88%D0%B8_%D1%87%D1%96%D1%82%D0%BA%D1%96%D1%88%D0%B5_%D1%83_%D0%BA%D0%BD%D0%B8%D0%B7%D1%96_a9b756a9_2K.jpg')"}}/>
     <div className="absolute left-3 top-3 z-30 flex items-center gap-2 rounded-lg bg-black/55 px-3 py-2 backdrop-blur"><House size={18} className="text-amber-200"/><span className="text-sm font-bold">Мій дім · День {p.gameState.day}</span><button onClick={p.onBack} className="ml-2 flex items-center gap-1 rounded bg-white/10 px-2 py-1 text-xs"><ArrowLeft size={14}/>Карта</button></div>
     <div className="absolute bottom-3 left-3 z-30 flex max-w-[calc(100vw-24px)] flex-wrap gap-2">
+      <button onClick={p.onOpenInventory} className="flex items-center gap-2 rounded-lg border border-emerald-300/50 bg-[#26372b]/90 px-3 py-2 text-xs font-bold text-emerald-100 shadow-lg"><Backpack size={16}/>Рюкзак</button>
       <button onClick={()=>toggle('storage')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Box size={16}/>Сховище</button>
       <button onClick={()=>toggle('trophies')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Trophy size={16}/>Трофейна кімната</button>
       <button onClick={()=>toggle('gear')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Package size={16}/>Робочий стіл</button><button onClick={()=>toggle('progress')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><BarChart3 size={16}/>Особистий прогрес</button>
