@@ -90,15 +90,15 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Worn black-carbon carp blank: near-black graphite with a restrained satin clearcoat.
-  const blankColor = 0x20251f; // natural dark olive graphite carbon, low-sheen finish
+  const blankColor = 0x45483a; // visible natural olive-green graphite, satin finish
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x806044,
+    color: 0xa17d55,
     roughness: 0.9,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x463326,
+    color: 0x62472e,
     roughness: 1,
     metalness: 0,
   });
@@ -142,7 +142,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   buttCap.position.set(0, 0, 0.14);
   root.add(buttCap);
 
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.018, 0.36, 32), corkMat);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.023, 0.025, 0.38, 32), corkMat);
   grip.rotation.x = Math.PI / 2;
   grip.position.set(0, 0, -0.06);
   root.add(grip);
@@ -159,7 +159,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   });
   for (let i = 0; i < 8; i++) {
     const tape = new THREE.Mesh(
-      new THREE.TorusGeometry(0.019 + (i % 2) * 0.0007, 0.0028, 5, 18),
+      new THREE.TorusGeometry(0.026 + (i % 2) * 0.0007, 0.0022, 5, 18),
       i % 3 === 0 ? darkTapeMat : tapeMat
     );
     tape.rotation.x = Math.PI / 2;
@@ -169,7 +169,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   }
   // Fine cork grip rings and a worn, matte end collar.
   for (let i = 0; i < 7; i++) {
-    const seam = new THREE.Mesh(new THREE.TorusGeometry(0.0205, 0.0014, 5, 16), corkSeamMat);
+    const seam = new THREE.Mesh(new THREE.TorusGeometry(0.027, 0.0012, 5, 16), corkSeamMat);
     seam.rotation.x = Math.PI / 2;
     seam.position.set(0, 0, -0.205 + i * 0.043);
     root.add(seam);
@@ -188,12 +188,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   reelStem.position.set(0, 0.022, 0);
   reelGroup.add(reelStem);
 
-  const reelBody = new THREE.Mesh(new THREE.SphereGeometry(0.043, 32, 24), evaMat);
-  reelBody.scale.set(0.78, 0.66, 1.12);
+  const reelBody = new THREE.Mesh(new THREE.SphereGeometry(0.052, 32, 24), evaMat);
+  reelBody.scale.set(0.82, 0.72, 1.12);
   reelBody.position.set(0, -0.018, 0.01);
   reelGroup.add(reelBody);
   const reelSidePlate = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.034, 0.034, 0.012, 32),
+    new THREE.CylinderGeometry(0.041, 0.041, 0.014, 32),
     accentMat
   );
   reelSidePlate.rotation.x = Math.PI / 2;
@@ -211,20 +211,20 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   spoolCore.rotation.x = Math.PI / 2;
   spoolCore.position.set(0, -0.012, -0.036);
   reelGroup.add(spoolCore);
-  const spoolMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.029, 0.052, 32), accentMat);
+  const spoolMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, 0.056, 32), accentMat);
   spoolMesh.rotation.x = Math.PI / 2;
   spoolMesh.position.set(0, -0.012, -0.036);
   reelGroup.add(spoolMesh);
   // Spool lips and a thin fishing-line coil make the reel read as real tackle.
   for (const z of [-0.063, -0.009]) {
-    const lip = new THREE.Mesh(new THREE.TorusGeometry(0.027, 0.0024, 6, 20), metalMat);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.0022, 6, 24), metalMat);
     lip.rotation.x = Math.PI / 2;
     lip.position.set(0, -0.012, z);
     reelGroup.add(lip);
   }
   const lineCoilMat = new THREE.MeshStandardMaterial({ color: 0x8a9a8b, roughness: 0.55, metalness: 0.12 });
   for (let i = 0; i < 5; i++) {
-    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.022 + i * 0.0004, 0.0009, 4, 24), lineCoilMat);
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.029 + i * 0.0004, 0.0008, 4, 24), lineCoilMat);
     coil.rotation.x = Math.PI / 2;
     coil.position.set(0, -0.012, -0.04 + i * 0.003);
     reelGroup.add(coil);
@@ -366,14 +366,14 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
 
   // One continuous tapered blank: the rod bends as a single elastic piece,
   // not as five visibly hinged sections.
-  const rodLength = rodType === 'float' ? 2.82 : 2.72;
+  const rodLength = rodType === 'float' ? 3.05 : 2.95;
   const longitudinalSegments = 128;
   const radialSegments = 20;
   const rodPositions = new Float32Array((longitudinalSegments + 1) * (radialSegments + 1) * 3);
   const rodIndices: number[] = [];
   for (let row = 0; row <= longitudinalSegments; row++) {
     const t = row / longitudinalSegments;
-    const radius = THREE.MathUtils.lerp(0.0205, 0.0025, Math.pow(t, 0.88));
+    const radius = THREE.MathUtils.lerp(0.024, 0.0019, Math.pow(t, 0.92));
     const z = -0.34 - rodLength * t;
     for (let side = 0; side <= radialSegments; side++) {
       const a = (side / radialSegments) * Math.PI * 2;
@@ -412,9 +412,9 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Lightweight ceramic guides follow the same smooth curve as the blank.
   const rodGuideGroups: THREE.Group[] = [];
   const rodGuideT: number[] = [];
-  const guidePositions = [0.10, 0.22, 0.34, 0.46, 0.58, 0.69, 0.79, 0.88, 0.96];
+  const guidePositions = [0.09, 0.19, 0.30, 0.41, 0.52, 0.63, 0.73, 0.82, 0.90, 0.97];
   guidePositions.forEach((t, i) => {
-    const radius = THREE.MathUtils.lerp(0.022, 0.0062, t);
+    const radius = THREE.MathUtils.lerp(0.027, 0.0048, t);
     const guide = new THREE.Group();
     guide.position.set(0, -radius * 0.82, -0.34 - rodLength * t);
     const outerRing = new THREE.Mesh(
