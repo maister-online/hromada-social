@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import cityLocationPhoto from '../../Зроби_мега_різкість_9392a4f5_2K.jpg';
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
   ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, Move, Check, RotateCcw,
@@ -28,7 +29,7 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   const [activeId, setActiveId] = useState<BusinessId | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
-  const cityImageSrc = `${import.meta.env.BASE_URL}assets/rokytne-city.jpg`;
+  const cityImageSrc = cityLocationPhoto;
   const [cityImageFailed, setCityImageFailed] = useState(false);
   const [positions, setPositions] = useState<Record<BusinessId, PointPosition>>(() => {
     try {
