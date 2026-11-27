@@ -90,48 +90,48 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Worn black-carbon carp blank: near-black graphite with a restrained satin clearcoat.
-  const blankColor = 0x252b20; // matte charcoal-olive STALKER field carbon
+  const blankColor = 0x20251f; // natural dark olive graphite carbon, low-sheen finish
 
   const corkMat = new THREE.MeshStandardMaterial({
-    color: 0x59412c,
+    color: 0x806044,
     roughness: 0.9,
     metalness: 0,
   });
   const corkSeamMat = new THREE.MeshStandardMaterial({
-    color: 0x241d16,
+    color: 0x463326,
     roughness: 1,
     metalness: 0,
   });
   const evaMat = new THREE.MeshStandardMaterial({
-    color: 0x263c36,
+    color: 0x303a32,
     roughness: 0.58,
     metalness: 0.08,
   });
   const metalMat = new THREE.MeshStandardMaterial({
-    color: 0x899b91,
+    color: 0x78847e,
     roughness: 0.34,
     metalness: 0.82,
   });
   const ceramicMat = new THREE.MeshPhysicalMaterial({
-    color: 0x102c2b,
+    color: 0x202725,
     roughness: 0.2,
     metalness: 0.18,
     clearcoat: 0.8,
   });
   const threadMat = new THREE.MeshStandardMaterial({
-    color: 0x9a542d,
+    color: 0x424a3b,
     roughness: 0.48,
     metalness: 0.28,
   });
   const blankMat = new THREE.MeshPhysicalMaterial({
     color: blankColor,
-    roughness: 0.48,
-    metalness: 0.18,
-    clearcoat: 0.46,
-    clearcoatRoughness: 0.34,
+    roughness: 0.38,
+    metalness: 0.08,
+    clearcoat: 0.32,
+    clearcoatRoughness: 0.42,
   });
   const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x1b3430,
+    color: 0x252d29,
     roughness: 0.28,
     metalness: 0.82,
   });
@@ -148,12 +148,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   root.add(grip);
   // Uneven olive field tape wrapped around the handle, like repaired Zone gear.
   const tapeMat = new THREE.MeshStandardMaterial({
-    color: 0x667b36,
+    color: 0x514d38,
     roughness: 0.94,
     metalness: 0,
   });
   const darkTapeMat = new THREE.MeshStandardMaterial({
-    color: 0x273321,
+    color: 0x292d26,
     roughness: 1,
     metalness: 0,
   });
@@ -448,12 +448,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Subdued olive-drab thread wraps and steel collars give the blank a rugged
   // field-repaired, STALKER-style look without bright gaming-style decoration.
   const fieldWrapMat = new THREE.MeshStandardMaterial({
-    color: 0x454a35,
+    color: 0x3a4034,
     roughness: 0.92,
     metalness: 0.08,
   });
   const wornSteelMat = new THREE.MeshStandardMaterial({
-    color: 0x667c70,
+    color: 0x747d78,
     roughness: 0.48,
     metalness: 0.72,
   });
@@ -479,12 +479,12 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // Field-worn STALKER-inspired detailing: hand-laced olive cord on the grip,
   // oxidised steel collars and a small service plate. All details are real meshes.
   const cordMat = new THREE.MeshStandardMaterial({
-    color: 0x59613a,
+    color: 0x4b503c,
     roughness: 0.98,
     metalness: 0.02,
   });
   const cordDarkMat = new THREE.MeshStandardMaterial({
-    color: 0x292d22,
+    color: 0x292c26,
     roughness: 1,
     metalness: 0,
   });
@@ -539,7 +539,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   );
   serviceTag.add(tagBase);
   const tagMarkMat = new THREE.MeshStandardMaterial({
-    color: 0xb56a32,
+    color: 0x80613e,
     roughness: 0.82,
     metalness: 0.08,
   });
@@ -559,7 +559,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   root.add(tipMarker);
   const tipBand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.0027, 0.0032, 0.045, 16),
-    new THREE.MeshStandardMaterial({ color: 0xd66b2e, roughness: 0.38, metalness: 0.06 })
+    new THREE.MeshStandardMaterial({ color: 0xc17d43, roughness: 0.38, metalness: 0.06 })
   );
   tipBand.rotation.x = Math.PI / 2;
   tipBand.position.z = 0.025;
