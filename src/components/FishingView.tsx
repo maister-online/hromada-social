@@ -1498,7 +1498,7 @@ export const FishingView: React.FC<FishingViewProps> = ({
   const canShowLandingPrompt = phase === 'FIGHTING' && fishDistM <= landingReachM;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#060b09] select-none">
+    <div className="game-viewport relative w-screen h-screen overflow-hidden bg-[#060b09] select-none">
       {/* Real Location Photo Backdrop when configured */}
       {location.backdropPhotoUrl && (
         <img
