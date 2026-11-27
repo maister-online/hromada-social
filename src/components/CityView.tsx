@@ -134,9 +134,8 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
           <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-emerald-200/25 bg-emerald-950/50 text-emerald-100 shadow-2xl"><activePlace.Icon className="h-10 w-10" /></div>
           <h3 className="text-2xl font-black">{activePlace.title}</h3>
           <p className="mt-2 max-w-sm text-sm text-white/60">{activePlace.subtitle}</p>
-          <div className="mt-7 max-w-sm rounded-xl border border-dashed border-white/20 bg-black/30 px-5 py-4">
-            <p className="text-sm font-bold text-emerald-200">Фото цієї локації ще не додано</p>
-            <p className="mt-2 text-xs leading-relaxed text-white/55">Коли завантажиш фото будівлі, підключимо його сюди. Це буде окрема локація, а не картка поверх міської мапи.</p>
+          <div className="mt-7 w-full max-w-2xl overflow-hidden rounded-xl border border-white/15 bg-black/30 shadow-2xl">
+            <img src={cityImageSrc} alt={`Фото локації: ${activePlace.title}`} loading="eager" decoding="async" className="block h-auto max-h-[42vh] w-full object-cover object-center" />
           </div>
           <p className="mt-5 max-w-sm text-xs leading-relaxed text-white/45">{activePlace.description}</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">{activePlace.services.map((service) => <span key={service} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/65">{service}</span>)}</div>
