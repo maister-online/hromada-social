@@ -1616,7 +1616,7 @@ export default function App() {
 
   return (
     <div
-      className="relative w-screen h-screen overflow-hidden bg-[#060a08]"
+      className="game-viewport relative w-screen h-screen overflow-hidden bg-[#060a08]"
     >
       <video
         ref={presentationVideoRef}
