@@ -90,7 +90,7 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   const root = new THREE.Group();
 
   // Worn black-carbon carp blank: near-black graphite with a restrained satin clearcoat.
-  const blankColor = 0x12332f; // saturated deep petrol-black carbon
+  const blankColor = 0x252b20; // matte charcoal-olive STALKER field carbon
 
   const corkMat = new THREE.MeshStandardMaterial({
     color: 0x59412c,
@@ -125,10 +125,10 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   });
   const blankMat = new THREE.MeshPhysicalMaterial({
     color: blankColor,
-    roughness: 0.34,
-    metalness: 0.28,
-    clearcoat: 0.82,
-    clearcoatRoughness: 0.22,
+    roughness: 0.48,
+    metalness: 0.18,
+    clearcoat: 0.46,
+    clearcoatRoughness: 0.34,
   });
   const accentMat = new THREE.MeshStandardMaterial({
     color: 0x1b3430,
