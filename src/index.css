@@ -919,9 +919,24 @@ html, body, #root {
   overscroll-behavior: none;
 }
 
-.game-viewport,
-.bunker-scene {
+ .game-viewport {
   position: relative;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  height: 100svh !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+.bunker-scene {
+  position: fixed !important;
+  inset: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   height: 100vh !important;
