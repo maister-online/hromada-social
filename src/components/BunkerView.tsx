@@ -273,7 +273,7 @@ export const BunkerView: React.FC<BunkerViewProps> = ({
     ).length;
 
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
+    <div className="bunker-scene fixed inset-0 w-screen h-[100dvh] bg-[#050806] text-slate-100 overflow-hidden select-none">
       {playIntro && (
         <div className="fixed inset-0 z-[100] bg-black">
           <video
