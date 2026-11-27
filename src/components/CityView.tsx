@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg?url';
-const CITY_IMAGE_FALLBACK_URL = 'https://raw.githubusercontent.com/maister-online/hromada-social/main/' + encodeURIComponent('Зроби_мега_різкість_9392a4f5_2K.jpg');
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
   ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, Move, Check, RotateCcw,
@@ -30,8 +28,7 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   const [activeId, setActiveId] = useState<BusinessId | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
-  const [cityImageSrc, setCityImageSrc] = useState(CITY_IMAGE_URL);
-  const [cityImageFallbackTried, setCityImageFallbackTried] = useState(false);
+  const cityImageSrc = `${import.meta.env.BASE_URL}assets/rokytne-city.jpg`;
   const [cityImageFailed, setCityImageFailed] = useState(false);
   const [positions, setPositions] = useState<Record<BusinessId, PointPosition>>(() => {
     try {
@@ -75,14 +72,7 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
           fetchPriority="high"
           decoding="async"
           onLoad={() => setCityImageFailed(false)}
-          onError={() => {
-            if (!cityImageFallbackTried) {
-              setCityImageFallbackTried(true);
-              setCityImageSrc(CITY_IMAGE_FALLBACK_URL);
-            } else {
-              setCityImageFailed(true);
-            }
-          }}
+          onError={() => setCityImageFailed(true)}
           style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center' }}
         />
         <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/45 via-transparent to-black/45" />
