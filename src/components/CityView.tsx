@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg';
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
   ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, X,
@@ -53,7 +54,6 @@ const CITY_PLACES: Array<{
   },
 ];
 
-const CITY_IMAGE_URL = `${import.meta.env.BASE_URL}${encodeURIComponent('Зроби_мега_різкість_9392a4f5_2K.jpg')}`;
 
 interface CityViewProps {
   credits: number;
