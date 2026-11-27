@@ -300,7 +300,7 @@ export default function App() {
   useEffect(() => {
     const isMapOpen = !showCityPromo && screen !== 'CITY' && (screen === 'MAP' || (screen === 'BUNKER' && showBunkerMap));
     if (!mapMusicRef.current) {
-      const audio = new Audio(MAP_BGM_TRACK_URL);
+      const audio = new Audio();
       audio.loop = true;
       audio.preload = 'auto';
       audio.volume = 0.42;
@@ -309,6 +309,11 @@ export default function App() {
 
     const audio = mapMusicRef.current;
     if (isMapOpen && !muted) {
+      // Джерело карти підключається тільки поки відкрита карта.
+      if (!audio.getAttribute('src')) {
+        audio.src = MAP_BGM_TRACK_URL;
+        audio.load();
+      }
       audio.muted = false;
       audio.volume = 0.42;
       audio.loop = true;
@@ -316,14 +321,13 @@ export default function App() {
         // Якщо браузер заблокував автозапуск, повторна спроба буде при наступному відкритті карти.
       });
     } else {
+      // Повністю вивантажуємо трек, а не лише ставимо на паузу:
+      // так він не може продовжувати звучати поверх промо або міста.
       audio.pause();
-      audio.currentTime = 0;
+      audio.muted = true;
+      audio.removeAttribute('src');
+      audio.load();
     }
-
-    return () => {
-      audio.pause();
-      audio.currentTime = 0;
-    };
   }, [screen, showBunkerMap, showCityPromo, muted]);
 
   useEffect(() => () => {
@@ -391,12 +395,12 @@ export default function App() {
   const stopMapMusic = useCallback(() => {
     const audio = mapMusicRef.current;
     if (audio) {
+      // Жорстка зупинка: від'єднуємо файл від audio-елемента і вивантажуємо декодований потік.
       audio.pause();
-      audio.currentTime = 0;
       audio.muted = true;
+      audio.removeAttribute('src');
+      audio.load();
     }
-    // Також глушимо фоновий музичний канал гри, щоб жоден трек не переживав перехід.
-    audioEngine.setMusicEnabled(false);
   }, []);
 
   const openDestinationNow = useCallback(
