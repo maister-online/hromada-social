@@ -904,3 +904,130 @@ input, select, textarea {
   background-color: rgba(12, 18, 15, .20) !important;
   background-image: none !important;
 }
+
+
+/* UNIVERSAL RESPONSIVE GAME LAYOUT
+   Fluid viewport sizing, safe-area support and modal sizing for narrow phones,
+   tall phones, tablets and large displays. Never scale the whole game UI. */
+html, body, #root {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  overflow: hidden;
+}
+.game-viewport,
+.bunker-scene {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+.game-viewport {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Modal shells: fluid width on large displays, never wider than the usable viewport. */
+.fixed.inset-0 > .panel-window,
+.fixed.inset-0 > .bunker-dialog,
+.fixed.inset-0 > [class*="max-w-"].panel-window,
+.bunker-dialog-backdrop > .bunker-dialog {
+  width: min(94vw, 76rem) !important;
+  max-width: calc(100vw - 2 * max(8px, env(safe-area-inset-left, 0px))) !important;
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px)) - max(16px, env(safe-area-inset-bottom, 0px))) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+}
+.fixed.inset-0 > .panel-window,
+.fixed.inset-0 > .bunker-dialog {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.bunker-dialog-backdrop {
+  padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
+  padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+}
+.bunker-dialog {
+  width: min(94vw, 76rem) !important;
+  max-width: 100% !important;
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px)) - max(16px, env(safe-area-inset-bottom, 0px))) !important;
+}
+.bunker-dialog-content,
+.panel-window {
+  min-width: 0;
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+.bunker-dialog-content > *,
+.panel-window > * {
+  min-width: 0;
+}
+
+/* Let inner cards shrink instead of forcing a modal wider than the phone. */
+.bunker-dialog-content .grid,
+.panel-window .grid {
+  min-width: 0;
+}
+.bunker-dialog-content .grid > *,
+.panel-window .grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
+/* Small phones: use nearly the full available width and stack dense two-column cards. */
+@media (max-width: 380px) {
+  .fixed.inset-0 > .panel-window,
+  .fixed.inset-0 > .bunker-dialog,
+  .bunker-dialog {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    border-radius: 12px !important;
+  }
+  .bunker-dialog-content,
+  .panel-window {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  .bunker-dialog-content [class*="grid-cols-2"],
+  .panel-window [class*="grid-cols-2"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Wide phones and tablets: use more of the available canvas, without oversized margins. */
+@media (min-width: 700px) {
+  .fixed.inset-0 > .panel-window,
+  .fixed.inset-0 > .bunker-dialog,
+  .bunker-dialog {
+    width: min(92vw, 76rem) !important;
+  }
+}
+
+/* Short landscape phones: keep dialogs scrollable and their header/actions reachable. */
+@media (max-height: 520px) {
+  .bunker-dialog-backdrop,
+  .fixed.inset-0 {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+  }
+  .bunker-dialog,
+  .fixed.inset-0 > .panel-window {
+    max-height: calc(100dvh - 8px) !important;
+    height: auto !important;
+  }
+  .bunker-dialog-topbar {
+    min-height: 44px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+}
