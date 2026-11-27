@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg';
+import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg?url';
+const CITY_IMAGE_FALLBACK_URL = 'https://raw.githubusercontent.com/maister-online/hromada-social/main/' + encodeURIComponent('Зроби_мега_різкість_9392a4f5_2K.jpg');
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
   ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, Move, Check, RotateCcw,
@@ -29,6 +30,9 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   const [activeId, setActiveId] = useState<BusinessId | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
+  const [cityImageSrc, setCityImageSrc] = useState(CITY_IMAGE_URL);
+  const [cityImageFallbackTried, setCityImageFallbackTried] = useState(false);
+  const [cityImageFailed, setCityImageFailed] = useState(false);
   const [positions, setPositions] = useState<Record<BusinessId, PointPosition>>(() => {
     try {
       const saved = localStorage.getItem(POSITION_STORAGE_KEY);
@@ -61,11 +65,29 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   };
 
   return (
-    <main className="fixed inset-0 z-[95] isolate overflow-hidden bg-[#080d0b] text-white">
-      <div className="absolute inset-0">
-        <img src={CITY_IMAGE_URL} alt="Міська локація Рокитне" className="absolute inset-0 h-full w-full object-cover object-center" draggable={false} loading="eager" fetchPriority="high" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black/65" />
-        <div className="absolute inset-0 bg-[#11190f]/15" />
+    <main className="fixed inset-0 z-[95] isolate overflow-hidden bg-[#080d0b] text-white" style={{ position: 'fixed', inset: 0, width: '100vw', height: '100dvh', zIndex: 95 }}>
+      <div className="pointer-events-none absolute inset-0 z-0" style={{ width: '100%', height: '100%', backgroundColor: '#080d0b' }}>
+        <img
+          src={cityImageSrc}
+          alt="Міська локація Рокитне"
+          draggable={false}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          onLoad={() => setCityImageFailed(false)}
+          onError={() => {
+            if (!cityImageFallbackTried) {
+              setCityImageFallbackTried(true);
+              setCityImageSrc(CITY_IMAGE_FALLBACK_URL);
+            } else {
+              setCityImageFailed(true);
+            }
+          }}
+          style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center' }}
+        />
+        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/45 via-transparent to-black/45" />
+        <div className="absolute inset-0 z-[2] bg-[#11190f]/10" />
+        {cityImageFailed && <div className="absolute inset-x-4 bottom-20 z-[3] rounded-lg bg-black/90 p-3 text-center text-sm text-white">Не вдалося завантажити фото міста. Перевіряється доступ до оригінального файлу.</div>}
       </div>
 
       <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3 pt-[max(12px,env(safe-area-inset-top))] sm:p-5">
