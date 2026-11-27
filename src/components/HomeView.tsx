@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Box, Fish, Gem, House, Package, Trophy, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Box, House, Package, Trophy, X } from 'lucide-react';
 import { FISH_MAP, LOCATIONS, LOOT_MAP, RODS, REELS, LINES } from '../game/data';
 import { CaughtFish, FoundLootEntry, SaveState, SavedTackleSet } from '../game/types';
 
