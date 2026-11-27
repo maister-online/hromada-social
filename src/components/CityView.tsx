@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import CITY_IMAGE_URL from '../../Зроби_мега_різкість_9392a4f5_2K.jpg';
+const CITY_IMAGE_URL = 'https://raw.githubusercontent.com/maister-online/hromada-social/main/' + encodeURIComponent('Зроби_мега_різкість_9392a4f5_2K.jpg');
 import {
   ArrowLeft, ArrowUpRight, Coins, Gem, ShoppingBasket, Store,
   ArrowLeftRight, Hammer, Coffee, Warehouse, MapPin, Move, Check, RotateCcw,
@@ -63,7 +63,7 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
   return (
     <main className="fixed inset-0 z-[95] isolate overflow-hidden bg-[#080d0b] text-white">
       <div className="absolute inset-0">
-        <img src={CITY_IMAGE_URL} alt="Міська локація Рокитне" className="h-full w-full object-cover object-center" draggable={false} onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+        <img src={CITY_IMAGE_URL} alt="Міська локація Рокитне" className="absolute inset-0 h-full w-full object-cover object-center" draggable={false} loading="eager" fetchPriority="high" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black/65" />
         <div className="absolute inset-0 bg-[#11190f]/15" />
       </div>
