@@ -367,8 +367,8 @@ export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): Fis
   // One continuous tapered blank: the rod bends as a single elastic piece,
   // not as five visibly hinged sections.
   const rodLength = rodType === 'float' ? 2.82 : 2.72;
-  const longitudinalSegments = 96;
-  const radialSegments = 16;
+  const longitudinalSegments = 128;
+  const radialSegments = 20;
   const rodPositions = new Float32Array((longitudinalSegments + 1) * (radialSegments + 1) * 3);
   const rodIndices: number[] = [];
   for (let row = 0; row <= longitudinalSegments; row++) {
