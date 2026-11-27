@@ -64,8 +64,7 @@ export const CityView: React.FC<CityViewProps> = ({ credits, goldCoins, amberSha
             </div>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black/65" />
-        <div className="absolute inset-0 bg-[#07130c]/15" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20" />
       </div>
 
       <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3 pt-[max(12px,env(safe-area-inset-top))] sm:p-5">
