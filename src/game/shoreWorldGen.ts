@@ -78,12 +78,15 @@ export interface FishingRodRig {
   root: THREE.Group;
   rodBlank: THREE.Mesh;
   rodBasePositions: Float32Array;
-  rodGuideGroups: THREE.Group[];
+  rodGuideGroups: THREE.Object3D[];
   rodGuideT: number[];
   rodLength: number;
   tipMarker: THREE.Object3D;
-  reelHandle: THREE.Group;
-  spoolMesh: THREE.Mesh;
+  reelHandle: THREE.Object3D;
+  spoolMesh: THREE.Object3D;
+  modelAxisX?: boolean;
+  rodGuideBasePositions?: THREE.Vector3[];
+  tipBasePosition?: THREE.Vector3;
 }
 
 export function buildFishingRodRig(rodType: RodType, rodLevelIndex: number): FishingRodRig {
