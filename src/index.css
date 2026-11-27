@@ -1117,3 +1117,58 @@ img, video, canvas, svg {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* BUNKER: invisible STALKER-style interface panels.
+   Keep text and controls, remove all visible window surfaces, borders and shadows. */
+.bunker-scene .bunker-dialog-backdrop {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.bunker-scene .bunker-dialog,
+.bunker-scene .bunker-dialog-content,
+.bunker-scene .bunker-dialog-topbar,
+.bunker-scene .bunker-character-card,
+.bunker-scene .panel-window,
+.bunker-scene .panel-field,
+.bunker-scene .bunker-dialogue-bubble,
+.bunker-scene .bunker-main-header,
+.bunker-scene .bunker-npc-tag,
+.bunker-scene [class*="bg-[#0b130f]"],
+.bunker-scene [class*="bg-[#060a08]"],
+.bunker-scene [class*="bg-[#080d0b]"],
+.bunker-scene [class*="bg-[#0a130f]"],
+.bunker-scene [class*="bg-[#070b09]"],
+.bunker-scene [class*="bg-[#060908]"],
+.bunker-scene [class*="bg-[#050907]"],
+.bunker-scene [class*="bg-[#0b1510]"],
+.bunker-scene [class*="bg-[#091815]"],
+.bunker-scene [class*="bg-[#08120e]"],
+.bunker-scene [class*="bg-[#0d1c18]"],
+.bunker-scene [class*="bg-[#12160c]"],
+.bunker-scene [class*="bg-[#17160c]"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Nested information cards inside shop, trader and character windows. */
+.bunker-scene .bunker-dialog-content > div,
+.bunker-scene .bunker-dialog-content .grid > div,
+.bunker-scene .panel-field > div {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+/* Preserve control styling and readability. */
+.bunker-scene button,
+.bunker-scene a,
+.bunker-scene input,
+.bunker-scene select,
+.bunker-scene textarea {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
