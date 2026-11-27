@@ -14,7 +14,7 @@ interface Props {
   onMountLoot: (uid: string) => void; onUnmountLoot: (uid: string) => void;
 }
 const initialPositions: Record<WindowKey, {x:number;y:number}> = {
-  storage:{x:22,y:105}, trophies:{x:340,y:105}, gear:{x:22,y:390}
+  storage:{x:16,y:86}, trophies:{x:16,y:126}, gear:{x:16,y:166}
 };
 export const HomeView: React.FC<Props> = (p) => {
   const [opened,setOpened]=useState<WindowKey[]>([]);
