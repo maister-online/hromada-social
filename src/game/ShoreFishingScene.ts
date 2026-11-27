@@ -585,7 +585,7 @@ export class ShoreFishingScene {
     // visibly in the player's lower-right field of view on portrait screens.
     this.rodRig.root.position.set(0.075, -0.29, -0.48);
     this.rodRig.root.rotation.set(0.20, -0.045, -0.025);
-    this.rodRig.root.scale.setScalar(0.52);
+    this.rodRig.root.scale.setScalar(0.26);
     this.rodRig.root.visible = true;
     this.camera.add(this.rodRig.root);
   }
