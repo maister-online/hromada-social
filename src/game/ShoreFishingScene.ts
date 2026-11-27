@@ -576,14 +576,16 @@ export class ShoreFishingScene {
 
   private rebuildRod(rodType: RodType, rodLevelIndex: number): void {
     if (this.rodRig) {
-      this.scene.remove(this.rodRig.root);
+      // The rod is parented to the camera, not directly to the scene.
+      // Remove it from its actual parent before building the replacement.
+      this.rodRig.root.parent?.remove(this.rodRig.root);
     }
     this.rodRig = buildFishingRodRig(rodType, rodLevelIndex);
     // First-person rig: parent it to the camera so the hands and rod stay
     // visibly in the player's lower-right field of view on portrait screens.
-    this.rodRig.root.position.set(0.10, -0.27, -0.52);
-    this.rodRig.root.rotation.set(0.22, -0.06, -0.035);
-    this.rodRig.root.scale.setScalar(0.48);
+    this.rodRig.root.position.set(0.075, -0.29, -0.48);
+    this.rodRig.root.rotation.set(0.20, -0.045, -0.025);
+    this.rodRig.root.scale.setScalar(0.60);
     this.rodRig.root.visible = true;
     this.camera.add(this.rodRig.root);
   }
