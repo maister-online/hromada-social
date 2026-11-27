@@ -360,6 +360,23 @@ export default function App() {
     });
   }, []);
 
+  // Системні вікна працюють як один стек: одночасно відкрите тільки одне.
+  const closeGamePanels = useCallback(() => {
+    setShowInventory(false); setShowJournal(false); setShowQuests(false); setShowBestiary(false);
+  }, []);
+  const openInventory = useCallback(() => {
+    setShowJournal(false); setShowQuests(false); setShowBestiary(false); setShowInventory(true);
+  }, []);
+  const openJournal = useCallback(() => {
+    setShowInventory(false); setShowQuests(false); setShowBestiary(false); setShowJournal(true);
+  }, []);
+  const openQuests = useCallback(() => {
+    setShowInventory(false); setShowJournal(false); setShowBestiary(false); setShowQuests(true);
+  }, []);
+  const openBestiary = useCallback(() => {
+    setShowInventory(false); setShowJournal(false); setShowQuests(false); setShowBestiary(true);
+  }, []);
+
   const finishGamePresentation = useCallback(() => {
     const audio = presentationAudioRef.current;
     if (audio) {
@@ -377,6 +394,7 @@ export default function App() {
   }, [showToast]);
 
   const handleNewGame = useCallback(() => {
+    closeGamePanels();
     const fresh = createFreshSave();
     setGameState(fresh);
     setShowGamePresentation(true);
@@ -392,12 +410,13 @@ export default function App() {
       audio.volume = 1;
       void audio.play().catch(() => {});
     }
-  }, [finishGamePresentation]);
+  }, [finishGamePresentation, closeGamePanels]);
 
   const handleContinue = useCallback(() => {
+    closeGamePanels();
     const loc = stateRef.current.currentLocationId;
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : loc === 'rokitne_city' ? 'CITY' : 'FISHING');
-  }, []);
+  }, [closeGamePanels]);
 
   const openDestinationNow = useCallback(
     (locId: LocationId) => {
@@ -405,6 +424,7 @@ export default function App() {
       setShowBunkerMap(false);
       const target = LOCATIONS[locId];
       if (!target) return;
+      closeGamePanels();
 
       const isNew = !stateRef.current.visitedLocationIds.includes(locId);
       setGameState((prev) => ({
@@ -433,7 +453,7 @@ export default function App() {
         }
       }
     },
-    [showToast, screen, showBunkerMap]
+    [showToast, screen, showBunkerMap, closeGamePanels]
   );
 
   const finishCityPromo = useCallback(() => {
@@ -449,6 +469,7 @@ export default function App() {
 
   const handleSelectDestination = useCallback((locId: LocationId) => {
     if (locId === 'rokitne_city') {
+      closeGamePanels();
       setShowCityPromo(true);
       setCityPromoNeedsStart(false);
       return;
@@ -1791,7 +1812,7 @@ export default function App() {
               totalSpeciesCount={FISH_SPECIES.length}
               onNewGame={handleNewGame}
               onContinue={handleContinue}
-              onOpenBestiary={() => setShowBestiary(true)}
+              onOpenBestiary={openBestiary}
             />
           </div>
 
@@ -1803,7 +1824,7 @@ export default function App() {
           gameState={gameState}
           savedTackleSets={gameState.savedTackleSets ?? []}
           onBack={() => setScreen('MAP')}
-          onOpenInventory={() => setShowInventory(true)}
+          onOpenInventory={openInventory}
           onSaveTackleSet={handleSaveTackleSet}
           onEquipTackleSet={handleEquipTackleSet}
           onDeleteTackleSet={handleDeleteTackleSet}
@@ -1850,10 +1871,10 @@ export default function App() {
           muted={muted}
           onSelectDestination={handleSelectDestination}
           onOpenHome={() => setScreen('HOME')}
-          onOpenInventory={() => setShowInventory(true)}
-          onOpenQuests={() => setShowQuests(true)}
-          onOpenBestiary={() => setShowBestiary(true)}
-          onOpenJournal={() => setShowJournal(true)}
+          onOpenInventory={openInventory}
+          onOpenQuests={openQuests}
+          onOpenBestiary={openBestiary}
+          onOpenJournal={openJournal}
           onToggleMute={handleToggleMute}
         />
       )}
@@ -1886,9 +1907,9 @@ export default function App() {
           onToggleGearItem={handleBuyOrToggleGearItem}
           onSelectFlavoring={handleSelectFlavoring}
           onDamageTackle={handleDamageTackle}
-          onOpenInventory={() => setShowInventory(true)}
-          onOpenJournal={() => setShowJournal(true)}
-          onOpenQuests={() => setShowQuests(true)}
+          onOpenInventory={openInventory}
+          onOpenJournal={openJournal}
+          onOpenQuests={openQuests}
           onOpenMap={() => setScreen('MAP')}
           onGoToBunker={() => handleSelectDestination('rokitne_bunker')}
         />
@@ -1904,7 +1925,7 @@ export default function App() {
 
           onToggleMute={handleToggleMute}
 
-          onOpenJournal={() => setShowJournal(true)}
+          onOpenJournal={openJournal}
           onSellFish={handleSellFish}
           onSellAll={handleSellAll}
           onSellLoot={handleSellLoot}
@@ -1950,15 +1971,15 @@ export default function App() {
           onSelectDestination={handleSelectDestination}
           muted={muted} onToggleMute={handleToggleMute}
           onOpenHome={() => { setShowBunkerMap(false); setScreen('HOME'); }}
-          onOpenInventory={() => setShowInventory(true)} onOpenQuests={() => setShowQuests(true)}
-          onOpenBestiary={() => setShowBestiary(true)} onOpenJournal={() => setShowJournal(true)}
+          onOpenInventory={openInventory} onOpenQuests={openQuests}
+          onOpenBestiary={openBestiary} onOpenJournal={openJournal}
         />
       )}
 
       {screen !== 'TITLE' && !showInventory && (
         <button
           type="button"
-          onClick={() => setShowInventory(true)}
+          onClick={openInventory}
           aria-label="Відкрити рюкзак"
           title="Рюкзак"
           className="fixed right-3 top-[calc(env(safe-area-inset-top)+5.5rem)] z-[45] inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-300/60 bg-[#101b15]/95 px-3 py-2 text-xs font-extrabold tracking-wider text-emerald-100 shadow-[0_4px_18px_rgba(0,0,0,.65)] backdrop-blur-sm hover:bg-[#1c3023]"
@@ -1985,28 +2006,28 @@ export default function App() {
           onEquipBait={handleSelectBait}
           onSelectFlavoring={handleSelectFlavoring}
           onUseConsumable={handleUseConsumable}
-          onClose={() => setShowInventory(false)}
+          onClose={closeGamePanels}
         />
       )}
 
       {showJournal && (
         <JournalModal
           gameState={gameState}
-          onClose={() => setShowJournal(false)}
+          onClose={closeGamePanels}
         />
       )}
 
       {showQuests && (
         <QuestsModal
           gameState={gameState}
-          onClose={() => setShowQuests(false)}
+          onClose={closeGamePanels}
         />
       )}
 
       {showBestiary && (
         <BestiaryModal
           discovered={gameState.discovered}
-          onClose={() => setShowBestiary(false)}
+          onClose={closeGamePanels}
         />
       )}
 
