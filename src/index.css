@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Roboto+Condensed:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -704,8 +705,8 @@
 
 /* MYSTIC POLISSIA — storybook-shaped STALKER interface skin */
 :root {
-  --font-display: "Trebuchet MS", "Arial Rounded MT Bold", system-ui, sans-serif;
-  --font-sans: "Trebuchet MS", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-display: "Oswald", "Arial Narrow", Impact, sans-serif;
+  --font-sans: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
   --ui-ink: #e1e5df;
   --ui-muted: #aab3aa;
   --ui-metal: #626d68;
@@ -1219,4 +1220,52 @@ img, video, canvas, svg {
 @media (max-width: 480px) {
   .city-promo-controls { width: calc(100% - 24px); gap: 7px; }
   .city-promo-button, .city-promo-skip { min-height: 44px; padding: 9px 12px; font-size: 12px; }
+}
+
+
+/* DYKE POLISSIA — rugged survival-game typography for every dialogue and modal. */
+.bunker-dialog,
+.bunker-dialog-content,
+.panel-window,
+[role="dialog"] {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+  font-weight: 500;
+  letter-spacing: .012em;
+}
+.bunker-dialog h1,
+.bunker-dialog h2,
+.bunker-dialog h3,
+.bunker-dialog-topbar,
+.bunker-character-card h2,
+.panel-window h1,
+.panel-window h2,
+.panel-window h3,
+[role="dialog"] h1,
+[role="dialog"] h2,
+[role="dialog"] h3 {
+  font-family: "Oswald", "Arial Narrow", Impact, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .045em !important;
+  text-transform: uppercase;
+}
+.bunker-dialogue-bubble p,
+.bunker-dialog-content p,
+.panel-window p,
+[role="dialog"] p {
+  font-family: "Roboto Condensed", "Arial Narrow", system-ui, sans-serif !important;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.bunker-dialog button,
+.panel-window button,
+[role="dialog"] button {
+  font-family: "Oswald", "Arial Narrow", Impact, sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.bunker-dialog .bunker-dialogue-bubble p {
+  font-size: clamp(14px, 1.05rem, 17px);
+  line-height: 1.55;
+  color: #e5e8df;
 }
