@@ -1182,6 +1182,14 @@ img, video, canvas, svg {
   overflow: hidden;
   background: #000;
 }
+.city-promo-overlay.city-promo-fade-out {
+  background: transparent;
+  pointer-events: none;
+}
+.city-promo-video-fade-out {
+  opacity: 0;
+  transition: opacity 700ms ease-in-out;
+}
 .city-promo-video {
   display: block;
   width: 100%;
