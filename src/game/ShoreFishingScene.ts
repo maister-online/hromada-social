@@ -934,7 +934,7 @@ export class ShoreFishingScene {
     this.rodRig.root.position.set(0.10, -0.27 + breathY, -0.52);
     this.rodRig.root.visible = true;
     this.rodRig.root.rotation.x = THREE.MathUtils.damp(this.rodRig.root.rotation.x, basePitch, 10, dt);
-    this.rodRig.root.rotation.y = THREE.MathUtils.damp(this.rodRig.root.rotation.y, baseYaw, 10, dt);
+    this.rodRig.root.rotation.y = THREE.MathUtils.damp(this.rodRig.root.rotation.y, baseYaw + (this.rodRig.modelAxisX ? Math.PI / 2 : 0), 10, dt);
 
     // Elastic one-piece blank: smooth parabolic deflection, strongest near the tip.
     const bendForce =
