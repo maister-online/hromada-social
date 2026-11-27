@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Box, House, Package, Trophy, X } from 'lucide-react';
+import { ArrowLeft, BarChart3, Box, House, Package, Trophy, X } from 'lucide-react';
 import { FISH_MAP, LOCATIONS, LOOT_MAP, RODS, REELS, LINES } from '../game/data';
 import { CaughtFish, FoundLootEntry, SaveState, SavedTackleSet } from '../game/types';
 
-type WindowKey = 'storage' | 'trophies' | 'gear';
+type WindowKey = 'storage' | 'trophies' | 'gear' | 'progress';
 interface Props {
   gameState: SaveState; savedTackleSets: SavedTackleSet[]; onBack: () => void;
   onSaveTackleSet: (name: string) => void; onEquipTackleSet: (set: SavedTackleSet) => void;
@@ -14,7 +14,7 @@ interface Props {
   onMountLoot: (uid: string) => void; onUnmountLoot: (uid: string) => void;
 }
 const initialPositions: Record<WindowKey, {x:number;y:number}> = {
-  storage:{x:16,y:86}, trophies:{x:16,y:126}, gear:{x:16,y:166}
+  storage:{x:16,y:86}, trophies:{x:16,y:126}, gear:{x:16,y:166}, progress:{x:16,y:206}
 };
 export const HomeView: React.FC<Props> = (p) => {
   const [opened,setOpened]=useState<WindowKey[]>([]);
@@ -56,7 +56,7 @@ export const HomeView: React.FC<Props> = (p) => {
     <div className="absolute bottom-3 left-3 z-30 flex max-w-[calc(100vw-24px)] flex-wrap gap-2">
       <button onClick={()=>toggle('storage')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Box size={16}/>Сховище</button>
       <button onClick={()=>toggle('trophies')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Trophy size={16}/>Трофейна кімната</button>
-      <button onClick={()=>toggle('gear')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Package size={16}/>Снасті й інструменти</button>
+      <button onClick={()=>toggle('gear')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><Package size={16}/>Робочий стіл</button><button onClick={()=>toggle('progress')} className="flex items-center gap-2 rounded-lg border border-amber-200/40 bg-black/65 px-3 py-2 text-xs font-bold shadow-lg"><BarChart3 size={16}/>Особистий прогрес</button>
     </div>
     {opened.includes('storage')&&<section className={panel} style={{left:positions.storage.x,top:positions.storage.y}}>
       {header('storage','Сховище предметів',<Box size={16}/>)}
@@ -71,7 +71,7 @@ export const HomeView: React.FC<Props> = (p) => {
       {header('trophies','Кімната трофеїв',<Trophy size={16}/>)}
       <div className="max-h-[55vh] overflow-y-auto">
         <div className="border-b border-white/10 px-3 py-2 text-[11px] font-bold text-amber-200">Риба на стенді</div>
-        {p.gameState.homeStoredFish.filter(f=>f.isTrophy||f.isMutant).map(f=>row(fishName(f),`${f.weightKg.toFixed(2)} кг · ${f.lengthCm} см · День ${f.caughtDay}`,'Виставити',()=>p.onMountFish(f.uid)))}
+        {p.gameState.homeStoredFish.map(f=>row(fishName(f),`${f.weightKg.toFixed(2)} кг · ${f.lengthCm} см · День ${f.caughtDay}`,'Виставити',()=>p.onMountFish(f.uid)))}
         {p.gameState.homeTrophyFish.map(f=>row(fishName(f),`${f.weightKg.toFixed(2)} кг · ${f.lengthCm} см · ${loc(f.locationId)}`,'Зняти',()=>p.onUnmountFish(f.uid)))}
         <div className="border-y border-white/10 px-3 py-2 text-[11px] font-bold text-amber-200">Монети та артефакти у вітрині</div>
         {p.gameState.homeStoredLoot.map(l=>row(lootName(l),`Знахідка · ${loc(l.locationId)}`,'У вітрину',()=>p.onMountLoot(l.uid)))}
@@ -80,7 +80,7 @@ export const HomeView: React.FC<Props> = (p) => {
       </div>
     </section>}
     {opened.includes('gear')&&<section className={panel} style={{left:positions.gear.x,top:positions.gear.y}}>
-      {header('gear','Снасті та інструменти',<Package size={16}/>)}
+      {header('gear','Робочий стіл',<Package size={16}/>)}
       <div className="max-h-[55vh] overflow-y-auto p-3 text-xs">
         <p className="mb-2 text-emerald-200">Наявне спорядження</p>
         <p>Вудилища: {p.gameState.ownedRodIds.map(id=>RODS.find(x=>x.id===id)?.name??id).join(', ')||'—'}</p>
@@ -90,6 +90,21 @@ export const HomeView: React.FC<Props> = (p) => {
           <div className="mb-2 flex gap-1"><input value={setName} onChange={e=>setSetName(e.target.value)} placeholder="Назва комплекту" className="min-w-0 flex-1 rounded bg-black/40 px-2 py-1.5"/><button onClick={()=>{p.onSaveTackleSet(setName);setSetName('')}} className="rounded bg-emerald-700 px-2">Зберегти</button></div>
           {(p.savedTackleSets??[]).map(s=><div key={s.id} className="mb-1 flex items-center justify-between gap-2"><span className="truncate">{s.name}</span><span className="flex gap-1"><button onClick={()=>p.onEquipTackleSet(s)} className="rounded bg-emerald-800 px-2 py-1">Взяти</button><button onClick={()=>p.onDeleteTackleSet(s.id)} className="rounded bg-rose-900 px-2 py-1">×</button></span></div>)}
         </div>
+      </div>
+    </section>}
+    {opened.includes('progress')&&<section className={panel} style={{left:positions.progress.x,top:positions.progress.y}}>
+      {header('progress','Особистий прогрес',<BarChart3 size={16}/>)}
+      <div className="space-y-2 p-3 text-xs">
+        <div className="flex items-center justify-between"><span className="text-slate-400">Рівень персонажа</span><b className="text-amber-200">{p.gameState.level}</b></div>
+        <div className="h-2 overflow-hidden rounded-full bg-black/50"><div className="h-full rounded-full bg-emerald-500" style={{width: Math.max(0,Math.min(100,(p.gameState.xp%250)/250*100))+'%'}}/></div>
+        <div className="flex justify-between text-[10px] text-slate-400"><span>{p.gameState.xp} XP</span><span>До наступного рівня: {250-(p.gameState.xp%250)} XP</span></div>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="rounded-lg bg-white/5 p-2"><span className="text-slate-400">Спіймано риби</span><b className="mt-1 block text-base">{p.gameState.totalCaughtCount}</b></div>
+          <div className="rounded-lg bg-white/5 p-2"><span className="text-slate-400">Зароблено</span><b className="mt-1 block text-base">₴ {p.gameState.totalEarnedCredits.toLocaleString('uk-UA')}</b></div>
+          <div className="rounded-lg bg-white/5 p-2"><span className="text-slate-400">Риб у трофеях</span><b className="mt-1 block text-base">{p.gameState.homeTrophyFish.length}</b></div>
+          <div className="rounded-lg bg-white/5 p-2"><span className="text-slate-400">Знахідок у вітрині</span><b className="mt-1 block text-base">{p.gameState.homeTrophyLoot.length}</b></div>
+        </div>
+        <p className="text-[10px] text-slate-500">Статистика оновлюється разом із збереженням гри.</p>
       </div>
     </section>}
   </main>;
