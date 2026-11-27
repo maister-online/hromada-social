@@ -309,6 +309,7 @@ export default function App() {
 
     const audio = mapMusicRef.current;
     if (isMapOpen && !muted) {
+      audio.muted = false;
       audio.volume = 0.42;
       audio.loop = true;
       void audio.play().catch(() => {
