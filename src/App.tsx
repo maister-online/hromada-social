@@ -256,6 +256,9 @@ export default function App() {
   const [showGamePresentation, setShowGamePresentation] = useState(false);
   const [showRiverIntro, setShowRiverIntro] = useState(false);
   const [showBunkerIntro, setShowBunkerIntro] = useState(false);
+  const [showCityPromo, setShowCityPromo] = useState(false);
+  const [cityPromoNeedsStart, setCityPromoNeedsStart] = useState(false);
+  const cityPromoVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationVideoRef = useRef<HTMLVideoElement | null>(null);
   const presentationAudioRef = useRef<HTMLAudioElement | null>(null);
   const mapMusicRef = useRef<HTMLAudioElement | null>(null);
@@ -383,7 +386,7 @@ export default function App() {
     setScreen(loc === 'rokitne_bunker' ? 'BUNKER' : loc === 'rokitne_city' ? 'CITY' : 'FISHING');
   }, []);
 
-  const handleSelectDestination = useCallback(
+  const openDestinationNow = useCallback(
     (locId: LocationId) => {
       audioEngine.init();
       setShowBunkerMap(false);
@@ -419,6 +422,51 @@ export default function App() {
     },
     [showToast, screen, showBunkerMap]
   );
+
+  const finishCityPromo = useCallback(() => {
+    const video = cityPromoVideoRef.current;
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+    setShowCityPromo(false);
+    setCityPromoNeedsStart(false);
+    openDestinationNow('rokitne_city');
+  }, [openDestinationNow]);
+
+  const handleSelectDestination = useCallback((locId: LocationId) => {
+    if (locId === 'rokitne_city') {
+      setShowCityPromo(true);
+      setCityPromoNeedsStart(false);
+      return;
+    }
+    openDestinationNow(locId);
+  }, [openDestinationNow]);
+
+  useEffect(() => {
+    if (!showCityPromo) return;
+    const video = cityPromoVideoRef.current;
+    if (!video) return;
+    video.currentTime = 0;
+    video.muted = false;
+    video.volume = 1;
+    void video.play().then(() => {
+      setCityPromoNeedsStart(false);
+    }).catch(() => {
+      setCityPromoNeedsStart(true);
+    });
+  }, [showCityPromo]);
+
+  const startCityPromo = useCallback(() => {
+    const video = cityPromoVideoRef.current;
+    if (!video) {
+      finishCityPromo();
+      return;
+    }
+    video.muted = false;
+    video.volume = 1;
+    void video.play().then(() => setCityPromoNeedsStart(false)).catch(() => setCityPromoNeedsStart(true));
+  }, [finishCityPromo]);
 
   const handleSelectBait = useCallback((baitId: string) => {
     setGameState((prev) => ({ ...prev, equippedBaitId: baitId }));
@@ -1628,6 +1676,30 @@ export default function App() {
         onError={finishGamePresentation}
         src={`${import.meta.env.BASE_URL}Presentation_and_promo_video_340f25b1.mp4`}
       />
+      {showCityPromo && (
+        <div className="city-promo-overlay fixed inset-0 z-[130] flex items-center justify-center bg-black">
+          <video
+            ref={cityPromoVideoRef}
+            className="city-promo-video"
+            autoPlay
+            playsInline
+            preload="auto"
+            onEnded={finishCityPromo}
+            onError={() => setCityPromoNeedsStart(true)}
+            src={`${import.meta.env.BASE_URL}city_promo.mp4`}
+          />
+          <div className="city-promo-controls">
+            {cityPromoNeedsStart && (
+              <button type="button" onClick={startCityPromo} className="city-promo-button">
+                Відтворити промо
+              </button>
+            )}
+            <button type="button" onClick={finishCityPromo} className="city-promo-skip">
+              {cityPromoNeedsStart ? 'Відкрити місто' : 'Пропустити'}
+            </button>
+          </div>
+        </div>
+      )}
       {showRiverIntro && (
         <div className="river-intro-enter fixed inset-0 z-[120] bg-black">
           <video
